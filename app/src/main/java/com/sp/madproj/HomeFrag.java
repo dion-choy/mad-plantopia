@@ -5,7 +5,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.location.LocationManager;
-import android.os.AsyncTask;
 import android.os.Bundle;
 
 import androidx.fragment.app.Fragment;
@@ -14,11 +13,9 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.android.volley.NetworkResponse;
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.Response;
@@ -28,10 +25,6 @@ import com.android.volley.toolbox.Volley;
 
 import org.json.JSONException;
 import org.json.JSONObject;
-
-import java.io.IOException;
-import java.net.HttpURLConnection;
-import java.net.URL;
 
 public class HomeFrag extends Fragment {
     private GPSTracker gpsTracker;
@@ -66,10 +59,10 @@ public class HomeFrag extends Fragment {
 
         IntentFilter filter = new IntentFilter(LocationManager.PROVIDERS_CHANGED_ACTION);
         filter.addAction(Intent.ACTION_PROVIDER_CHANGED);
-        getActivity().registerReceiver(gpsSwitchStateReceiver, filter);
+        getActivity().registerReceiver(gpsSwitchStateReceiver, filter, Context.RECEIVER_NOT_EXPORTED);
     }
 
-    private BroadcastReceiver gpsSwitchStateReceiver = new BroadcastReceiver() {
+    private final BroadcastReceiver gpsSwitchStateReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
             if (LocationManager.PROVIDERS_CHANGED_ACTION.equals(intent.getAction())) {
@@ -104,12 +97,11 @@ public class HomeFrag extends Fragment {
                 try {
                     homeFrag.setText(response.getJSONObject("main").toString());
                 } catch (JSONException e) {
-                    Log.d("Weather Error", "Malformed Response: " + e.toString());
+                    Log.d("Weather Error", "Malformed Response: " + e);
                 }
                 Toast.makeText(getActivity().getApplicationContext(), "new", Toast.LENGTH_SHORT).show();
             }
         }, new Response.ErrorListener() {
-
             @Override
             public void onErrorResponse(VolleyError error) {
                 Log.d("Weather Error", "Response Error: " + error.toString());
