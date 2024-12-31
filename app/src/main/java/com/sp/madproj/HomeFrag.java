@@ -5,6 +5,7 @@ import android.os.Bundle;
 
 import androidx.fragment.app.Fragment;
 
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -20,6 +21,7 @@ import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.Volley;
 
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.IOException;
@@ -43,8 +45,9 @@ public class HomeFrag extends Fragment {
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_home, container, false);
-
+        TextView homeFrag = view.findViewById(R.id.homeFrag);
         gpsTracker = ((MainActivity) getActivity()).gpsTracker;
+
         String weatherUrl = "";
         if (((MainActivity) getActivity()).gpsTracker != null && gpsTracker.canGetLocation) {
             weatherUrl = "https://api.openweathermap.org/data/2.5/weather?units=metric" +
@@ -55,19 +58,22 @@ public class HomeFrag extends Fragment {
 
         RequestQueue queue = Volley.newRequestQueue(getActivity());
 
-        TextView homeFrag = view.findViewById(R.id.homeFrag);
-
         JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(
                 Request.Method.GET, weatherUrl, null, new Response.Listener<JSONObject>() {
                 @Override
                 public void onResponse(JSONObject response) {
-                    homeFrag.setText(response.toString());
+                    try {
+                        homeFrag.setText(response.getJSONObject("main").toString());
+                    } catch (JSONException e) {
+                        Log.d("Weather Error", "Malformed Response: " + e.toString());
+                    }
+                    Toast.makeText(getActivity().getApplicationContext(), "new", Toast.LENGTH_SHORT).show();
                 }
             }, new Response.ErrorListener() {
 
             @Override
             public void onErrorResponse(VolleyError error) {
-                Toast.makeText(getActivity().getApplicationContext(), error.toString(), Toast.LENGTH_SHORT).show();
+                Log.d("Weather Error", "Response Error: " + error.toString());
             }
         });
 
