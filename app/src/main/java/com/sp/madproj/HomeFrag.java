@@ -49,7 +49,7 @@ public class HomeFrag extends Fragment {
         gpsTracker = ((MainActivity) getActivity()).gpsTracker;
 
         String weatherUrl = "";
-        if (((MainActivity) getActivity()).gpsTracker != null && gpsTracker.canGetLocation) {
+        if (gpsTracker != null && gpsTracker.canGetLocation) {
             weatherUrl = "https://api.openweathermap.org/data/2.5/weather?units=metric" +
                     "&lat=" + ((MainActivity) getActivity()).getLatitude() +
                     "&lon=" + ((MainActivity) getActivity()).getLongitude() +
