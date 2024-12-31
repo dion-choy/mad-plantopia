@@ -28,7 +28,9 @@ import org.json.JSONObject;
 
 public class HomeFrag extends Fragment {
     private GPSTracker gpsTracker;
-    private TextView homeFrag;
+    private TextView test;
+    private TextView temp;
+    private TextView humid;
 
     public HomeFrag() {
         // Required empty public constructor
@@ -44,7 +46,9 @@ public class HomeFrag extends Fragment {
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_home, container, false);
-        homeFrag = view.findViewById(R.id.homeFrag);
+        temp = view.findViewById(R.id.temp);
+        test = view.findViewById(R.id.test);
+        humid = view.findViewById(R.id.humidity);
         gpsTracker = ((MainActivity) getActivity()).gpsTracker;
 
         if (gpsTracker != null && gpsTracker.canGetLocation) {
@@ -95,11 +99,13 @@ public class HomeFrag extends Fragment {
             @Override
             public void onResponse(JSONObject response) {
                 try {
-                    homeFrag.setText(response.getJSONObject("main").toString());
+                    test.setText(response.toString());
+                    temp.setText(response.getJSONObject("main").get("temp").toString());
+                    humid.setText(response.getJSONObject("main").get("humidity").toString() + "%");
+                    Toast.makeText(getActivity().getApplicationContext(), "new", Toast.LENGTH_SHORT).show();
                 } catch (JSONException e) {
                     Log.d("Weather Error", "Malformed Response: " + e);
                 }
-                Toast.makeText(getActivity().getApplicationContext(), "new", Toast.LENGTH_SHORT).show();
             }
         }, new Response.ErrorListener() {
             @Override
