@@ -21,6 +21,10 @@ public class MainActivity extends AppCompatActivity {
     private FeedFrag feedFrag;
     private BadgeFrag badgeFrag;
 
+    private GPSTracker gpsTracker;
+    private double latitude = 0.0d;
+    private double longitude = 0.0d;
+
     @Override
     public void onBackPressed() {
         if (fragManager.findFragmentById(R.id.viewFrag) == homeFrag) {
@@ -67,6 +71,16 @@ public class MainActivity extends AppCompatActivity {
                 .addToBackStack(null)
                 .commit();
 
+        gpsTracker = new GPSTracker(this);
+        if (gpsTracker.canGetLocation()) {
+            latitude = gpsTracker.getLatitude();
+            longitude = gpsTracker.getLongitude();
+
+            Toast.makeText(getApplicationContext(), "Your location is - \nLat: " +
+                    latitude + "\nLong: " + longitude, Toast.LENGTH_LONG).show();
+        } else {
+            Toast.makeText(getApplicationContext(), "Cannot get loc", Toast.LENGTH_LONG).show();
+        }
     }
 
     BottomNavigationView.OnItemSelectedListener switchPage = new NavigationBarView.OnItemSelectedListener() {

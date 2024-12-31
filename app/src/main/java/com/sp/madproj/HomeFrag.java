@@ -10,13 +10,19 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Toast;
 
+import com.android.volley.NetworkResponse;
+import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.JsonObjectRequest;
+import com.android.volley.toolbox.Volley;
+
+import org.json.JSONObject;
+
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URL;
-
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.Response;
 
 public class HomeFrag extends Fragment {
     public HomeFrag() {
@@ -35,37 +41,24 @@ public class HomeFrag extends Fragment {
         View view = inflater.inflate(R.layout.fragment_home, container, false);
 
         String url = "https://api-open.data.gov.sg/v2/real-time/api/air-temperature";
+        RequestQueue queue = Volley.newRequestQueue(getActivity());
 
-        OkHttpHandler okHttpHandler= new OkHttpHandler();
-        okHttpHandler.execute(url);
+        JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(
+                Request.Method.GET, url, null, new Response.Listener<JSONObject>() {
+                @Override
+                public void onResponse(JSONObject response) {
+                    Toast.makeText(getActivity().getApplicationContext(), "Response: " + response.toString(), Toast.LENGTH_SHORT).show();
+                }
+            }, new Response.ErrorListener() {
+
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                // TODO: Handle error
+            }
+        });
+
+        queue.add(jsonObjectRequest);
 
         return view;
-    }
-
-    public class OkHttpHandler extends AsyncTask<String, Void, String> {
-        OkHttpClient client = new OkHttpClient();
-
-        @Override
-        protected String doInBackground(String ...params) {
-
-            Request request = new Request.Builder()
-                    .url(params[0])
-                    .get()
-                    .build();
-
-            try {
-                Response response = client.newCall(request).execute();
-                return response.body().string();
-            }catch (Exception e){
-                e.printStackTrace();
-            }
-            return null;
-        }
-
-        @Override
-        protected void onPostExecute(String s) {
-            super.onPostExecute(s);
-            Toast.makeText(getActivity().getApplicationContext(), s, Toast.LENGTH_SHORT).show();
-        }
     }
 }
