@@ -8,6 +8,8 @@ import androidx.fragment.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.EditText;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.android.volley.NetworkResponse;
@@ -25,6 +27,8 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 
 public class HomeFrag extends Fragment {
+    private GPSTracker gpsTracker;
+
     public HomeFrag() {
         // Required empty public constructor
     }
@@ -40,20 +44,30 @@ public class HomeFrag extends Fragment {
         // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_home, container, false);
 
-        String url = "https://api-open.data.gov.sg/v2/real-time/api/air-temperature";
+        gpsTracker = ((MainActivity) getActivity()).gpsTracker;
+        String weatherUrl = "";
+        if (((MainActivity) getActivity()).gpsTracker != null && gpsTracker.canGetLocation) {
+            weatherUrl = "https://api.openweathermap.org/data/2.5/weather?units=metric" +
+                    "&lat=" + ((MainActivity) getActivity()).getLatitude() +
+                    "&lon=" + ((MainActivity) getActivity()).getLongitude() +
+                    "&appid=" + BuildConfig.WEATHER_KEY;
+        }
+
         RequestQueue queue = Volley.newRequestQueue(getActivity());
 
+        TextView homeFrag = view.findViewById(R.id.homeFrag);
+
         JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(
-                Request.Method.GET, url, null, new Response.Listener<JSONObject>() {
+                Request.Method.GET, weatherUrl, null, new Response.Listener<JSONObject>() {
                 @Override
                 public void onResponse(JSONObject response) {
-                    Toast.makeText(getActivity().getApplicationContext(), "Response: " + response.toString(), Toast.LENGTH_SHORT).show();
+                    homeFrag.setText(response.toString());
                 }
             }, new Response.ErrorListener() {
 
             @Override
             public void onErrorResponse(VolleyError error) {
-                // TODO: Handle error
+                Toast.makeText(getActivity().getApplicationContext(), error.toString(), Toast.LENGTH_SHORT).show();
             }
         });
 

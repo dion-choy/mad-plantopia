@@ -6,6 +6,10 @@ android {
     namespace 'com.sp.madproj'
     compileSdk 34
 
+    Properties properties = new Properties()
+    properties.load(project.rootProject.file('local.properties').newDataInputStream())
+    def weatherKey= properties.getProperty('weatherKey')
+
     defaultConfig {
         applicationId "com.sp.madproj"
         minSdk 27
@@ -14,6 +18,8 @@ android {
         versionName "1.0"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+
+        buildConfigField "String" , "WEATHER_KEY" , weatherKey
     }
 
     buildTypes {
@@ -28,6 +34,7 @@ android {
     }
 
     buildFeatures {
+        buildConfig true
         viewBinding true
     }
 }

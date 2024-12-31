@@ -21,9 +21,18 @@ public class MainActivity extends AppCompatActivity {
     private FeedFrag feedFrag;
     private BadgeFrag badgeFrag;
 
-    private GPSTracker gpsTracker;
+    public GPSTracker gpsTracker;
+
     private double latitude = 0.0d;
     private double longitude = 0.0d;
+
+    public double getLatitude() {
+        return latitude;
+    }
+
+    public double getLongitude() {
+        return longitude;
+    }
 
     @Override
     public void onBackPressed() {
@@ -76,10 +85,10 @@ public class MainActivity extends AppCompatActivity {
             latitude = gpsTracker.getLatitude();
             longitude = gpsTracker.getLongitude();
 
-            Toast.makeText(getApplicationContext(), "Your location is - \nLat: " +
-                    latitude + "\nLong: " + longitude, Toast.LENGTH_LONG).show();
+//            Toast.makeText(getApplicationContext(), "Your location is - \nLat: " +
+//                    latitude + "\nLong: " + longitude, Toast.LENGTH_LONG).show();
         } else {
-            Toast.makeText(getApplicationContext(), "Cannot get loc", Toast.LENGTH_LONG).show();
+            Toast.makeText(getApplicationContext(), "Please turn on location services", Toast.LENGTH_LONG).show();
         }
     }
 
