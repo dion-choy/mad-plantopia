@@ -1,5 +1,10 @@
 package com.sp.madproj;
 
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
+import android.location.LocationManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
 
@@ -30,6 +35,7 @@ import java.net.URL;
 
 public class HomeFrag extends Fragment {
     private GPSTracker gpsTracker;
+    private TextView homeFrag;
 
     public HomeFrag() {
         // Required empty public constructor
@@ -45,31 +51,64 @@ public class HomeFrag extends Fragment {
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_home, container, false);
-        TextView homeFrag = view.findViewById(R.id.homeFrag);
+        homeFrag = view.findViewById(R.id.homeFrag);
         gpsTracker = ((MainActivity) getActivity()).gpsTracker;
 
-        String weatherUrl = "";
         if (gpsTracker != null && gpsTracker.canGetLocation) {
-            weatherUrl = "https://api.openweathermap.org/data/2.5/weather?units=metric" +
-                    "&lat=" + ((MainActivity) getActivity()).getLatitude() +
-                    "&lon=" + ((MainActivity) getActivity()).getLongitude() +
-                    "&appid=" + BuildConfig.WEATHER_KEY;
+            getWeather();
         }
+        return view;
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+
+        IntentFilter filter = new IntentFilter(LocationManager.PROVIDERS_CHANGED_ACTION);
+        filter.addAction(Intent.ACTION_PROVIDER_CHANGED);
+        getActivity().registerReceiver(gpsSwitchStateReceiver, filter);
+    }
+
+    private BroadcastReceiver gpsSwitchStateReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if (LocationManager.PROVIDERS_CHANGED_ACTION.equals(intent.getAction())) {
+                // Make an action or refresh an already managed state.
+
+                LocationManager locationManager = (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
+                boolean isGpsEnabled = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
+                boolean isNetworkEnabled = locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER);
+
+                if (isGpsEnabled || isNetworkEnabled) {
+                    Log.i(this.getClass().getName(), "gpsSwitchStateReceiver.onReceive() location is enabled : isGpsEnabled = " + isGpsEnabled + " isNetworkEnabled = " + isNetworkEnabled);
+                    getWeather();
+                } else {
+                    Log.w(this.getClass().getName(), "gpsSwitchStateReceiver.onReceive() location disabled ");
+                }
+            }
+        }
+    };
+
+    private void getWeather() {
+        String weatherUrl = "https://api.openweathermap.org/data/2.5/weather?units=metric" +
+                "&lat=" + ((MainActivity) getActivity()).getLatitude() +
+                "&lon=" + ((MainActivity) getActivity()).getLongitude() +
+                "&appid=" + BuildConfig.WEATHER_KEY;
 
         RequestQueue queue = Volley.newRequestQueue(getActivity());
 
         JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(
                 Request.Method.GET, weatherUrl, null, new Response.Listener<JSONObject>() {
-                @Override
-                public void onResponse(JSONObject response) {
-                    try {
-                        homeFrag.setText(response.getJSONObject("main").toString());
-                    } catch (JSONException e) {
-                        Log.d("Weather Error", "Malformed Response: " + e.toString());
-                    }
-                    Toast.makeText(getActivity().getApplicationContext(), "new", Toast.LENGTH_SHORT).show();
+            @Override
+            public void onResponse(JSONObject response) {
+                try {
+                    homeFrag.setText(response.getJSONObject("main").toString());
+                } catch (JSONException e) {
+                    Log.d("Weather Error", "Malformed Response: " + e.toString());
                 }
-            }, new Response.ErrorListener() {
+                Toast.makeText(getActivity().getApplicationContext(), "new", Toast.LENGTH_SHORT).show();
+            }
+        }, new Response.ErrorListener() {
 
             @Override
             public void onErrorResponse(VolleyError error) {
@@ -78,7 +117,5 @@ public class HomeFrag extends Fragment {
         });
 
         queue.add(jsonObjectRequest);
-
-        return view;
     }
 }
