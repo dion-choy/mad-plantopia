@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="light_primary">#047836</color>
+    <color name="dark_primary">#023B2D</color>
+    <color name="light_background">#BBFFE7</color>
+    <color name="dark_background">#023B2D</color>
+    <color name="nav_bar_background">#AFE2C2</color>
+    <color name="nav_bar_focus">#C6FFDB</color>
+
+    <color name="light_text">#047836</color>
+    <color name="light_text_em">#014F23</color>
+    <color name="dark_text">#047836</color>
+</resources>

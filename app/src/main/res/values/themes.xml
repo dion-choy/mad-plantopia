@@ -1,0 +1,31 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!-- Base application theme. -->
+    <style name="fab">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">50%</item>
+        <item name="cornerSizeTopLeft">100dp</item>
+        <item name="cornerSizeTopRight">100dp</item>
+        <item name="cornerSizeBottomLeft">100dp</item>
+        <item name="cornerSizeBottomRight">100dp</item>
+        <item name="colorPrimaryContainer">@color/nav_bar_background</item>
+    </style>
+
+    <style name="Base.Theme.MADproj" parent="Theme.Material3.DayNight.NoActionBar">
+        <!-- Customize your light theme here. -->
+        <item name="colorPrimary">@color/light_primary</item>
+        <item name="android:windowBackground">@color/light_background</item>
+
+        <item name="colorOnSecondaryContainer">@color/light_text_em</item>
+        <item name="colorOnSurface">@color/light_text_em</item>
+
+        <item name="colorOnSurfaceVariant">@color/light_text</item>
+
+        <item name="colorSecondaryContainer">@color/nav_bar_focus</item>
+        <item name="colorSurfaceContainer">@color/nav_bar_background</item>
+
+        <item name="colorPrimaryContainer">@color/nav_bar_background</item>
+        <item name="colorOnPrimaryContainer">@color/light_text</item>
+    </style>
+
+    <style name="Theme.MADproj" parent="Base.Theme.MADproj" />
+</resources>

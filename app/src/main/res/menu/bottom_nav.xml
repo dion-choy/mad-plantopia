@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item
+        android:id="@+id/homeTab"
+        android:icon="@drawable/home_icon"
+        android:title="Home" />
+    <item
+        android:id="@+id/plantsTab"
+        android:icon="@drawable/plants_icon"
+        android:title="Plants" />
+    <item
+        android:id="@+id/identifyTab"
+        android:icon="@drawable/identify_icon"
+        android:title="Identify" />
+    <item
+        android:id="@+id/feedTab"
+        android:icon="@drawable/feed_icon"
+        android:title="Feed" />
+    <item
+        android:id="@+id/badgesTab"
+        android:icon="@drawable/badge_icon"
+        android:title="Badges" />
+</menu>
