@@ -16,6 +16,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -35,6 +36,7 @@ public class HomeFrag extends Fragment {
     private TextView test;
     private TextView temp;
     private TextView humid;
+    private ImageView weatherImg;
 
     private SharedPreferences sharedPref;
 
@@ -57,13 +59,14 @@ public class HomeFrag extends Fragment {
         test = view.findViewById(R.id.test);
         humid = view.findViewById(R.id.humidity);
 
+        weatherImg = view.findViewById(R.id.weatherImage);
+
         sharedPref = getActivity().getApplicationContext().getSharedPreferences("mySettings", MODE_PRIVATE);
-        temp.setText(String.format(Locale.ENGLISH, "%.1f",
-                sharedPref.getFloat("temperature", 0)
-        ));
-        humid.setText(String.format(Locale.ENGLISH, "%.0f%%",
-                sharedPref.getFloat("humidity", 0)
-        ));
+        fillScreenText(
+                sharedPref.getInt("temperature", 0),
+                sharedPref.getInt("humidity", 0),
+                sharedPref.getString("weatherIcon", "01")
+        );
 
         GPSTracker gpsTracker = ((MainActivity) getActivity()).gpsTracker;
         if (gpsTracker != null && gpsTracker.canGetLocation) {
@@ -102,6 +105,45 @@ public class HomeFrag extends Fragment {
         }
     };
 
+    private void fillScreenText(int tempVal, int humidVal, String imageIcon) {
+        temp.setText(String.format(Locale.ENGLISH, "%d", tempVal));
+        humid.setText(String.format(Locale.ENGLISH, "%d%%", humidVal));
+
+        imageIcon = imageIcon.substring(0, 2);
+
+        switch (imageIcon) {
+            case "01":
+                weatherImg.setImageResource(R.drawable.weather_sunny);
+                break;
+            case "02":
+                weatherImg.setImageResource(R.drawable.weather_partly_cloudy);
+                break;
+            case "03":
+                weatherImg.setImageResource(R.drawable.weather_cloudy);
+                break;
+            case "04":
+                weatherImg.setImageResource(R.drawable.weather_very_cloudy);
+                break;
+            case "09": case "10":
+                weatherImg.setImageResource(R.drawable.weather_rain);
+                break;
+            case "11":
+                weatherImg.setImageResource(R.drawable.weather_lightning);
+                break;
+            case "13":
+                weatherImg.setImageResource(R.drawable.weather_snow);
+                break;
+            default:
+                weatherImg.setImageResource(R.drawable.weather_sunny);
+        }
+
+        SharedPreferences.Editor editor = sharedPref.edit();
+        editor.putInt("temperature", tempVal);
+        editor.putInt("humidity", humidVal);
+        editor.putString("weatherIcon", imageIcon);
+        editor.apply();
+    }
+
     private void getWeather() {
         String weatherUrl = "https://api.openweathermap.org/data/2.5/weather?units=metric" +
                 "&lat=" + ((MainActivity) getActivity()).getLatitude() +
@@ -117,15 +159,11 @@ public class HomeFrag extends Fragment {
                 try {
                     test.setText(response.toString());
 
-                    double tempRes = response.getJSONObject("main").getDouble("temp");
-                    double humidRes = response.getJSONObject("main").getDouble("humidity");
-                    temp.setText(String.format(Locale.ENGLISH, "%.1f", tempRes));
-                    humid.setText(String.format(Locale.ENGLISH, "%.0f%%", humidRes));
-
-                    SharedPreferences.Editor editor = sharedPref.edit();
-                    editor.putFloat("temperature", (float) tempRes);
-                    editor.putFloat("humidity", (float) humidRes);
-                    editor.apply();
+                    fillScreenText(
+                            Math.round(response.getJSONObject("main").getLong("temp")),
+                            Math.round(response.getJSONObject("main").getLong("humidity")),
+                            response.getJSONArray("weather").getJSONObject(0).getString("icon")
+                    );
 
                     Toast.makeText(getActivity().getApplicationContext(), "new", Toast.LENGTH_SHORT).show();
                 } catch (JSONException e) {
