@@ -141,8 +141,6 @@ public class HomeFrag extends Fragment {
             case "50d": case "50n":
                 weatherImg.setImageResource(R.drawable.weather_mist);
                 break;
-            default:
-                weatherImg.setImageResource(R.drawable.weather_clear_day);
         }
 
         SharedPreferences.Editor editor = sharedPref.edit();

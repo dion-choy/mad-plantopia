@@ -1,15 +1,73 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context=".HomeFrag">
 
-    <!-- TODO: Update blank fragment layout -->
-    <TextView
-        android:id="@+id/temp"
+    <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:text="PLANT" />
+        android:layout_height="match_parent">
+
+        <TextView
+            android:id="@+id/shade"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="#80000000"
+            android:visibility="gone"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/openGallery"
+            android:layout_width="wrap_content"
+            android:layout_height="0dp"
+            android:layout_marginEnd="16dp"
+            android:backgroundTint="@color/dark_text"
+            android:clickable="true"
+            android:contentDescription="Identify new plant"
+            android:src="@drawable/gallery"
+            android:visibility="gone"
+            app:fabCustomSize="40dp"
+            app:layout_constraintBottom_toTopOf="@id/openCam"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:shapeAppearanceOverlay="@style/fab"
+            app:tint="@color/nav_bar_background" />
+
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/openCam"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="16dp"
+            android:layout_marginBottom="8dp"
+            android:backgroundTint="@color/dark_text"
+            android:clickable="true"
+            android:contentDescription="Identify new plant"
+            android:src="@drawable/cam"
+            android:visibility="gone"
+            app:fabCustomSize="40dp"
+            app:layout_constraintBottom_toTopOf="@id/addPlant"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:shapeAppearanceOverlay="@style/fab"
+            app:tint="@color/nav_bar_background" />
+
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/addPlant"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="16dp"
+            android:layout_marginBottom="16dp"
+            android:clickable="true"
+            android:contentDescription="Open options"
+            android:src="@drawable/icon_add"
+            app:fabSize="normal"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:shapeAppearanceOverlay="@style/fab" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
 
 </FrameLayout>
