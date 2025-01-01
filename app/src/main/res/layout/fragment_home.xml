@@ -32,7 +32,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginVertical="20dp"
                     android:layout_marginLeft="10dp"
-                    android:src="@drawable/weather_sunny" />
+                    android:src="@drawable/weather_clear_day" />
 
                 <LinearLayout
                     android:layout_width="wrap_content"

@@ -65,7 +65,7 @@ public class HomeFrag extends Fragment {
         fillScreenText(
                 sharedPref.getInt("temperature", 0),
                 sharedPref.getInt("humidity", 0),
-                sharedPref.getString("weatherIcon", "01")
+                sharedPref.getString("weatherIcon", "01d")
         );
 
         GPSTracker gpsTracker = ((MainActivity) getActivity()).gpsTracker;
@@ -109,32 +109,40 @@ public class HomeFrag extends Fragment {
         temp.setText(String.format(Locale.ENGLISH, "%d", tempVal));
         humid.setText(String.format(Locale.ENGLISH, "%d%%", humidVal));
 
-        imageIcon = imageIcon.substring(0, 2);
-
         switch (imageIcon) {
-            case "01":
-                weatherImg.setImageResource(R.drawable.weather_sunny);
+            case "01d":
+                weatherImg.setImageResource(R.drawable.weather_clear_day);
                 break;
-            case "02":
+            case "01n":
+                weatherImg.setImageResource(R.drawable.weather_clear_night);
+                break;
+            case "02d":
                 weatherImg.setImageResource(R.drawable.weather_partly_cloudy);
                 break;
-            case "03":
+            case "02n":
+                weatherImg.setImageResource(R.drawable.weather_partly_cloudy_night);
+                break;
+            case "03d": case "03n":
                 weatherImg.setImageResource(R.drawable.weather_cloudy);
                 break;
-            case "04":
+            case "04d": case "04n":
                 weatherImg.setImageResource(R.drawable.weather_very_cloudy);
                 break;
-            case "09": case "10":
+            case "09d": case "09n":
+            case "10d": case "10n":
                 weatherImg.setImageResource(R.drawable.weather_rain);
                 break;
-            case "11":
+            case "11d": case "11n":
                 weatherImg.setImageResource(R.drawable.weather_lightning);
                 break;
-            case "13":
+            case "13d": case "13n":
                 weatherImg.setImageResource(R.drawable.weather_snow);
                 break;
+            case "50d": case "50n":
+                weatherImg.setImageResource(R.drawable.weather_mist);
+                break;
             default:
-                weatherImg.setImageResource(R.drawable.weather_sunny);
+                weatherImg.setImageResource(R.drawable.weather_clear_day);
         }
 
         SharedPreferences.Editor editor = sharedPref.edit();
