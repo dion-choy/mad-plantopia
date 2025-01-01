@@ -1,9 +1,12 @@
 package com.sp.madproj;
 
+import static android.content.Context.MODE_PRIVATE;
+
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.location.LocationManager;
 import android.os.Bundle;
 
@@ -33,6 +36,9 @@ public class HomeFrag extends Fragment {
     private TextView temp;
     private TextView humid;
 
+    private SharedPreferences sharedPref;
+
+
     public HomeFrag() {
         // Required empty public constructor
     }
@@ -51,10 +57,19 @@ public class HomeFrag extends Fragment {
         test = view.findViewById(R.id.test);
         humid = view.findViewById(R.id.humidity);
 
+        sharedPref = getActivity().getApplicationContext().getSharedPreferences("mySettings", MODE_PRIVATE);
+        temp.setText(String.format(Locale.ENGLISH, "%.1f",
+                sharedPref.getFloat("temperature", 0)
+        ));
+        humid.setText(String.format(Locale.ENGLISH, "%.0f%%",
+                sharedPref.getFloat("humidity", 0)
+        ));
+
         GPSTracker gpsTracker = ((MainActivity) getActivity()).gpsTracker;
         if (gpsTracker != null && gpsTracker.canGetLocation) {
             getWeather();
         }
+
         return view;
     }
 
@@ -101,12 +116,17 @@ public class HomeFrag extends Fragment {
             public void onResponse(JSONObject response) {
                 try {
                     test.setText(response.toString());
-                    temp.setText(String.format(Locale.ENGLISH, "%.1f",
-                            response.getJSONObject("main").getDouble("temp")
-                    ));
-                    humid.setText(String.format(Locale.ENGLISH, "%.0f%%",
-                            response.getJSONObject("main").getDouble("humidity")
-                    ));
+
+                    double tempRes = response.getJSONObject("main").getDouble("temp");
+                    double humidRes = response.getJSONObject("main").getDouble("humidity");
+                    temp.setText(String.format(Locale.ENGLISH, "%.1f", tempRes));
+                    humid.setText(String.format(Locale.ENGLISH, "%.0f%%", humidRes));
+
+                    SharedPreferences.Editor editor = sharedPref.edit();
+                    editor.putFloat("temperature", (float) tempRes);
+                    editor.putFloat("humidity", (float) humidRes);
+                    editor.apply();
+
                     Toast.makeText(getActivity().getApplicationContext(), "new", Toast.LENGTH_SHORT).show();
                 } catch (JSONException e) {
                     Log.d("Weather Error", "Malformed Response: " + e);
