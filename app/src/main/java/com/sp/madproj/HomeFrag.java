@@ -26,8 +26,9 @@ import com.android.volley.toolbox.Volley;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.util.Locale;
+
 public class HomeFrag extends Fragment {
-    private GPSTracker gpsTracker;
     private TextView test;
     private TextView temp;
     private TextView humid;
@@ -49,8 +50,8 @@ public class HomeFrag extends Fragment {
         temp = view.findViewById(R.id.temp);
         test = view.findViewById(R.id.test);
         humid = view.findViewById(R.id.humidity);
-        gpsTracker = ((MainActivity) getActivity()).gpsTracker;
 
+        GPSTracker gpsTracker = ((MainActivity) getActivity()).gpsTracker;
         if (gpsTracker != null && gpsTracker.canGetLocation) {
             getWeather();
         }
@@ -100,8 +101,12 @@ public class HomeFrag extends Fragment {
             public void onResponse(JSONObject response) {
                 try {
                     test.setText(response.toString());
-                    temp.setText(response.getJSONObject("main").get("temp").toString());
-                    humid.setText(response.getJSONObject("main").get("humidity").toString() + "%");
+                    temp.setText(String.format(Locale.ENGLISH, "%.1f",
+                            response.getJSONObject("main").getDouble("temp")
+                    ));
+                    humid.setText(String.format(Locale.ENGLISH, "%.0f%%",
+                            response.getJSONObject("main").getDouble("humidity")
+                    ));
                     Toast.makeText(getActivity().getApplicationContext(), "new", Toast.LENGTH_SHORT).show();
                 } catch (JSONException e) {
                     Log.d("Weather Error", "Malformed Response: " + e);
