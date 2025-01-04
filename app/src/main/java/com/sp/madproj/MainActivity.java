@@ -65,6 +65,8 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        gpsTracker = new GPSTracker(this);
+
         navBar = findViewById(R.id.bottomNav);
         navBar.setOnItemSelectedListener(switchPage);
 
@@ -80,13 +82,9 @@ public class MainActivity extends AppCompatActivity {
                 .addToBackStack(null)
                 .commit();
 
-        gpsTracker = new GPSTracker(this);
         if (gpsTracker.canGetLocation()) {
             latitude = gpsTracker.getLatitude();
             longitude = gpsTracker.getLongitude();
-
-//            Toast.makeText(getApplicationContext(), "Your location is - \nLat: " +
-//                    latitude + "\nLong: " + longitude, Toast.LENGTH_LONG).show();
         } else {
             Toast.makeText(getApplicationContext(), "Please turn on location services", Toast.LENGTH_LONG).show();
         }
