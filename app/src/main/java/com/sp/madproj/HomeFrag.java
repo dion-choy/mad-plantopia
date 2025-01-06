@@ -12,13 +12,19 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Bundle;
 
+import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.DefaultItemAnimator;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -32,15 +38,22 @@ import com.android.volley.toolbox.Volley;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
 
 public class HomeFrag extends Fragment {
-    private TextView test;
     private TextView temp;
     private TextView humid;
     private ImageView weatherImg;
 
     private SharedPreferences sharedPref;
+
+    private SwipeRefreshLayout refreshHome;
+
+    private RecyclerView notifs;
+    private List<String> model = new ArrayList<>();
+    private NotifsAdapter notifsAdapter;
 
 
     public HomeFrag() {
@@ -58,11 +71,34 @@ public class HomeFrag extends Fragment {
         // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_home, container, false);
         temp = view.findViewById(R.id.temp);
-        test = view.findViewById(R.id.test);
         humid = view.findViewById(R.id.humidity);
 
         weatherImg = view.findViewById(R.id.weatherImage);
 
+        notifsAdapter = new NotifsAdapter(model);
+
+        notifs = view.findViewById(R.id.notifsList);
+        notifs.setHasFixedSize(true);
+        notifs.setLayoutManager(new LinearLayoutManager(getContext()));
+        notifs.setItemAnimator(new DefaultItemAnimator());
+
+        loadNotifs();
+
+        // Set refresh
+        refreshHome =  view.findViewById(R.id.refreshHome);
+        refreshHome.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+            @Override
+            public void onRefresh() {
+                ((MainActivity) getActivity()).updateLocation();
+                getWeather();
+                loadNotifs();
+                model.add("1bruh");
+                notifs.setAdapter(notifsAdapter);
+                refreshHome.setRefreshing(false);
+            }
+        });
+
+        // Load past data
         sharedPref = getActivity().getApplicationContext().getSharedPreferences("mySettings", MODE_PRIVATE);
         fillScreenText(
                 sharedPref.getInt("temperature", 0),
@@ -85,6 +121,59 @@ public class HomeFrag extends Fragment {
         IntentFilter filter = new IntentFilter(LocationManager.PROVIDERS_CHANGED_ACTION);
         filter.addAction(ConnectivityManager.CONNECTIVITY_ACTION);
         getActivity().registerReceiver(gpsSwitchStateReceiver, filter, Context.RECEIVER_NOT_EXPORTED);
+
+        notifs.setAdapter(notifsAdapter);
+    }
+
+    private class NotifsAdapter extends RecyclerView.Adapter<NotifsAdapter.NotifsHolder>{
+        private List<String> notifs;
+
+        NotifsAdapter(List<String> notifs) {
+            this.notifs = notifs;
+        }
+
+        @Override
+        public NotifsHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+            View view = LayoutInflater.from(parent.getContext())
+                    .inflate(R.layout.notifs_row, parent, false);
+            return new NotifsHolder(view);
+        }
+
+        @Override
+        public void onBindViewHolder(@NonNull NotifsHolder holder, final int position) {
+            final String notif = notifs.get(position);
+            holder.notifText.setText(notif.substring(1));
+            switch (notif.substring(0,1)) {
+                case "1":
+                    holder.notifType.setImageResource(R.drawable.notif_info);
+                    break;
+                case "2":
+                    holder.notifType.setImageResource(R.drawable.notif_celebrate);
+                    break;
+                case "3":
+                    holder.notifType.setImageResource(R.drawable.notif_important);
+                    break;
+                default:
+                    Toast.makeText(getActivity().getApplicationContext(), notif.substring(0,1), Toast.LENGTH_SHORT).show();
+                    holder.notifType.setImageResource(R.drawable.notif_info);
+            }
+        }
+
+        @Override
+        public int getItemCount() {
+            return notifs.size();
+        }
+
+        class NotifsHolder extends RecyclerView.ViewHolder {
+            private TextView notifText;
+            private ImageView notifType;
+
+            public NotifsHolder(View itemView) {
+                super(itemView);
+                notifType = itemView.findViewById(R.id.notifIcon);
+                notifText = itemView.findViewById(R.id.notifText);
+            }
+        }
     }
 
     private final BroadcastReceiver gpsSwitchStateReceiver = new BroadcastReceiver() {
@@ -154,6 +243,13 @@ public class HomeFrag extends Fragment {
         editor.apply();
     }
 
+    private void loadNotifs() {
+        model.clear();
+        model.add("1Test1");
+        model.add("2Test2");
+        model.add("3Test3");
+    }
+
     private void getWeather() {
         String weatherUrl = "https://api.openweathermap.org/data/2.5/weather?units=metric" +
                 "&lat=" + ((MainActivity) getActivity()).getLatitude() +
@@ -167,15 +263,13 @@ public class HomeFrag extends Fragment {
             @Override
             public void onResponse(JSONObject response) {
                 try {
-                    test.setText(response.toString());
-
                     fillScreenText(
                             Math.round(response.getJSONObject("main").getLong("temp")),
                             Math.round(response.getJSONObject("main").getLong("humidity")),
                             response.getJSONArray("weather").getJSONObject(0).getString("icon")
                     );
 
-                    Toast.makeText(getActivity().getApplicationContext(), "new", Toast.LENGTH_SHORT).show();
+                    Log.d("Weather Request", "Success: " + response.toString());
                 } catch (JSONException e) {
                     Log.d("Weather Error", "Malformed Response: " + e);
                 }

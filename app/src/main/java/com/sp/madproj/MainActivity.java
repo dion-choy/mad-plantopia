@@ -1,5 +1,6 @@
 package com.sp.madproj;
 
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.MenuItem;
 import android.widget.Toast;
@@ -22,6 +23,8 @@ public class MainActivity extends AppCompatActivity {
     private BadgeFrag badgeFrag;
 
     public GPSTracker gpsTracker;
+
+    private SharedPreferences sharedPref;
 
     private double latitude = 0.0d;
     private double longitude = 0.0d;
@@ -82,11 +85,23 @@ public class MainActivity extends AppCompatActivity {
                 .addToBackStack(null)
                 .commit();
 
+        sharedPref = getApplicationContext().getSharedPreferences("oldLocation", MODE_PRIVATE);
+    }
+
+    public void updateLocation() {
         if (gpsTracker.canGetLocation()) {
             latitude = gpsTracker.getLatitude();
             longitude = gpsTracker.getLongitude();
+
+            SharedPreferences.Editor editor = sharedPref.edit();
+            editor.putFloat("lat", (float) latitude);
+            editor.putFloat("long", (float) longitude);
+            editor.apply();
         } else {
             Toast.makeText(getApplicationContext(), "Please turn on location services", Toast.LENGTH_LONG).show();
+
+            latitude = (double) sharedPref.getFloat("lat", 0);
+            longitude = (double) sharedPref.getFloat("long", 0);
         }
     }
 
