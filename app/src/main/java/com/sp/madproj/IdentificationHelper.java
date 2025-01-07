@@ -54,9 +54,34 @@ public class IdentificationHelper extends SQLiteOpenHelper {
         ContentValues cv = new ContentValues();
 
         try {
-            InputStream iStream = context.getContentResolver().openInputStream(uri);
-            byte[] inputData = getBytes(iStream);
-            iStream.close();
+            Bitmap bitmap = MediaStore.Images.Media.getBitmap(context.getContentResolver(), uri);
+            ByteArrayOutputStream stream = new ByteArrayOutputStream();
+
+            int width = 100;
+            int height = 100;
+            if (bitmap.getWidth() < bitmap.getHeight()) {
+                height = Math.round(bitmap.getHeight() / (bitmap.getWidth() / 100));
+            } else if (bitmap.getHeight() < bitmap.getWidth()) {
+                width = Math.round(bitmap.getWidth() / (bitmap.getHeight() / 100));
+            }
+            Bitmap resizedBitmap;
+            resizedBitmap = Bitmap.createScaledBitmap(bitmap, width, height, false);
+
+
+            Bitmap cropBitmap;
+            if (width > height) {
+                cropBitmap = Bitmap.createBitmap(resizedBitmap, Math.round((width - 100) / 2), 0,
+                        Math.round(((width - 100) / 2) + 100), 100);
+            } else if (height > width) {
+                cropBitmap = Bitmap.createBitmap(resizedBitmap, 0, Math.round((height - 100) / 2),
+                        100, Math.round(((width - 100) / 2) + 100));
+            } else {
+                cropBitmap = resizedBitmap;
+            }
+
+            cropBitmap.compress(Bitmap.CompressFormat.PNG, 100, stream);
+            byte[] inputData = stream.toByteArray();
+            cropBitmap.recycle();
 
             cv.put("speciesName", species);
             cv.put("commonName", common);
@@ -91,11 +116,11 @@ public class IdentificationHelper extends SQLiteOpenHelper {
 
             Bitmap cropBitmap;
             if (width > height) {
-                cropBitmap = Bitmap.createBitmap(resizedBitmap, Math.round((width-100)/2), 0,
-                        Math.round(((width-100)/2)+100), 100);
+                cropBitmap = Bitmap.createBitmap(resizedBitmap, Math.round((width - 100) / 2), 0,
+                        Math.round(((width - 100) / 2) + 100), 100);
             } else if (height > width) {
-                cropBitmap = Bitmap.createBitmap(resizedBitmap, 0, Math.round((height-100)/2),
-                        100, Math.round(((width-100)/2)+100));
+                cropBitmap = Bitmap.createBitmap(resizedBitmap, 0, Math.round((height - 100) / 2),
+                        100, Math.round(((width - 100) / 2) + 100));
             } else {
                 cropBitmap = resizedBitmap;
             }
@@ -144,17 +169,5 @@ public class IdentificationHelper extends SQLiteOpenHelper {
 
     public String getAccuracy(Cursor c) {
         return c.getString(5);
-    }
-
-    public byte[] getBytes(InputStream inputStream) throws IOException {
-        ByteArrayOutputStream byteBuffer = new ByteArrayOutputStream();
-        int bufferSize = 1024;
-        byte[] buffer = new byte[bufferSize];
-
-        int len = 0;
-        while ((len = inputStream.read(buffer)) != -1) {
-            byteBuffer.write(buffer, 0, len);
-        }
-        return byteBuffer.toByteArray();
     }
 }
