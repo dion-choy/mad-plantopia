@@ -11,7 +11,6 @@ import android.provider.MediaStore;
 import android.util.Log;
 import android.util.Size;
 import android.view.MotionEvent;
-import android.view.OrientationEventListener;
 import android.view.View;
 import android.widget.ImageButton;
 import android.widget.Toast;
@@ -137,9 +136,6 @@ public class CamActivtity extends AppCompatActivity {
 
                     @Override
                     public void onImageSaved(ImageCapture.OutputFileResults output) {
-                        String msg = "Photo capture succeeded: " + output.getSavedUri();
-                        Toast.makeText(getApplicationContext(), msg, Toast.LENGTH_SHORT).show();
-
                         setResult(IMAGE_URI, new Intent().setData(output.getSavedUri()));
                         finish();
                     }

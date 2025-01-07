@@ -1,21 +1,30 @@
 package com.sp.madproj;
 
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
+import android.database.Cursor;
+import android.net.Uri;
 import android.os.Bundle;
 
 import androidx.activity.result.ActivityResult;
 import androidx.activity.result.ActivityResultCallback;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.DefaultItemAnimator;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import android.provider.MediaStore;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -36,6 +45,12 @@ public class IdentifyFrag extends Fragment {
     private FloatingActionButton openGalleryBtn;
     private TextView shade;
 
+
+    private RecyclerView identifs;
+    private Cursor model;
+    private IdentifAdapter idAdapter;
+    private IdentificationHelper idHelper;
+
     public IdentifyFrag() {
         // Required empty public constructor
     }
@@ -43,6 +58,9 @@ public class IdentifyFrag extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        idHelper = new IdentificationHelper(getContext());
+        model = idHelper.getAll();
+        idAdapter = new IdentifAdapter(getContext(), model);
     }
 
     @Override
@@ -50,6 +68,12 @@ public class IdentifyFrag extends Fragment {
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_identify, container, false);
+
+        identifs = view.findViewById(R.id.identifList);
+        identifs.setHasFixedSize(true);
+        identifs.setLayoutManager(new LinearLayoutManager(getContext()));
+        identifs.setItemAnimator(new DefaultItemAnimator());
+        identifs.setAdapter(idAdapter);
 
         fromBottomFabAnim = AnimationUtils.loadAnimation(getContext(), R.anim.from_bottom_fab);
         toBottomFabAnim = AnimationUtils.loadAnimation(getContext(), R.anim.to_bottom_fab);
@@ -88,14 +112,94 @@ public class IdentifyFrag extends Fragment {
                 new ActivityResultCallback<ActivityResult>() {
                     @Override
                     public void onActivityResult(ActivityResult result) {
-                        if (result.getResultCode() == Activity.RESULT_OK) {
-                            Intent data = result.getData();
-                            Toast.makeText(getActivity().getApplicationContext(), data.toUri(Intent.URI_ALLOW_UNSAFE), Toast.LENGTH_SHORT).show();
+                        if (result.getResultCode() == Activity.RESULT_OK || result.getResultCode() == CamActivtity.IMAGE_URI
+                        && result.getData() != null) {
+                            Uri imageUri = result.getData().getData();
+                            Toast.makeText(getActivity().getApplicationContext(), imageUri.toString(), Toast.LENGTH_SHORT).show();
+                            Log.d("result", imageUri.toString());
+
+                            idHelper.insert("species", "name", imageUri, "1/2/3", 98.0, getContext());
+                            idAdapter.notifyDataSetChanged();
                         }
                     }
                 });
 
         return view;
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        if (model != null) {
+            model.close();
+        }
+
+        model = idHelper.getAll();
+        idAdapter.swapCursor(model);
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        idHelper.close();
+    }
+
+    public class IdentifAdapter extends RecyclerView.Adapter<IdentifAdapter.IdentifHolder> {
+        private Context context;
+        private IdentificationHelper helper = null;
+        private Cursor cursor;
+
+        IdentifAdapter(Context context, Cursor cursor) {
+            this.context = context;
+            this.cursor = cursor;
+            helper = new IdentificationHelper(context);
+        }
+
+        public void swapCursor(Cursor newCursor) {
+            Cursor oldCursor = this.cursor;
+            this.cursor = newCursor;
+            oldCursor.close();
+        }
+
+        @Override
+        public IdentifHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+            View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.identif_row, parent, false);
+            return new IdentifHolder(view);
+        }
+
+        @Override
+        public void onBindViewHolder(@NonNull IdentifHolder holder, final int position) {
+            if (!cursor.moveToPosition(position)) {
+                return;
+            }
+
+            Log.d("Cursor", cursor.toString());
+            holder.species.setText(helper.getSpecies(cursor));
+            holder.common.setText(String.format("(%s, %s%%)", helper.getCommon(cursor), helper.getAccuracy(cursor)));
+            holder.date.setText(helper.getDate(cursor));
+
+            holder.image.setImageBitmap(helper.getImage(cursor, context));
+        }
+
+        @Override
+        public int getItemCount() {
+            return cursor.getCount();
+        }
+
+        class IdentifHolder extends RecyclerView.ViewHolder {
+            private TextView species;
+            private TextView common;
+            private TextView date;
+            private ImageView image;
+
+            public IdentifHolder(View itemView) {
+                super(itemView);
+                species = itemView.findViewById(R.id.identifSpecies);
+                common = itemView.findViewById(R.id.commonName);
+                date = itemView.findViewById(R.id.date);
+                image = itemView.findViewById(R.id.plantImage);
+            }
+        }
     }
 
     public void openOptions() {

@@ -1,7 +1,10 @@
 package com.sp.madproj;
 
+import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.provider.MediaStore;
+import android.util.Log;
 import android.view.MenuItem;
 import android.widget.Toast;
 
@@ -37,6 +40,12 @@ public class MainActivity extends AppCompatActivity {
         return longitude;
     }
 
+
+    private static Context context;
+    public static Context getContext() {
+        return context;
+    }
+
     @Override
     public void onBackPressed() {
         if (fragManager.findFragmentById(R.id.viewFrag) == homeFrag) {
@@ -68,6 +77,8 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        context = getContext();
+
         gpsTracker = new GPSTracker(this);
 
         navBar = findViewById(R.id.bottomNav);
@@ -86,6 +97,7 @@ public class MainActivity extends AppCompatActivity {
                 .commit();
 
         sharedPref = getApplicationContext().getSharedPreferences("oldLocation", MODE_PRIVATE);
+        updateLocation();
     }
 
     public void updateLocation() {
