@@ -58,7 +58,18 @@ public class PlantFrag extends Fragment {
         fadeInBg = AnimationUtils.loadAnimation(getContext(), R.anim.fadein_bg);
 
         addPlant = view.findViewById(R.id.addPlant);
-        addPlant.setOnClickListener(camGallOption);
+        addPlant.setOnClickListener(
+                new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        if (addPlant.getContentDescription().equals("Open options")) {
+                            openOptions();
+                        } else if (addPlant.getContentDescription().equals("Close options")) {
+                            closeOptions();
+                        }
+                    }
+                }
+        );
 
         openCamBtn = view.findViewById(R.id.openCam);
         openCamBtn.setOnClickListener(
@@ -124,15 +135,4 @@ public class PlantFrag extends Fragment {
 
         addPlant.setImageResource(R.drawable.icon_add);
     }
-
-    View.OnClickListener camGallOption = new View.OnClickListener() {
-        @Override
-        public void onClick(View view) {
-            if (addPlant.getContentDescription().equals("Open options")) {
-                openOptions();
-            } else if (addPlant.getContentDescription().equals("Close options")) {
-                closeOptions();
-            }
-        }
-    };
 }

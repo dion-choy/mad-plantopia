@@ -8,7 +8,8 @@ android {
 
     Properties properties = new Properties()
     properties.load(project.rootProject.file('local.properties').newDataInputStream())
-    def weatherKey= properties.getProperty('weatherKey')
+    def weatherKey = properties.getProperty('weatherKey')
+    def plantKey = properties.getProperty('plantKey')
 
     defaultConfig {
         applicationId "com.sp.madproj"
@@ -20,6 +21,7 @@ android {
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
 
         buildConfigField "String" , "WEATHER_KEY" , weatherKey
+        buildConfigField "String" , "PLANT_KEY" , plantKey
     }
 
     buildTypes {

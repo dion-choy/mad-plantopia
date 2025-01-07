@@ -58,7 +58,18 @@ public class FeedFrag extends Fragment {
         fadeInBg = AnimationUtils.loadAnimation(getContext(), R.anim.fadein_bg);
 
         addPost = view.findViewById(R.id.addPost);
-        addPost.setOnClickListener(camGallOption);
+        addPost.setOnClickListener(
+                new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        if (addPost.getContentDescription().equals("Open options")) {
+                            openOptions();
+                        } else if (addPost.getContentDescription().equals("Close options")) {
+                            closeOptions();
+                        }
+                    }
+                }
+        );
 
         openCamBtn = view.findViewById(R.id.openCam);
         openCamBtn.setOnClickListener(
@@ -124,15 +135,4 @@ public class FeedFrag extends Fragment {
 
         addPost.setImageResource(R.drawable.icon_camera);
     }
-
-    View.OnClickListener camGallOption = new View.OnClickListener() {
-        @Override
-        public void onClick(View view) {
-            if (addPost.getContentDescription().equals("Open options")) {
-                openOptions();
-            } else if (addPost.getContentDescription().equals("Close options")) {
-                closeOptions();
-            }
-        }
-    };
 }

@@ -18,6 +18,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import android.provider.MediaStore;
+import android.util.Base64;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -28,7 +29,24 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.android.volley.AuthFailureError;
+import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.JsonObjectRequest;
+import com.android.volley.toolbox.Volley;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.HashMap;
+import java.util.Map;
 
 public class IdentifyFrag extends Fragment {
     private Animation fromBottomFabAnim;
@@ -83,7 +101,18 @@ public class IdentifyFrag extends Fragment {
         fadeInBg = AnimationUtils.loadAnimation(getContext(), R.anim.fadein_bg);
 
         idPlant = view.findViewById(R.id.idPlant);
-        idPlant.setOnClickListener(camGallOption);
+        idPlant.setOnClickListener(
+                new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        if (idPlant.getContentDescription().equals("Open options")) {
+                            openOptions();
+                        } else if (idPlant.getContentDescription().equals("Close options")) {
+                            closeOptions();
+                        }
+                    }
+                }
+        );
 
         openCamBtn = view.findViewById(R.id.openCam);
         openCamBtn.setOnClickListener(
@@ -100,7 +129,9 @@ public class IdentifyFrag extends Fragment {
                 new View.OnClickListener() {
                     @Override
                     public void onClick(View view) {
-                        getImage.launch(new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.INTERNAL_CONTENT_URI));
+                        Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
+                        intent.setType("image/*");
+                        getImage.launch(intent);
                     }
                 }
         );
@@ -118,8 +149,8 @@ public class IdentifyFrag extends Fragment {
                             Toast.makeText(getActivity().getApplicationContext(), imageUri.toString(), Toast.LENGTH_SHORT).show();
                             Log.d("result", imageUri.toString());
 
-                            idHelper.insert("species", "name", imageUri, "1/2/3", 98.0, getContext());
-                            idAdapter.notifyDataSetChanged();
+                            getPlantIdAPI(imageUri);
+
                         }
                     }
                 });
@@ -202,6 +233,77 @@ public class IdentifyFrag extends Fragment {
         }
     }
 
+    public void getPlantIdAPI(Uri imageUri) {
+        byte[] bytes = null;
+        try {
+            bytes = getBytes(getContext().getContentResolver() .openInputStream(imageUri));
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+        idHelper.insert("species", "name", imageUri, "1/2/3", 98.0, getContext());
+        idAdapter.notifyItemInserted(idHelper.getAll().getCount()-1);
+
+        String dataUri = "data:" + getContext().getContentResolver().getType(imageUri) +
+                ";base64," + Base64.encodeToString(bytes, Base64.DEFAULT);
+
+        String plantApi = "https://plant.id/api/v3/identification?details=common_names,url,description,taxonomy,rank,gbif_id,inaturalist_id,image,synonyms,edible_parts,watering,best_light_condition,best_soil_type,common_uses,cultural_significance,toxicity,best_watering&language=en";
+
+        JSONObject body = new JSONObject();
+        try {
+            ((MainActivity) getActivity()).updateLocation();
+            body.put("images", new JSONArray().put(dataUri))
+                    .put("latitiude",  ((MainActivity) getActivity()).getLatitude())
+                    .put("longitude", ((MainActivity) getActivity()).getLongitude())
+                    .put("similar_images", true);
+        } catch (JSONException e) {
+            throw new RuntimeException(e);
+        }
+
+        RequestQueue queue = Volley.newRequestQueue(getActivity());
+
+        JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(Request.Method.GET, plantApi, body, new Response.Listener<JSONObject>() {
+            @Override
+            public void onResponse(JSONObject response) {
+                try {
+                    response.getJSONObject("result");
+                    Log.d("Plant API", "Success: " + response.toString());
+                } catch (JSONException e) {
+                    Log.d("Plant API Error", "Malformed Response: " + e);
+                }
+            }
+        }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                Log.d("Plant API Error", "Response Error: " + error.toString());
+            }
+        }) {
+            @Override
+            public Map<String, String> getHeaders() throws AuthFailureError {
+                Map<String, String> params = new HashMap<String, String>();
+                params.put("Content-Type", "application/json");
+                params.put("Api-Key", BuildConfig.PLANT_KEY);
+                return params;
+            }
+        };
+
+        queue.add(jsonObjectRequest);
+    }
+
+    public byte[] getBytes(InputStream inputStream) throws IOException {
+        ByteArrayOutputStream byteBuffer = new ByteArrayOutputStream();
+        int bufferSize = 1024;
+        byte[] buffer = new byte[bufferSize];
+
+        int len = 0;
+        while ((len = inputStream.read(buffer)) != -1) {
+            byteBuffer.write(buffer, 0, len);
+        }
+
+        inputStream.close();
+        return byteBuffer.toByteArray();
+    }
+
     public void openOptions() {
         openCamBtn.setVisibility(View.VISIBLE);
         openGalleryBtn.setVisibility(View.VISIBLE);
@@ -229,15 +331,4 @@ public class IdentifyFrag extends Fragment {
 
         idPlant.setImageResource(R.drawable.identify_icon);
     }
-
-    View.OnClickListener camGallOption = new View.OnClickListener() {
-        @Override
-        public void onClick(View view) {
-            if (idPlant.getContentDescription().equals("Open options")) {
-                openOptions();
-            } else if (idPlant.getContentDescription().equals("Close options")) {
-                closeOptions();
-            }
-        }
-    };
 }
