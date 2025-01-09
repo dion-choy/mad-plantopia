@@ -110,6 +110,33 @@ public class CamActivtity extends AppCompatActivity {
         );
     }
 
+    @Override
+    protected void onResume() {
+        super.onResume();
+
+        if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
+            cameraProviderFuture.addListener(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        ProcessCameraProvider cameraProvider = cameraProviderFuture.get();
+                        cameraProvider.unbindAll();
+                        bindImageAnalysis(cameraProvider);
+                    } catch (ExecutionException | InterruptedException e) {
+                        Log.d("error", "Could not open camera: " + e.getMessage());
+                    }
+                }
+            }, ActivityCompat.getMainExecutor(this));
+
+
+            Toast.makeText(getApplicationContext(), "Enabled", Toast.LENGTH_SHORT).show();
+        } else {
+            ActivityCompat.requestPermissions(this,
+                    new String[]{Manifest.permission.CAMERA},
+                    CAMERA_REQUEST_CODE);
+        }
+    }
+
     private void takePhoto() {
         long timeStamp = System.currentTimeMillis();
         ContentValues contentValues = new ContentValues();

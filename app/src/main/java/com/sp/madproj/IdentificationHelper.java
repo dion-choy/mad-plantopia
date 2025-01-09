@@ -32,7 +32,8 @@ public class IdentificationHelper extends SQLiteOpenHelper {
                 "commonName TEXT," +
                 "plantImage BLOB," +
                 "date TEXT," +
-                "accuracy REAL);");
+                "accuracy REAL," +
+                "jsonReply TEXT);");
     }
 
     @Override
@@ -50,7 +51,7 @@ public class IdentificationHelper extends SQLiteOpenHelper {
                         "WHERE _id = ?", new String[]{id}));
     }
 
-    public void update(String id, String species, String common, Uri uri, String date, double accuracy, Context context) {
+    public void update(String id, String species, String common, Uri uri, String date, double accuracy, String jsonReply, Context context) {
         ContentValues cv = new ContentValues();
 
         try {
@@ -88,6 +89,7 @@ public class IdentificationHelper extends SQLiteOpenHelper {
             cv.put("plantImage", inputData);
             cv.put("date", date);
             cv.put("accuracy", accuracy);
+            cv.put("jsonReply", jsonReply);
 
             getWritableDatabase().update("identification_table", cv, "_id = ?",
                     new String[]{id});
@@ -97,7 +99,7 @@ public class IdentificationHelper extends SQLiteOpenHelper {
         }
     }
 
-    public void insert(String species, String common, Uri uri, String date, double accuracy, Context context) {
+    public void insert(String species, String common, Uri uri, String date, double accuracy, String jsonReply, Context context) {
         ContentValues cv = new ContentValues();
         try {
             Bitmap bitmap = MediaStore.Images.Media.getBitmap(context.getContentResolver(), uri);
@@ -134,6 +136,7 @@ public class IdentificationHelper extends SQLiteOpenHelper {
             cv.put("plantImage", inputData);
             cv.put("date", date);
             cv.put("accuracy", accuracy);
+            cv.put("jsonReply", jsonReply);
 
             getWritableDatabase().insert("identification_table", "speciesName", cv);
         } catch (IOException e) {
@@ -167,7 +170,11 @@ public class IdentificationHelper extends SQLiteOpenHelper {
         return c.getString(4);
     }
 
-    public String getAccuracy(Cursor c) {
-        return c.getString(5);
+    public double getAccuracy(Cursor c) {
+        return c.getDouble(5);
+    }
+
+    public String getJsonReply(Cursor c) {
+        return c.getString(6);
     }
 }
