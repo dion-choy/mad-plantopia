@@ -26,6 +26,7 @@
                 android:layout_marginStart="10dp"
                 android:layout_marginTop="10dp"
                 android:cropToPadding="true"
+                android:scaleType="centerCrop"
                 android:src="@drawable/notif_info"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
@@ -48,7 +49,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginStart="10dp"
                 android:layout_marginTop="14dp"
-                android:text="Species name"
+                android:text="Common name"
                 android:textColor="#000000"
                 app:layout_constraintStart_toEndOf="@+id/plantImage"
                 app:layout_constraintTop_toTopOf="@id/identifSpecies" />
@@ -59,7 +60,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginStart="10dp"
                 android:layout_marginBottom="1dp"
-                android:text="Species name"
+                android:text="00/00/00"
                 android:textColor="#000000"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintStart_toEndOf="@+id/plantImage" />

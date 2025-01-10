@@ -7,6 +7,8 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Matrix;
+import android.media.ExifInterface;
 import android.net.Uri;
 import android.provider.MediaStore;
 import android.util.Log;
@@ -127,6 +129,7 @@ public class IdentificationHelper extends SQLiteOpenHelper {
                 cropBitmap = resizedBitmap;
             }
 
+            cropBitmap = rotateBitmap(cropBitmap, 90);
             cropBitmap.compress(Bitmap.CompressFormat.PNG, 100, stream);
             byte[] inputData = stream.toByteArray();
             cropBitmap.recycle();
@@ -140,9 +143,15 @@ public class IdentificationHelper extends SQLiteOpenHelper {
 
             getWritableDatabase().insert("identification_table", "speciesName", cv);
         } catch (IOException e) {
-            Toast.makeText(MainActivity.getContext().getApplicationContext(), "Failed", Toast.LENGTH_SHORT).show();
+            Toast.makeText(context.getApplicationContext(), "Failed", Toast.LENGTH_SHORT).show();
             Log.e("Database error", e.toString());
         }
+    }
+
+    private static Bitmap rotateBitmap(Bitmap bitmap, int degrees) {
+        Matrix matrix = new Matrix();
+        matrix.postRotate(degrees);
+        return Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true);
     }
 
     public String getID(Cursor c) {
@@ -164,6 +173,10 @@ public class IdentificationHelper extends SQLiteOpenHelper {
         }
 
         return BitmapFactory.decodeByteArray(image, 0, image.length);
+    }
+
+    public byte[] getImageByteArr(Cursor c) {
+        return c.getBlob(3);
     }
 
     public String getDate(Cursor c) {

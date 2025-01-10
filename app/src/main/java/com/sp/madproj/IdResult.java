@@ -1,6 +1,8 @@
 package com.sp.madproj;
 
 import android.database.Cursor;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
@@ -9,7 +11,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
@@ -17,7 +18,6 @@ import androidx.recyclerview.widget.DefaultItemAnimator;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.squareup.picasso.Picasso;
 
 import org.json.JSONArray;
@@ -67,8 +67,13 @@ public class IdResult extends AppCompatActivity {
         String inputUriStr = getIntent().getStringExtra("inputUriStr" );
         String apiReply = getIntent().getStringExtra("response" );
         String purpose = getIntent().getStringExtra("purpose" );
-        if (purpose != null && inputUriStr != null && apiReply != null) {
-            loadResult(purpose, inputUriStr, apiReply);
+        byte[] savedImgByteArr = getIntent().getByteArrayExtra("savedImg" );
+        if (purpose != null && apiReply != null) {
+            if (purpose.equals("identify") && inputUriStr != null) {
+                loadResult(inputUriStr, apiReply);
+            } else if (purpose.equals("check") && savedImgByteArr != null) {
+                loadFromDB(savedImgByteArr, apiReply);
+            }
         }
     }
 
@@ -91,21 +96,21 @@ public class IdResult extends AppCompatActivity {
         idHelper.close();
     }
 
-    void loadResult(String purpose, String inputUriStr, String apiReply) {
-        if (!inputUriStr.equals("none")) {
-            inputImage.setImageURI(Uri.parse(inputUriStr));
-        }
-
+    void loadFromDB(byte[] savedImgByteArr, String apiReply) {
         try {
             JSONObject apiReplyObj = new JSONObject(apiReply);
 
-            double isPlant = apiReplyObj.getJSONObject("result")
-                    .getJSONObject("is_plant").getDouble("probability");
+            inputImage.setImageBitmap(
+                    BitmapFactory.decodeByteArray(savedImgByteArr, 0, savedImgByteArr.length)
+            );
 
-            if (isPlant > 0.4) {
+            boolean isPlant = apiReplyObj.getJSONObject("result")
+                    .getJSONObject("is_plant").getDouble("probability") >= 0.4;
+
+            if (!isPlant) {
                 inputImage.setImageResource(R.drawable.notif_important);
                 ((TextView) findViewById(R.id.notPlant)).setText("Might not be a plant");
-                ((TextView) findViewById(R.id.notPlant)).setVisibility(View.VISIBLE);
+                (findViewById(R.id.notPlant)).setVisibility(View.VISIBLE);
             }
 
             JSONArray suggestions = apiReplyObj.getJSONObject("result")
@@ -117,8 +122,31 @@ public class IdResult extends AppCompatActivity {
             for (int i = 0; i < suggestions.length(); i++) {
                 model.add(suggestions.getJSONObject(i));
             }
+        } catch (JSONException e) {
+            throw new RuntimeException(e);
+        }
+    }
 
-            if (purpose.equals("identify")) {
+    void loadResult(String inputUriStr, String apiReply) {
+        inputImage.setImageURI(Uri.parse(inputUriStr));
+
+        try {
+            ((TextView) findViewById(R.id.test)).setText(apiReply);
+
+            JSONObject apiReplyObj = new JSONObject(apiReply);
+
+            JSONArray suggestions = apiReplyObj.getJSONObject("result")
+                    .getJSONObject("classification")
+                    .getJSONArray("suggestions");
+
+            for (int i = 0; i < suggestions.length(); i++) {
+                model.add(suggestions.getJSONObject(i));
+            }
+
+            boolean isPlant = apiReplyObj.getJSONObject("result")
+                    .getJSONObject("is_plant").getDouble("probability") >= 0.4;
+
+            if (isPlant) {
                 idHelper.insert(suggestions.getJSONObject(0).getString("name"),
                         suggestions.getJSONObject(0).getJSONObject("details")
                                 .getJSONArray("common_names").getString(0),
@@ -127,6 +155,10 @@ public class IdResult extends AppCompatActivity {
                         suggestions.getJSONObject(0).getDouble("probability"),
                         apiReply,
                         this);
+            } else {
+                inputImage.setImageResource(R.drawable.notif_important);
+                ((TextView) findViewById(R.id.notPlant)).setText("Might not be a plant");
+                (findViewById(R.id.notPlant)).setVisibility(View.VISIBLE);
             }
         } catch (JSONException e) {
             throw new RuntimeException(e);
