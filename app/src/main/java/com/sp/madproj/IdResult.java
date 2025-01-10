@@ -165,7 +165,7 @@ public class IdResult extends AppCompatActivity {
                     for (int i = 0; i < Math.min(commonNames.length(), 3); i++) {
                         commonNameOut += commonNames.getString(i).substring(0, 1).toUpperCase() +
                                 commonNames.getString(i).substring(1);
-                        if (i < 2) {
+                        if (i < Math.min(commonNames.length(), 3)-1) {
                             commonNameOut += ",\n";
                         }
                     }
