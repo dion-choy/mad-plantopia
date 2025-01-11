@@ -140,8 +140,6 @@ public class IdResult extends AppCompatActivity {
                     .getJSONObject("classification")
                     .getJSONArray("suggestions");
 
-            ((TextView) findViewById(R.id.test)).setText(apiReply);
-
             for (int i = 0; i < suggestions.length(); i++) {
                 model.add(suggestions.getJSONObject(i));
             }
@@ -154,8 +152,6 @@ public class IdResult extends AppCompatActivity {
         inputImage.setImageURI(Uri.parse(inputUriStr));
 
         try {
-            ((TextView) findViewById(R.id.test)).setText(apiReply);
-
             JSONObject apiReplyObj = new JSONObject(apiReply);
 
             JSONArray suggestions = apiReplyObj.getJSONObject("result")
