@@ -150,6 +150,12 @@ public class IdentifyFrag extends Fragment {
         );
 
         shade = view.findViewById(R.id.shade);
+        shade.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                closeOptions();
+            }
+        });
 
         getImage = registerForActivityResult(
                 new ActivityResultContracts.StartActivityForResult(),
@@ -225,8 +231,8 @@ public class IdentifyFrag extends Fragment {
         }
 
         @Override
-        public void onBindViewHolder(@NonNull IdentifHolder holder, final int position) {
-            if (!cursor.moveToPosition(position)) {
+        public void onBindViewHolder(@NonNull IdentifHolder holder, int position) {
+            if (!cursor.moveToPosition(holder.getAdapterPosition())) {
                 return;
             }
 
@@ -240,7 +246,7 @@ public class IdentifyFrag extends Fragment {
             holder.itemView.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
-                    if (!cursor.moveToPosition(position)) {
+                    if (!cursor.moveToPosition(holder.getAdapterPosition())) {
                         return;
                     }
 
@@ -248,6 +254,7 @@ public class IdentifyFrag extends Fragment {
                     intent.putExtra("response", helper.getJsonReply(cursor));
                     intent.putExtra("purpose", "check");
                     intent.putExtra("savedImg", helper.getImageByteArr(cursor));
+                    intent.putExtra("recordId", helper.getID(cursor));
                     startActivity(intent);
                 }
             });
@@ -372,6 +379,8 @@ public class IdentifyFrag extends Fragment {
         openGalleryBtn.startAnimation(fromBottomFabAnim);
         openCamBtn.startAnimation(fromBottomFabAnim);
 
+        shade.setClickable(true);
+
         idPlant.setImageResource(R.drawable.cancel);
     }
 
@@ -385,6 +394,8 @@ public class IdentifyFrag extends Fragment {
         idPlant.startAnimation(rotateAntiClockWiseFabAnim);
         openGalleryBtn.startAnimation(toBottomFabAnim);
         openCamBtn.startAnimation(toBottomFabAnim);
+
+        shade.setClickable(false);
 
         idPlant.setImageResource(R.drawable.identify_icon);
     }

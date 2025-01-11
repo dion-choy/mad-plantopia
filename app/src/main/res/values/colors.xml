@@ -6,6 +6,7 @@
     <color name="dark_background">#023B2D</color>
     <color name="nav_bar_background">#AFE2C2</color>
     <color name="nav_bar_focus">#C6FFDB</color>
+    <color name="white">#FFFFFF</color>
 
     <color name="light_text">#047836</color>
     <color name="light_text_em">#014F23</color>

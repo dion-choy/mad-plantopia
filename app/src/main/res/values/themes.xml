@@ -13,6 +13,7 @@
     <style name="Base.Theme.MADproj" parent="Theme.Material3.DayNight.NoActionBar">
         <!-- Customize your light theme here. -->
         <item name="colorPrimary">@color/light_primary</item>
+        <item name="android:textColorSecondary">@color/white</item>
         <item name="android:windowBackground">@color/light_background</item>
 
         <item name="colorOnSecondaryContainer">@color/light_text_em</item>

@@ -101,11 +101,39 @@ public class IdentificationHelper extends SQLiteOpenHelper {
         }
     }
 
+    public static int getBitmapOriention(String path){
+        ExifInterface exif = null;
+        int orientation = 0;
+        try {
+            exif = new ExifInterface(path);
+            orientation = exif.getAttributeInt(ExifInterface.TAG_ORIENTATION,
+                    ExifInterface.ORIENTATION_UNDEFINED);
+            //Log.e("getBitmapOriention", "getBitmapOriention: "+orientation );
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return orientation;
+    }
+
+    public String getRealPathFromURI(Context context, Uri contentUri) {
+        Cursor cursor = null;
+        try {
+            String[] proj = { MediaStore.Images.Media.DATA };
+            cursor = context.getContentResolver().query(contentUri,  proj, null, null, null);
+            int column_index = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
+            cursor.moveToFirst();
+            return cursor.getString(column_index);
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+        }
+    }
+
     public void insert(String species, String common, Uri uri, String date, double accuracy, String jsonReply, Context context) {
         ContentValues cv = new ContentValues();
         try {
             Bitmap bitmap = MediaStore.Images.Media.getBitmap(context.getContentResolver(), uri);
-            ByteArrayOutputStream stream = new ByteArrayOutputStream();
 
             int width = 100;
             int height = 100;
@@ -129,7 +157,25 @@ public class IdentificationHelper extends SQLiteOpenHelper {
                 cropBitmap = resizedBitmap;
             }
 
-            cropBitmap = rotateBitmap(cropBitmap, 90);
+            ByteArrayOutputStream stream = new ByteArrayOutputStream();
+
+            Matrix matrix = new Matrix();
+            switch (getBitmapOriention(getRealPathFromURI(context, uri))) {
+                case ExifInterface.ORIENTATION_NORMAL:
+                    matrix.postRotate(0);
+                    break;
+                case ExifInterface.ORIENTATION_ROTATE_90:
+                    matrix.postRotate(90);
+                    break;
+                case ExifInterface.ORIENTATION_ROTATE_180:
+                    matrix.postRotate(180);
+                    break;
+                case ExifInterface.ORIENTATION_ROTATE_270:
+                    matrix.postRotate(270);
+                    break;
+            }
+            cropBitmap = Bitmap.createBitmap(cropBitmap, 0, 0, cropBitmap.getWidth(), cropBitmap.getHeight(), matrix, true);
+
             cropBitmap.compress(Bitmap.CompressFormat.PNG, 100, stream);
             byte[] inputData = stream.toByteArray();
             cropBitmap.recycle();
@@ -148,10 +194,8 @@ public class IdentificationHelper extends SQLiteOpenHelper {
         }
     }
 
-    private static Bitmap rotateBitmap(Bitmap bitmap, int degrees) {
-        Matrix matrix = new Matrix();
-        matrix.postRotate(degrees);
-        return Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true);
+    public void delete(String id) {
+        getWritableDatabase().delete("identification_table", "_id=?", new String[]{id});
     }
 
     public String getID(Cursor c) {

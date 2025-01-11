@@ -1,16 +1,22 @@
 package com.sp.madproj;
 
+import android.content.Context;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Bundle;
+import android.provider.MediaStore;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
+import android.widget.Toolbar;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
@@ -32,6 +38,7 @@ import java.util.Locale;
 
 public class IdResult extends AppCompatActivity {
     private ImageView inputImage;
+    private Toolbar toolbar;
 
     private RecyclerView results;
     private List<JSONObject> model = new ArrayList<>();
@@ -56,6 +63,7 @@ public class IdResult extends AppCompatActivity {
         results.setItemAnimator(new DefaultItemAnimator());
 
         inputImage = findViewById(R.id.inputImg);
+        toolbar = findViewById(R.id.toolbar);
 
         findViewById(R.id.returnBtn).setOnClickListener(new View.OnClickListener() {
             @Override
@@ -67,11 +75,26 @@ public class IdResult extends AppCompatActivity {
         String inputUriStr = getIntent().getStringExtra("inputUriStr" );
         String apiReply = getIntent().getStringExtra("response" );
         String purpose = getIntent().getStringExtra("purpose" );
+        String recordId = getIntent().getStringExtra("recordId" );
         byte[] savedImgByteArr = getIntent().getByteArrayExtra("savedImg" );
         if (purpose != null && apiReply != null) {
             if (purpose.equals("identify") && inputUriStr != null) {
                 loadResult(inputUriStr, apiReply);
-            } else if (purpose.equals("check") && savedImgByteArr != null) {
+            } else if (purpose.equals("check") && savedImgByteArr != null && recordId != null) {
+                toolbar.setVisibility(View.VISIBLE);
+                toolbar.inflateMenu(R.menu.id_menu);
+                toolbar.setOnMenuItemClickListener(new Toolbar.OnMenuItemClickListener() {
+                    @Override
+                    public boolean onMenuItemClick(MenuItem menuItem) {
+                        if (menuItem.getItemId() == R.id.delete) {
+                            idHelper.delete(recordId);
+                            finish();
+                            return true;
+                        }
+                        return false;
+                    }
+                });
+
                 loadFromDB(savedImgByteArr, apiReply);
             }
         }
