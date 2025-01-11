@@ -58,7 +58,6 @@ public class IdentificationHelper extends SQLiteOpenHelper {
 
         try {
             Bitmap bitmap = MediaStore.Images.Media.getBitmap(context.getContentResolver(), uri);
-            ByteArrayOutputStream stream = new ByteArrayOutputStream();
 
             int width = 100;
             int height = 100;
@@ -67,24 +66,31 @@ public class IdentificationHelper extends SQLiteOpenHelper {
             } else if (bitmap.getHeight() < bitmap.getWidth()) {
                 width = Math.round(bitmap.getWidth() / (bitmap.getHeight() / 100));
             }
-            Bitmap resizedBitmap;
-            resizedBitmap = Bitmap.createScaledBitmap(bitmap, width, height, false);
+            Bitmap resizedBitmap = Bitmap.createScaledBitmap(bitmap, width, height, false);
 
+            ByteArrayOutputStream stream = new ByteArrayOutputStream();
 
-            Bitmap cropBitmap;
-            if (width > height) {
-                cropBitmap = Bitmap.createBitmap(resizedBitmap, Math.round((width - 100) / 2), 0,
-                        Math.round(((width - 100) / 2) + 100), 100);
-            } else if (height > width) {
-                cropBitmap = Bitmap.createBitmap(resizedBitmap, 0, Math.round((height - 100) / 2),
-                        100, Math.round(((width - 100) / 2) + 100));
-            } else {
-                cropBitmap = resizedBitmap;
+            Matrix matrix = new Matrix();
+            switch (getBitmapOriention(getRealPathFromURI(context, uri))) {
+                case ExifInterface.ORIENTATION_NORMAL:
+                    matrix.postRotate(0);
+                    break;
+                case ExifInterface.ORIENTATION_ROTATE_90:
+                    matrix.postRotate(90);
+                    break;
+                case ExifInterface.ORIENTATION_ROTATE_180:
+                    matrix.postRotate(180);
+                    break;
+                case ExifInterface.ORIENTATION_ROTATE_270:
+                    matrix.postRotate(270);
+                    break;
             }
+            resizedBitmap = Bitmap.createBitmap(resizedBitmap, 0, 0, resizedBitmap.getWidth(),
+                    resizedBitmap.getHeight(), matrix, true);
 
-            cropBitmap.compress(Bitmap.CompressFormat.PNG, 100, stream);
+            resizedBitmap.compress(Bitmap.CompressFormat.PNG, 100, stream);
             byte[] inputData = stream.toByteArray();
-            cropBitmap.recycle();
+            resizedBitmap.recycle();
 
             cv.put("speciesName", species);
             cv.put("commonName", common);
