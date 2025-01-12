@@ -22,31 +22,14 @@
             app:layout_constraintTop_toTopOf="parent" />
 
         <com.google.android.material.floatingactionbutton.FloatingActionButton
-            android:id="@+id/openGallery"
+            android:id="@+id/addPerson"
             android:layout_width="wrap_content"
             android:layout_height="0dp"
             android:layout_marginEnd="16dp"
             android:backgroundTint="@color/dark_text"
             android:clickable="true"
             android:contentDescription="Identify new plant"
-            android:src="@drawable/gallery"
-            android:visibility="gone"
-            app:fabCustomSize="40dp"
-            app:layout_constraintBottom_toTopOf="@id/openCam"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:shapeAppearanceOverlay="@style/fab"
-            app:tint="@color/nav_bar_background" />
-
-        <com.google.android.material.floatingactionbutton.FloatingActionButton
-            android:id="@+id/openCam"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginEnd="16dp"
-            android:layout_marginBottom="8dp"
-            android:backgroundTint="@color/dark_text"
-            android:clickable="true"
-            android:contentDescription="Identify new plant"
-            android:src="@drawable/cam"
+            android:src="@drawable/btn_add_person"
             android:visibility="gone"
             app:fabCustomSize="40dp"
             app:layout_constraintBottom_toTopOf="@id/addPlant"
@@ -56,6 +39,23 @@
 
         <com.google.android.material.floatingactionbutton.FloatingActionButton
             android:id="@+id/addPlant"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="16dp"
+            android:layout_marginBottom="8dp"
+            android:backgroundTint="@color/dark_text"
+            android:clickable="true"
+            android:contentDescription="Identify new plant"
+            android:src="@drawable/btn_add_plant"
+            android:visibility="gone"
+            app:fabCustomSize="40dp"
+            app:layout_constraintBottom_toTopOf="@id/openMenu"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:shapeAppearanceOverlay="@style/fab"
+            app:tint="@color/nav_bar_background" />
+
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/openMenu"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginEnd="16dp"

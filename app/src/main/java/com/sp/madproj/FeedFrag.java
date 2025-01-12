@@ -92,6 +92,12 @@ public class FeedFrag extends Fragment {
         );
 
         shade = view.findViewById(R.id.shade);
+        shade.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                closeOptions();
+            }
+        });
 
         getImage = registerForActivityResult(
                 new ActivityResultContracts.StartActivityForResult(),
@@ -119,6 +125,8 @@ public class FeedFrag extends Fragment {
         openGalleryBtn.startAnimation(fromBottomFabAnim);
         openCamBtn.startAnimation(fromBottomFabAnim);
 
+        shade.setClickable(true);
+
         addPost.setImageResource(R.drawable.cancel);
     }
 
@@ -132,6 +140,8 @@ public class FeedFrag extends Fragment {
         addPost.startAnimation(rotateAntiClockWiseFabAnim);
         openGalleryBtn.startAnimation(toBottomFabAnim);
         openCamBtn.startAnimation(toBottomFabAnim);
+
+        shade.setClickable(false);
 
         addPost.setImageResource(R.drawable.icon_camera);
     }

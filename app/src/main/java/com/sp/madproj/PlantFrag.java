@@ -20,6 +20,8 @@ import androidx.fragment.app.Fragment;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
+import java.net.Inet4Address;
+
 public class PlantFrag extends Fragment {
     private Animation fromBottomFabAnim;
     private Animation toBottomFabAnim;
@@ -30,9 +32,9 @@ public class PlantFrag extends Fragment {
 
     private ActivityResultLauncher<Intent> getImage;
 
-    private FloatingActionButton addPlant;
-    private FloatingActionButton openCamBtn;
-    private FloatingActionButton openGalleryBtn;
+    private FloatingActionButton openMenu;
+    private FloatingActionButton addPlantBtn;
+    private FloatingActionButton addPersonBtn;
     private TextView shade;
 
     public PlantFrag() {
@@ -57,82 +59,82 @@ public class PlantFrag extends Fragment {
         fadeOutBg = AnimationUtils.loadAnimation(getContext(), R.anim.fadeout_bg);
         fadeInBg = AnimationUtils.loadAnimation(getContext(), R.anim.fadein_bg);
 
-        addPlant = view.findViewById(R.id.addPlant);
-        addPlant.setOnClickListener(
+        openMenu = view.findViewById(R.id.openMenu);
+        openMenu.setOnClickListener(
                 new View.OnClickListener() {
                     @Override
                     public void onClick(View view) {
-                        if (addPlant.getContentDescription().equals("Open options")) {
+                        if (openMenu.getContentDescription().equals("Open options")) {
                             openOptions();
-                        } else if (addPlant.getContentDescription().equals("Close options")) {
+                        } else if (openMenu.getContentDescription().equals("Close options")) {
                             closeOptions();
                         }
                     }
                 }
         );
 
-        openCamBtn = view.findViewById(R.id.openCam);
-        openCamBtn.setOnClickListener(
+        addPlantBtn = view.findViewById(R.id.addPlant);
+        addPlantBtn.setOnClickListener(
                 new View.OnClickListener() {
                     @Override
                     public void onClick(View view) {
-                        getImage.launch(new Intent(getActivity(), CamActivtity.class));
+                        Intent intent = new Intent(getActivity(), addPlant.class);
+                        startActivity(intent);
+                        Toast.makeText(getActivity().getApplicationContext(), "add plant", Toast.LENGTH_SHORT).show();
                     }
                 }
         );
 
-        openGalleryBtn = view.findViewById(R.id.openGallery);
-        openGalleryBtn.setOnClickListener(
+        addPersonBtn = view.findViewById(R.id.addPerson);
+        addPersonBtn.setOnClickListener(
                 new View.OnClickListener() {
                     @Override
                     public void onClick(View view) {
-                        getImage.launch(new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.INTERNAL_CONTENT_URI));
+                        Toast.makeText(getActivity().getApplicationContext(), "add person", Toast.LENGTH_SHORT).show();
                     }
                 }
         );
 
         shade = view.findViewById(R.id.shade);
-
-        getImage = registerForActivityResult(
-                new ActivityResultContracts.StartActivityForResult(),
-                new ActivityResultCallback<ActivityResult>() {
-                    @Override
-                    public void onActivityResult(ActivityResult result) {
-                        if (result.getResultCode() == Activity.RESULT_OK) {
-                            Intent data = result.getData();
-                            Toast.makeText(getActivity().getApplicationContext(), data.toUri(Intent.URI_ALLOW_UNSAFE), Toast.LENGTH_SHORT).show();
-                        }
-                    }
-                });
+        shade.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                closeOptions();
+            }
+        });
 
         return view;
     }
 
     public void openOptions() {
-        openCamBtn.setVisibility(View.VISIBLE);
-        openGalleryBtn.setVisibility(View.VISIBLE);
+        addPlantBtn.setVisibility(View.VISIBLE);
+        addPersonBtn.setVisibility(View.VISIBLE);
         shade.setVisibility(View.VISIBLE);
-        addPlant.setContentDescription("Close options");
+        openMenu.setContentDescription("Close options");
 
         shade.startAnimation(fadeInBg);
-        addPlant.startAnimation(rotateClockWiseFabAnim);
-        openGalleryBtn.startAnimation(fromBottomFabAnim);
-        openCamBtn.startAnimation(fromBottomFabAnim);
+        openMenu.startAnimation(rotateClockWiseFabAnim);
+        addPersonBtn.startAnimation(fromBottomFabAnim);
+        addPlantBtn.startAnimation(fromBottomFabAnim);
 
-        addPlant.setImageResource(R.drawable.cancel);
+        shade.setClickable(true);
+
+        openMenu.setImageResource(R.drawable.cancel);
     }
 
     public void closeOptions() {
-        openCamBtn.setVisibility(View.GONE);
-        openGalleryBtn.setVisibility(View.GONE);
+        addPlantBtn.setVisibility(View.GONE);
+        addPersonBtn.setVisibility(View.GONE);
         shade.setVisibility(View.GONE);
-        addPlant.setContentDescription("Open options");
+        openMenu.setContentDescription("Open options");
 
         shade.startAnimation(fadeOutBg);
-        addPlant.startAnimation(rotateAntiClockWiseFabAnim);
-        openGalleryBtn.startAnimation(toBottomFabAnim);
-        openCamBtn.startAnimation(toBottomFabAnim);
+        openMenu.startAnimation(rotateAntiClockWiseFabAnim);
+        addPersonBtn.startAnimation(toBottomFabAnim);
+        addPlantBtn.startAnimation(toBottomFabAnim);
 
-        addPlant.setImageResource(R.drawable.icon_add);
+        shade.setClickable(false);
+
+        openMenu.setImageResource(R.drawable.icon_add);
     }
 }

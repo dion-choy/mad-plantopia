@@ -21,6 +21,9 @@
         android:theme="@style/Theme.MADproj"
         tools:targetApi="31">
         <activity
+            android:name=".addPlant"
+            android:exported="false" />
+        <activity
             android:name=".IdResult"
             android:exported="false" />
         <activity
