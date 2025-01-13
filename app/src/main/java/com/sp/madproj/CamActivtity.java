@@ -129,7 +129,7 @@ public class CamActivtity extends AppCompatActivity {
             }, ActivityCompat.getMainExecutor(this));
 
 
-            Toast.makeText(getApplicationContext(), "Enabled", Toast.LENGTH_SHORT).show();
+//            Toast.makeText(getApplicationContext(), "Enabled", Toast.LENGTH_SHORT).show();
         } else {
             ActivityCompat.requestPermissions(this,
                     new String[]{Manifest.permission.CAMERA},

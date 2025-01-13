@@ -8,7 +8,11 @@
     <color name="nav_bar_focus">#C6FFDB</color>
     <color name="white">#FFFFFF</color>
 
+    <color name="nav_bar_dark_background">#027A44</color>
+    <color name="nav_bar_focus_dark">#048E44</color>
+
     <color name="light_text">#047836</color>
     <color name="light_text_em">#014F23</color>
-    <color name="dark_text">#047836</color>
+    <color name="dark_text">#AFE2C2</color>
+    <color name="dark_text_em">#BEEBCE</color>
 </resources>

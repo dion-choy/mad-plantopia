@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".addPlant">
+    tools:context=".AddPlantActivity">
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/returnBtn"
@@ -25,13 +25,49 @@
         android:layout_height="match_parent"
         android:orientation="vertical">
 
-        <HorizontalScrollView
+        <com.google.android.material.textfield.TextInputLayout
+            style="?attr/textInputFilledStyle"
             android:layout_width="match_parent"
-            android:layout_height="match_parent">
+            android:layout_height="wrap_content"
+            android:hint="Give your plant a name!"
+            app:boxBackgroundColor="@color/nav_bar_background">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/nameInput"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <com.google.android.material.textfield.TextInputLayout
+            style="?attr/textInputFilledStyle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Enter something"
+            app:boxBackgroundColor="@color/nav_bar_background" >
+
+            <AutoCompleteTextView
+                android:id="@+id/speciesInput"
+                style="@style/Widget.Material3.AutoCompleteTextView.FilledBox"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:textColor="@color/dark_primary"
+                app:dropDownBackgroundTint="@color/nav_bar_focus"
+                app:simpleItemSelectedColor="@color/light_text_em" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <HorizontalScrollView
+            android:id="@+id/selectPlantIcon"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:fadingEdgeLength="50dp"
+            android:requiresFadingEdge="horizontal">
 
             <androidx.constraintlayout.widget.ConstraintLayout
                 android:layout_width="wrap_content"
                 android:layout_height="match_parent"
+                android:fadingEdge="horizontal"
                 android:orientation="horizontal">
 
                 <ImageButton
