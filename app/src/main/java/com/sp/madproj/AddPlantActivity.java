@@ -50,6 +50,12 @@ public class AddPlantActivity extends AppCompatActivity {
 
     TextInputEditText nameInput;
     AutoCompleteTextView speciesInput;
+    String selectAccessToken = "";
+
+    ImageView flowerTick;
+    ImageView uprightTick;
+    ImageView vineTick;
+    ImageView cactusTick;
 
     List<String> model = new ArrayList<String>();
     List<String> queries = new ArrayList<String>();
@@ -75,6 +81,8 @@ public class AddPlantActivity extends AppCompatActivity {
         selectVine.setOnClickListener(plantSelection);
         selectCactus.setOnClickListener(plantSelection);
 
+        nameInput = findViewById(R.id.nameInput);
+
         adapter = new ArrayAdapter<String>(this, R.layout.autocomplete_dropdown, model);
         speciesInput = findViewById(R.id.speciesInput);
         speciesInput.setAdapter(adapter);
@@ -93,13 +101,42 @@ public class AddPlantActivity extends AppCompatActivity {
         speciesInput.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
-                Toast.makeText(getApplicationContext(), queries.get(i), Toast.LENGTH_SHORT).show();
+                selectAccessToken = queries.get(i);
             }
         });
 
         findViewById(R.id.returnBtn).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                boolean error = false;
+                if (nameInput.getText().toString().isEmpty()) {
+                    nameInput.setError("Enter a name!");
+                    error = true;
+                }
+
+                if (speciesInput.getText().toString().isEmpty() || selectAccessToken.isEmpty()) {
+                    speciesInput.setError("Enter the species!");
+                    error = true;
+                }
+
+                String selectedIcon = "";
+                if (flowerTick.getVisibility() == View.VISIBLE) {
+                    selectedIcon = "flower";
+                } else if (uprightTick.getVisibility() == View.VISIBLE) {
+                    selectedIcon = "upright";
+                } else if (vineTick.getVisibility() == View.VISIBLE) {
+                    selectedIcon = "vine";
+                } else if (cactusTick.getVisibility() == View.VISIBLE) {
+                    selectedIcon = "cactus";
+                } else {
+                    error = true;
+                }
+
+                if (error) {
+                    return;
+                }
+
+                Log.d("Output", nameInput.getText().toString() + ", " + selectAccessToken + ", " + selectedIcon);
                 finish();
             }
         });
@@ -179,10 +216,10 @@ public class AddPlantActivity extends AppCompatActivity {
     View.OnClickListener plantSelection = new View.OnClickListener() {
         @Override
         public void onClick(View view) {
-            ImageView flowerTick = findViewById(R.id.selectedFlower);
-            ImageView uprightTick = findViewById(R.id.selectedUpright);
-            ImageView vineTick = findViewById(R.id.selectedVine);
-            ImageView cactusTick = findViewById(R.id.selectedCactus);
+            flowerTick = findViewById(R.id.selectedFlower);
+            uprightTick = findViewById(R.id.selectedUpright);
+            vineTick = findViewById(R.id.selectedVine);
+            cactusTick = findViewById(R.id.selectedCactus);
 
             flowerTick.clearAnimation();
             uprightTick.clearAnimation();
