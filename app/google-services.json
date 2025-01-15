@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "579066073373",
+    "project_id": "plantopia-backend",
+    "storage_bucket": "plantopia-backend.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:579066073373:android:eed1af78f8ad4769f811f4",
+        "android_client_info": {
+          "package_name": "com.sp.madproj"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDFkcoUdQhW4SdjS_CQKHH-nUSvX8ZxgXw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

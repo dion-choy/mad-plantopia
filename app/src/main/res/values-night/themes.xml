@@ -13,6 +13,9 @@
     <!-- Base application theme. -->
     <style name="Base.Theme.MADproj" parent="Theme.Material3.DayNight.NoActionBar">
         <!-- Customize your dark theme here. -->
+        <item name="android:textColor">@color/dark_text</item>
+        <item name="textColorAlertDialogListItem">@color/light_text_em</item>
+
         <item name="colorPrimary">@color/dark_primary</item>
         <item name="android:textColorSecondary">@color/nav_bar_dark_background</item>
         <item name="android:windowBackground">@color/dark_background</item>

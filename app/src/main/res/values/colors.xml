@@ -1,12 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <color name="light_primary">#047836</color>
-    <color name="dark_primary">#023B2D</color>
+    <color name="dark_primary">#AFE2C2</color>
     <color name="light_background">#BBFFE7</color>
     <color name="dark_background">#023B2D</color>
     <color name="nav_bar_background">#AFE2C2</color>
     <color name="nav_bar_focus">#C6FFDB</color>
+
     <color name="white">#FFFFFF</color>
+    <color name="black">#000000</color>
 
     <color name="nav_bar_dark_background">#027A44</color>
     <color name="nav_bar_focus_dark">#048E44</color>

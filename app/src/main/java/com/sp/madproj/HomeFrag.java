@@ -7,6 +7,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.graphics.Color;
 import android.location.LocationManager;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
@@ -152,6 +153,7 @@ public class HomeFrag extends Fragment {
                     break;
                 case "3":
                     holder.notifType.setImageResource(R.drawable.notif_important);
+                    holder.notifType.setColorFilter(Color.RED);
                     break;
                 default:
                     Toast.makeText(getActivity().getApplicationContext(), notif.substring(0,1), Toast.LENGTH_SHORT).show();

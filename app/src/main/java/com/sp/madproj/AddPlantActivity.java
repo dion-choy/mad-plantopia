@@ -4,13 +4,17 @@ import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -48,6 +52,7 @@ public class AddPlantActivity extends AppCompatActivity {
     AutoCompleteTextView speciesInput;
 
     List<String> model = new ArrayList<String>();
+    List<String> queries = new ArrayList<String>();
     ArrayAdapter<String> adapter = null;
 
     boolean queueFilled = false;
@@ -70,16 +75,12 @@ public class AddPlantActivity extends AppCompatActivity {
         selectVine.setOnClickListener(plantSelection);
         selectCactus.setOnClickListener(plantSelection);
 
-        model.add("aloe vera");
-        adapter = new ArrayAdapter<String>(this,android.R.layout.select_dialog_item, model);
+        adapter = new ArrayAdapter<String>(this, R.layout.autocomplete_dropdown, model);
         speciesInput = findViewById(R.id.speciesInput);
-        speciesInput.setThreshold(3);
         speciesInput.setAdapter(adapter);
         speciesInput.addTextChangedListener(new TextWatcher() {
             @Override
-            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
-
-            }
+            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {}
 
             @Override
             public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
@@ -87,8 +88,12 @@ public class AddPlantActivity extends AppCompatActivity {
             }
 
             @Override
-            public void afterTextChanged(Editable editable) {
-
+            public void afterTextChanged(Editable editable) {}
+        });
+        speciesInput.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
+                Toast.makeText(getApplicationContext(), queries.get(i), Toast.LENGTH_SHORT).show();
             }
         });
 
@@ -100,11 +105,11 @@ public class AddPlantActivity extends AppCompatActivity {
         });
     }
 
+    String prevQuery = "";
     void getAutoComplete(String query) {
         RequestQueue queue = Volley.newRequestQueue(this);
 
-        String plantApi = "https://plant.id/api/v3/kb/plants/name_search?q=" +
-                query;
+        String plantApi = "https://plant.id/api/v3/kb/plants/name_search?q=" + query;
 
         JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(Request.Method.GET, plantApi, null, new Response.Listener<JSONObject>() {
             @Override
@@ -115,10 +120,18 @@ public class AddPlantActivity extends AppCompatActivity {
                     JSONArray matches = response.getJSONArray("entities");
                     for (int i = 0; i < matches.length(); i++) {
                         adapter.add(matches.getJSONObject(i).getString("matched_in"));
+                        queries.add(matches.getJSONObject(i).getString("access_token"));
                     }
                     adapter.notifyDataSetChanged();
 
-                    speciesInput.showDropDown();
+                    if (!query.equals(prevQuery)) {
+                        int selectionStart = speciesInput.getSelectionStart();
+                        int selectionEnd = speciesInput.getSelectionEnd();
+                        speciesInput.setText(speciesInput.getText());
+                        speciesInput.setSelection(selectionStart, selectionEnd);
+                    }
+                    prevQuery = query;
+                    Toast.makeText(getApplicationContext(), "Response", Toast.LENGTH_SHORT).show();
                     Log.d("Plant API Success", matches.getJSONObject(0).getString("entity_name"));
                 } catch (JSONException e) {
                     Log.e("Plant API Error", "Malformed Response: " + e.toString());

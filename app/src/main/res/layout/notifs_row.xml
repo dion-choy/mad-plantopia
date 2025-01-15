@@ -23,14 +23,14 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_margin="10dp"
-                android:src="@drawable/notif_info" />
+                android:src="@drawable/notif_info"
+                app:tint="?android:attr/textColor" />
 
             <TextView
                 android:id="@+id/notifText"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Notification"
-                android:textColor="#000000" />
+                android:text="Notification" />
 
         </LinearLayout>
 

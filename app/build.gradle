@@ -1,5 +1,6 @@
 plugins {
     alias(libs.plugins.android.application)
+    alias(libs.plugins.google.gms.google.services)
 }
 
 android {
@@ -47,6 +48,7 @@ dependencies {
     implementation libs.material
     implementation libs.activity
     implementation libs.constraintlayout
+    implementation libs.firebase.auth
     testImplementation libs.junit
     androidTestImplementation libs.ext.junit
     androidTestImplementation libs.espresso.core
@@ -56,6 +58,8 @@ dependencies {
     implementation 'com.squareup.picasso:picasso:2.8'
 
     implementation 'pl.droidsonroids.gif:android-gif-drawable:1.2.17'
+
+    implementation 'com.hbb20:ccp:2.5.0'
 
     def camerax_version = "1.2.2"
     implementation "androidx.camera:camera-core:${camerax_version}"

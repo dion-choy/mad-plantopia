@@ -30,7 +30,8 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:hint="Give your plant a name!"
-            app:boxBackgroundColor="@color/nav_bar_background">
+            app:boxBackgroundColor="?attr/colorSurfaceContainer"
+            app:hintTextColor="?android:attr/textColor">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/nameInput"
@@ -43,8 +44,9 @@
             style="?attr/textInputFilledStyle"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Enter something"
-            app:boxBackgroundColor="@color/nav_bar_background" >
+            android:hint="Enter plant species"
+            app:boxBackgroundColor="?attr/colorSurfaceContainer"
+            app:helperTextTextColor="?android:attr/textColor">
 
             <AutoCompleteTextView
                 android:id="@+id/speciesInput"
@@ -52,7 +54,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:layout_weight="1"
-                android:textColor="@color/dark_primary"
+                android:breakStrategy="simple"
                 app:dropDownBackgroundTint="@color/nav_bar_focus"
                 app:simpleItemSelectedColor="@color/light_text_em" />
         </com.google.android.material.textfield.TextInputLayout>
@@ -60,9 +62,10 @@
         <HorizontalScrollView
             android:id="@+id/selectPlantIcon"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
+            android:layout_height="wrap_content"
             android:fadingEdgeLength="50dp"
-            android:requiresFadingEdge="horizontal">
+            android:requiresFadingEdge="horizontal"
+            android:scrollbars="none">
 
             <androidx.constraintlayout.widget.ConstraintLayout
                 android:layout_width="wrap_content"
