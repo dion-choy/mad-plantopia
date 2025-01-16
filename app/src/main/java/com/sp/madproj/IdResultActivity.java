@@ -71,11 +71,11 @@ public class IdResultActivity extends AppCompatActivity {
         String apiReply = getIntent().getStringExtra("response" );
         String purpose = getIntent().getStringExtra("purpose" );
         String recordId = getIntent().getStringExtra("recordId" );
-        byte[] savedImgByteArr = getIntent().getByteArrayExtra("savedImg" );
+        String imgUrl= getIntent().getStringExtra("savedImg" );
         if (purpose != null && apiReply != null) {
             if (purpose.equals("identify") && inputUriStr != null) {
                 loadResult(inputUriStr, apiReply);
-            } else if (purpose.equals("check") && savedImgByteArr != null && recordId != null) {
+            } else if (purpose.equals("check") && imgUrl != null && recordId != null) {
                 toolbar.setVisibility(View.VISIBLE);
                 toolbar.inflateMenu(R.menu.id_menu);
                 toolbar.setOnMenuItemClickListener(new Toolbar.OnMenuItemClickListener() {
@@ -90,7 +90,7 @@ public class IdResultActivity extends AppCompatActivity {
                     }
                 });
 
-                loadFromDB(savedImgByteArr, apiReply);
+                loadFromDB(imgUrl, apiReply);
             }
         }
     }
@@ -114,13 +114,14 @@ public class IdResultActivity extends AppCompatActivity {
         idHelper.close();
     }
 
-    void loadFromDB(byte[] savedImgByteArr, String apiReply) {
+    void loadFromDB(String imgUrl, String apiReply) {
         try {
             JSONObject apiReplyObj = new JSONObject(apiReply);
 
-            inputImage.setImageBitmap(
-                    BitmapFactory.decodeByteArray(savedImgByteArr, 0, savedImgByteArr.length)
-            );
+            Picasso.get()
+                    .load("https://upevuilypqhjisraltzb.supabase.co/storage/v1/object/images/"
+                            + imgUrl)
+                    .into(inputImage);
 
             boolean isPlant = apiReplyObj.getJSONObject("result")
                     .getJSONObject("is_plant").getDouble("probability") >= 0.4;

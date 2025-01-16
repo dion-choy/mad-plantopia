@@ -1,6 +1,7 @@
 package com.sp.madproj;
 
 import android.os.Bundle;
+import android.os.CountDownTimer;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -54,6 +55,13 @@ public class SignUpActivity extends AppCompatActivity {
                 }
             }
         });
+
+        findViewById(R.id.backBtn).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                finish();
+            }
+        });
     }
 
     View.OnClickListener signUpUser = new View.OnClickListener() {
@@ -98,6 +106,7 @@ public class SignUpActivity extends AppCompatActivity {
                                 FirebaseUser user = auth.getCurrentUser();
 
                                 if (user != null) {
+                                    findViewById(R.id.resendEmail).setVisibility(View.VISIBLE);
                                     sendVerificationEmail(user);
                                 }
                             } else {
@@ -131,10 +140,8 @@ public class SignUpActivity extends AppCompatActivity {
                         if (task.isSuccessful()) {
                             Toast.makeText(getApplicationContext(), "Verification email sent!",
                                     Toast.LENGTH_SHORT).show();
-//                            finish();
+                            finish();
                         } else {
-                            findViewById(R.id.resendEmail).setVisibility(View.VISIBLE);
-
                             Log.e("SEND EMAIL", task.getException().getMessage());
                             Toast.makeText(getApplicationContext(), "Error sending verification email",
                                     Toast.LENGTH_SHORT).show();

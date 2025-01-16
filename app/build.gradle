@@ -11,6 +11,8 @@ android {
     properties.load(project.rootProject.file('local.properties').newDataInputStream())
     def weatherKey = properties.getProperty('weatherKey')
     def plantKey = properties.getProperty('plantKey')
+    def supaKey= properties.getProperty('supaKey')
+    def anonSupaKey= properties.getProperty('anonSupaKey')
 
     defaultConfig {
         applicationId "com.sp.madproj"
@@ -23,6 +25,8 @@ android {
 
         buildConfigField "String" , "WEATHER_KEY" , weatherKey
         buildConfigField "String" , "PLANT_KEY" , plantKey
+        buildConfigField "String" , "SUPA_KEY" , supaKey
+        buildConfigField "String" , "ANON_SUPA_KEY" , anonSupaKey
     }
 
     buildTypes {
@@ -49,12 +53,12 @@ dependencies {
     implementation libs.activity
     implementation libs.constraintlayout
     implementation libs.firebase.auth
-    implementation libs.firebase.firestore
     testImplementation libs.junit
     androidTestImplementation libs.ext.junit
     androidTestImplementation libs.espresso.core
 
     implementation 'com.android.volley:volley:1.2.1'
+    implementation 'com.github.hardillb:MultiPartVolley:0.0.4'
 
     implementation 'com.squareup.picasso:picasso:2.8'
 

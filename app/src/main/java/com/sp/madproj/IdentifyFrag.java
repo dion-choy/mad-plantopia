@@ -37,6 +37,7 @@ import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.Volley;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.squareup.picasso.Picasso;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -239,7 +240,9 @@ public class IdentifyFrag extends Fragment {
                     100 * helper.getAccuracy(cursor)));
             holder.date.setText(helper.getDate(cursor).substring(0, 11));
 
-            holder.image.setImageBitmap(helper.getImage(cursor, context));
+            String imageUrl = "https://upevuilypqhjisraltzb.supabase.co/storage/v1/object/images/"
+                    + helper.getImage(cursor);
+            Picasso.get().load(imageUrl).into(holder.image);
 
             holder.itemView.setOnClickListener(new View.OnClickListener() {
                 @Override
@@ -251,7 +254,7 @@ public class IdentifyFrag extends Fragment {
                     Intent intent = new Intent(getActivity(), IdResultActivity.class);
                     intent.putExtra("response", helper.getJsonReply(cursor));
                     intent.putExtra("purpose", "check");
-                    intent.putExtra("savedImg", helper.getImageByteArr(cursor));
+                    intent.putExtra("savedImg", helper.getImage(cursor));
                     intent.putExtra("recordId", helper.getID(cursor));
                     startActivity(intent);
                 }

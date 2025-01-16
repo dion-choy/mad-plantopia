@@ -83,6 +83,16 @@
             android:layout_marginEnd="70dp"
             android:text="Sign Up" />
 
+        <Button
+            android:id="@+id/backBtn"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="70dp"
+            android:layout_marginTop="5dp"
+            android:layout_marginEnd="70dp"
+            android:foregroundTint="#FFFFFF"
+            android:text="Back" />
+
         <TextView
             android:id="@+id/resendEmail"
             android:layout_width="wrap_content"
