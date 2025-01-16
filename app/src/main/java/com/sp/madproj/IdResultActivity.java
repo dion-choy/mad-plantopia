@@ -71,18 +71,18 @@ public class IdResultActivity extends AppCompatActivity {
         String apiReply = getIntent().getStringExtra("response" );
         String purpose = getIntent().getStringExtra("purpose" );
         String recordId = getIntent().getStringExtra("recordId" );
-        String imgUrl= getIntent().getStringExtra("savedImg" );
+        String imgKey= getIntent().getStringExtra("savedImg" );
         if (purpose != null && apiReply != null) {
             if (purpose.equals("identify") && inputUriStr != null) {
                 loadResult(inputUriStr, apiReply);
-            } else if (purpose.equals("check") && imgUrl != null && recordId != null) {
+            } else if (purpose.equals("check") && imgKey != null && recordId != null) {
                 toolbar.setVisibility(View.VISIBLE);
                 toolbar.inflateMenu(R.menu.id_menu);
                 toolbar.setOnMenuItemClickListener(new Toolbar.OnMenuItemClickListener() {
                     @Override
                     public boolean onMenuItemClick(MenuItem menuItem) {
                         if (menuItem.getItemId() == R.id.delete) {
-                            idHelper.delete(recordId);
+                            idHelper.delete(recordId, imgKey, IdResultActivity.this);
                             finish();
                             return true;
                         }
@@ -90,7 +90,7 @@ public class IdResultActivity extends AppCompatActivity {
                     }
                 });
 
-                loadFromDB(imgUrl, apiReply);
+                loadFromDB(imgKey, apiReply);
             }
         }
     }
@@ -114,13 +114,13 @@ public class IdResultActivity extends AppCompatActivity {
         idHelper.close();
     }
 
-    void loadFromDB(String imgUrl, String apiReply) {
+    void loadFromDB(String imgKey, String apiReply) {
         try {
             JSONObject apiReplyObj = new JSONObject(apiReply);
 
             Picasso.get()
                     .load("https://upevuilypqhjisraltzb.supabase.co/storage/v1/object/images/"
-                            + imgUrl)
+                            + imgKey)
                     .into(inputImage);
 
             boolean isPlant = apiReplyObj.getJSONObject("result")

@@ -2,6 +2,7 @@ package com.sp.madproj;
 
 import android.content.ContentValues;
 import android.content.Context;
+import android.content.Intent;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
@@ -15,17 +16,22 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Toast;
 
+import com.android.volley.AuthFailureError;
 import com.android.volley.NetworkResponse;
 import com.android.volley.NoConnectionError;
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
+import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.Volley;
+
+import org.json.JSONObject;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
@@ -117,8 +123,6 @@ public class IdentificationHelper extends SQLiteOpenHelper {
                             String responseData = new String(response.data, StandardCharsets.UTF_8);
                             Log.d("Storage API", "onResponse: " + responseData);
                         }
-                        Log.d("Storage API", "run ");
-                        Toast.makeText(context.getApplicationContext(), "Please connect to internet", Toast.LENGTH_SHORT).show();
                     }
                 }, new Response.ErrorListener() {
             @Override
@@ -179,10 +183,50 @@ public class IdentificationHelper extends SQLiteOpenHelper {
         cv.put("plantImageKey", uploadImgSupa(context, uri));
 
         getWritableDatabase().insert("identification_table", "speciesName", cv);
-        Toast.makeText(context.getApplicationContext(), "Failed", Toast.LENGTH_SHORT).show();
     }
 
-    public void delete(String id) {
+    private void deleteImgSupa(String imgKey, Context context) {
+        Log.d("Storage API", "Building Request...");
+
+        RequestQueue queue = Volley.newRequestQueue(context);
+
+        String apiUrl = "https://upevuilypqhjisraltzb.supabase.co/storage/v1/object/images/"
+                + imgKey;
+
+        JsonObjectRequest request = new JsonObjectRequest(Request.Method.DELETE, apiUrl, null, new Response.Listener<JSONObject>() {
+            @Override
+            public void onResponse(JSONObject response) {
+                if (response != null) {
+                    Log.d("Storage API", "onResponse: " + response.toString());
+                }
+            }
+        }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                Log.e("Storage API Error", "Response Error: " + error.toString());
+                Log.e("Storage API Error", "Response Error: " + error.getMessage());
+
+                if (error.getClass() == NoConnectionError.class) {
+                    Toast.makeText(context.getApplicationContext(), "Please connect to internet", Toast.LENGTH_SHORT).show();
+                }
+            }
+        }) {
+            @Override
+            public Map<String, String> getHeaders() throws AuthFailureError {
+                Map<String, String> params = new HashMap<String, String>();
+                params.put("Authorization", "Bearer " + BuildConfig.SUPA_KEY);
+                return params;
+            }
+        };
+
+
+        Log.d("Storage API", "Sent request: " + apiUrl);
+        queue.add(request);
+
+    }
+
+    public void delete(String id, String imgKey, Context context) {
+        deleteImgSupa(imgKey, context);
         getWritableDatabase().delete("identification_table", "_id=?", new String[]{id});
     }
 
