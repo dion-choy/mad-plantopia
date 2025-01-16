@@ -132,7 +132,7 @@ public class IdentifyFrag extends Fragment {
                 }
         );
 
-        openGalleryBtn = view.findViewById(R.id.openGallery);
+        openGalleryBtn = view.findViewById(R.id.openMenu);
         openGalleryBtn.setOnClickListener(
                 new View.OnClickListener() {
                     @Override

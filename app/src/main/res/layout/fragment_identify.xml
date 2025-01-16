@@ -34,7 +34,7 @@
             app:layout_constraintTop_toTopOf="parent" />
 
         <com.google.android.material.floatingactionbutton.FloatingActionButton
-            android:id="@+id/openGallery"
+            android:id="@+id/openMenu"
             android:layout_width="wrap_content"
             android:layout_height="0dp"
             android:layout_marginEnd="16dp"

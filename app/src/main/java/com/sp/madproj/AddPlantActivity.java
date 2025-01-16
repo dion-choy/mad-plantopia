@@ -76,6 +76,11 @@ public class AddPlantActivity extends AppCompatActivity {
         selectVine = findViewById(R.id.selectVine);
         selectCactus = findViewById(R.id.selectCactus);
 
+        flowerTick = findViewById(R.id.selectedFlower);
+        uprightTick = findViewById(R.id.selectedUpright);
+        vineTick = findViewById(R.id.selectedVine);
+        cactusTick = findViewById(R.id.selectedCactus);
+
         selectFlower.setOnClickListener(plantSelection);
         selectUpright.setOnClickListener(plantSelection);
         selectVine.setOnClickListener(plantSelection);
@@ -114,8 +119,13 @@ public class AddPlantActivity extends AppCompatActivity {
                     error = true;
                 }
 
-                if (speciesInput.getText().toString().isEmpty() || selectAccessToken.isEmpty()) {
+                if (speciesInput.getText().toString().isEmpty()) {
                     speciesInput.setError("Enter the species!");
+                    error = true;
+                }
+
+                if (selectAccessToken.isEmpty()) {
+                    speciesInput.setError("Please pick an item from the dropdown list!");
                     error = true;
                 }
 
@@ -216,11 +226,6 @@ public class AddPlantActivity extends AppCompatActivity {
     View.OnClickListener plantSelection = new View.OnClickListener() {
         @Override
         public void onClick(View view) {
-            flowerTick = findViewById(R.id.selectedFlower);
-            uprightTick = findViewById(R.id.selectedUpright);
-            vineTick = findViewById(R.id.selectedVine);
-            cactusTick = findViewById(R.id.selectedCactus);
-
             flowerTick.clearAnimation();
             uprightTick.clearAnimation();
             vineTick.clearAnimation();

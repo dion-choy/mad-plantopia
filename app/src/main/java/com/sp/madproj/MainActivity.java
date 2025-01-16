@@ -14,6 +14,8 @@ import androidx.fragment.app.FragmentManager;
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.navigation.NavigationBarView;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 
 public class MainActivity extends AppCompatActivity {
     private BottomNavigationView navBar;
@@ -24,10 +26,14 @@ public class MainActivity extends AppCompatActivity {
     private IdentifyFrag identifyFrag;
     private FeedFrag feedFrag;
     private BadgeFrag badgeFrag;
+    private LandingPageFrag landingPageFrag;
 
     public GPSTracker gpsTracker;
 
     private SharedPreferences sharedPref;
+
+    private FirebaseAuth auth = FirebaseAuth.getInstance();
+    private FirebaseUser currentUser;
 
     private double latitude = 0.0d;
     private double longitude = 0.0d;
@@ -55,6 +61,12 @@ public class MainActivity extends AppCompatActivity {
         if (fragManager.findFragmentById(R.id.viewFrag) == identifyFrag && identifyFrag.getView().findViewById(R.id.idPlant).getContentDescription().equals("Close options")) {
             identifyFrag.closeOptions();
             return;
+        } else if (fragManager.findFragmentById(R.id.viewFrag) == feedFrag && feedFrag.getView().findViewById(R.id.openMenu).getContentDescription().equals("Close options")) {
+            feedFrag.closeOptions();
+            return;
+        } else if (fragManager.findFragmentById(R.id.viewFrag) == plantFrag && plantFrag.getView().findViewById(R.id.openMenu).getContentDescription().equals("Close options")) {
+            plantFrag.closeOptions();
+            return;
         }
 
         super.onBackPressed();
@@ -65,7 +77,7 @@ public class MainActivity extends AppCompatActivity {
             navBar.setSelectedItemId(R.id.identifyTab);
         } else if (fragManager.findFragmentById(R.id.viewFrag) == plantFrag) {
             navBar.setSelectedItemId(R.id.plantsTab);
-        } else if (fragManager.findFragmentById(R.id.viewFrag) == feedFrag) {
+        } else if (fragManager.findFragmentById(R.id.viewFrag) == feedFrag || fragManager.findFragmentById(R.id.viewFrag) == landingPageFrag) {
             navBar.setSelectedItemId(R.id.feedTab);
         } else if (fragManager.findFragmentById(R.id.viewFrag) == badgeFrag) {
             navBar.setSelectedItemId(R.id.badgesTab);
@@ -79,6 +91,8 @@ public class MainActivity extends AppCompatActivity {
 
         context = getContext();
 
+        currentUser = auth.getCurrentUser();
+
         gpsTracker = new GPSTracker(this);
 
         navBar = findViewById(R.id.bottomNav);
@@ -89,6 +103,7 @@ public class MainActivity extends AppCompatActivity {
         identifyFrag = new IdentifyFrag();
         feedFrag = new FeedFrag();
         badgeFrag = new BadgeFrag();
+        landingPageFrag = new LandingPageFrag();
 
         fragManager.beginTransaction()
                 .replace(R.id.viewFrag, homeFrag)
@@ -98,6 +113,30 @@ public class MainActivity extends AppCompatActivity {
 
         sharedPref = getApplicationContext().getSharedPreferences("oldLocation", MODE_PRIVATE);
         updateLocation();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+
+        if (fragManager.findFragmentById(R.id.viewFrag) == feedFrag || fragManager.findFragmentById(R.id.viewFrag) == landingPageFrag) {
+            currentUser = auth.getCurrentUser();
+            if (currentUser != null){
+                Log.i("USER", currentUser.getEmail());
+                fragManager.beginTransaction()
+                        .replace(R.id.viewFrag, feedFrag)
+                        .setReorderingAllowed(true)
+                        .addToBackStack(null)
+                        .commit();
+            } else {
+                Log.d("Not signed in", "onStart: Not Signed In");
+                fragManager.beginTransaction()
+                        .replace(R.id.viewFrag, landingPageFrag)
+                        .setReorderingAllowed(true)
+                        .addToBackStack(null)
+                        .commit();
+            }
+        }
     }
 
     public void updateLocation() {
@@ -147,11 +186,24 @@ public class MainActivity extends AppCompatActivity {
                         .addToBackStack(null)
                         .commit();
             } else if (id == R.id.feedTab && fragManager.findFragmentById(R.id.viewFrag) != feedFrag) {
-                fragManager.beginTransaction()
-                        .replace(R.id.viewFrag, feedFrag)
-                        .setReorderingAllowed(true)
-                        .addToBackStack(null)
-                        .commit();
+                currentUser = auth.getCurrentUser();
+                auth.signOut();
+
+                if (currentUser != null){
+                    Log.i("USER", currentUser.getEmail());
+                    fragManager.beginTransaction()
+                            .replace(R.id.viewFrag, feedFrag)
+                            .setReorderingAllowed(true)
+                            .addToBackStack(null)
+                            .commit();
+                } else {
+                    Log.d("Not signed in", "onStart: Not Signed In");
+                    fragManager.beginTransaction()
+                            .replace(R.id.viewFrag, landingPageFrag)
+                            .setReorderingAllowed(true)
+                            .addToBackStack(null)
+                            .commit();
+                }
             }
 
             return true;
