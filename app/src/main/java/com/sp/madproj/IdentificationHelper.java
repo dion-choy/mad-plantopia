@@ -73,114 +73,14 @@ public class IdentificationHelper extends SQLiteOpenHelper {
                         "WHERE _id = ?", new String[]{id}));
     }
 
-    private String uploadImgSupa(Context context, Uri uri) {
-        Matrix matrix = new Matrix();
-        switch (getBitmapOriention(getRealPathFromURI(context, uri))) {
-            case ExifInterface.ORIENTATION_NORMAL:
-                matrix.postRotate(0);
-                break;
-            case ExifInterface.ORIENTATION_ROTATE_90:
-                matrix.postRotate(90);
-                break;
-            case ExifInterface.ORIENTATION_ROTATE_180:
-                matrix.postRotate(180);
-                break;
-            case ExifInterface.ORIENTATION_ROTATE_270:
-                matrix.postRotate(270);
-                break;
-        }
-
-        Bitmap bitmap = null;
-        try {
-            bitmap = MediaStore.Images.Media.getBitmap(context.getContentResolver(), uri);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-
-        ByteArrayOutputStream bitmapStream = new ByteArrayOutputStream();
-        bitmap = Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true);
-        bitmap.compress(Bitmap.CompressFormat.JPEG, 75, bitmapStream);
-        byte[] inputData = bitmapStream.toByteArray();
-        bitmap.recycle();
-
-        Log.d("Storage API", "Building Request...");
-
-        RequestQueue queue = Volley.newRequestQueue(context);
-
-        Map<String, String> header = new HashMap<String, String>();
-        header.put("Authorization", "Bearer " + BuildConfig.SUPA_KEY);
-
-        String rng = String.valueOf((int) Math.floor(Math.random()*100000));
-        String apiUrl = "https://upevuilypqhjisraltzb.supabase.co/storage/v1/object/images/"
-                +  rng + ".jpg";
-
-        MultipartRequest request = new MultipartRequest(Request.Method.POST,
-                apiUrl, header,
-                new Response.Listener<NetworkResponse>() {
-                    @Override
-                    public void onResponse(NetworkResponse response) {
-                        if (response != null) {
-                            String responseData = new String(response.data, StandardCharsets.UTF_8);
-                            Log.d("Storage API", "onResponse: " + responseData);
-                        }
-                    }
-                }, new Response.ErrorListener() {
-            @Override
-            public void onErrorResponse(VolleyError error) {
-                Log.e("Storage API Error", "Response Error: " + error.toString());
-                Log.e("Storage API Error", "Response Error: " + error.getMessage());
-
-                if (error.getClass() == NoConnectionError.class) {
-                    Toast.makeText(context.getApplicationContext(), "Please connect to internet", Toast.LENGTH_SHORT).show();
-                }
-            }
-        });
-
-        request.addPart(new MultipartRequest.FilePart("", "image/jpg", null, inputData));
-
-        Log.d("Storage API", "Sent request: " + apiUrl);
-        queue.add(request);
-
-        return rng + ".jpg";
-    }
-
-    public static int getBitmapOriention(String path){
-        ExifInterface exif = null;
-        int orientation = 0;
-        try {
-            exif = new ExifInterface(path);
-            orientation = exif.getAttributeInt(ExifInterface.TAG_ORIENTATION,
-                    ExifInterface.ORIENTATION_UNDEFINED);
-            //Log.e("getBitmapOriention", "getBitmapOriention: "+orientation );
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return orientation;
-    }
-
-    public String getRealPathFromURI(Context context, Uri contentUri) {
-        Cursor cursor = null;
-        try {
-            String[] proj = { MediaStore.Images.Media.DATA };
-            cursor = context.getContentResolver().query(contentUri,  proj, null, null, null);
-            int column_index = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
-            cursor.moveToFirst();
-            return cursor.getString(column_index);
-        } finally {
-            if (cursor != null) {
-                cursor.close();
-            }
-        }
-    }
-
-    public void insert(String species, String common, Uri uri, String date, double accuracy, String jsonReply, Context context) {
+    public void insert(String species, String common, String imgKey, String date, double accuracy, String jsonReply, Context context) {
         ContentValues cv = new ContentValues();
         cv.put("speciesName", species);
         cv.put("commonName", common);
         cv.put("date", date);
         cv.put("accuracy", accuracy);
         cv.put("jsonReply", jsonReply);
-        cv.put("plantImageKey", uploadImgSupa(context, uri));
+        cv.put("plantImageKey", imgKey);
 
         getWritableDatabase().insert("identification_table", "speciesName", cv);
     }

@@ -4,6 +4,9 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
+import android.graphics.Bitmap;
+import android.graphics.Matrix;
+import android.media.ExifInterface;
 import android.net.Uri;
 import android.os.Bundle;
 
@@ -17,6 +20,7 @@ import androidx.recyclerview.widget.DefaultItemAnimator;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import android.provider.MediaStore;
 import android.util.Base64;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -29,6 +33,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.android.volley.AuthFailureError;
+import com.android.volley.NetworkResponse;
 import com.android.volley.NoConnectionError;
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
@@ -47,11 +52,13 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 
 import pl.droidsonroids.gif.GifImageView;
+import uk.me.hardill.volley.multipart.MultipartRequest;
 
 public class IdentifyFrag extends Fragment {
     private Animation fromBottomFabAnim;
@@ -75,6 +82,19 @@ public class IdentifyFrag extends Fragment {
     private Cursor model;
     private IdentifAdapter idAdapter;
     private IdentificationHelper idHelper;
+
+    private static String imageKey = "";
+    private UploadThread uploadThread = null;
+    private class UploadThread extends Thread {
+        private Uri imageUri;
+        UploadThread(Uri imageUri) {
+            this.imageUri = imageUri;
+        }
+
+        public void run() {
+            IdentifyFrag.imageKey = uploadImgSupa(getActivity(), imageUri);
+        }
+    }
 
     public IdentifyFrag() {
         // Required empty public constructor
@@ -164,14 +184,23 @@ public class IdentifyFrag extends Fragment {
 //                            Toast.makeText(getActivity().getApplicationContext(), imageUri.toString(), Toast.LENGTH_SHORT).show();
                             Log.d("result", imageUri.toString());
 
+                            uploadThread = new UploadThread(imageUri);
+                            uploadThread.start();
+
                             loadingIcon.setVisibility(View.VISIBLE);
 
                             // TEST CODE
+                            try {
+                                uploadThread.join();
+                            } catch (InterruptedException e) {
+                                throw new RuntimeException(e);
+                            }
                             Intent intent = new Intent(getActivity(), IdResultActivity.class);
                             intent.putExtra("response",
                                     "{\n  \"access_token\": \"CtrjYkVtwJseMWs\",\n  \"model_version\": \"plant_id:4.0.2\",\n  \"custom_id\": null,\n  \"input\": {\n    \"latitude\": 49.207,\n    \"longitude\": 16.608,\n    \"similar_images\": true,\n    \"images\": [\n      \"https://plant.id/media/imgs/0f6ed1169d8442319fda1f9987e4210f.jpg\"\n    ],\n    \"datetime\": \"2024-08-05T08:16:45.899943+00:00\"\n  },\n  \"result\": {\n    \"is_plant\": {\n      \"probability\": 0.99096996,\n      \"threshold\": 0.5,\n      \"binary\": true\n    },\n    \"classification\": {\n      \"suggestions\": [\n        {\n          \"id\": \"872243f84209c0c2\",\n          \"name\": \"Buddleja davidii\",\n          \"probability\": 0.9892,\n          \"similar_images\": [\n            {\n              \"id\": \"909f07fbf17c7dab80a175a1649173b24ae6adb6\",\n              \"url\": \"https://plant-id.ams3.cdn.digitaloceanspaces.com/similar_images/4/909/f07fbf17c7dab80a175a1649173b24ae6adb6.jpeg\",\n              \"license_name\": \"CC BY-NC-SA 4.0\",\n              \"license_url\": \"https://creativecommons.org/licenses/by-nc-sa/4.0/\",\n              \"citation\": \"FlowerChecker s.r.o.\",\n              \"similarity\": 0.758,\n              \"url_small\": \"https://plant-id.ams3.cdn.digitaloceanspaces.com/similar_images/4/909/f07fbf17c7dab80a175a1649173b24ae6adb6.small.jpeg\"\n            },\n            {\n              \"id\": \"808c7d58dabe9c3486549ea3e83de2fd9e86d581\",\n              \"url\": \"https://plant-id.ams3.cdn.digitaloceanspaces.com/similar_images/4/808/c7d58dabe9c3486549ea3e83de2fd9e86d581.jpeg\",\n              \"license_name\": \"CC BY-NC-SA 4.0\",\n              \"license_url\": \"https://creativecommons.org/licenses/by-nc-sa/4.0/\",\n              \"citation\": \"FlowerChecker s.r.o.\",\n              \"similarity\": 0.741,\n              \"url_small\": \"https://plant-id.ams3.cdn.digitaloceanspaces.com/similar_images/4/808/c7d58dabe9c3486549ea3e83de2fd9e86d581.small.jpeg\"\n            }\n          ],\n          \"details\": {\n            \"common_names\": [\n              \"orange-eyed butterfly-bush\",\n              \"Butterfly bush\",\n              \"summer lilac\",\n              \"orange-eye butterfly bush\",\n              \"Chinese Sagewood\"\n            ],\n            \"taxonomy\": {\n              \"class\": \"Magnoliopsida\",\n              \"genus\": \"Buddleja\",\n              \"order\": \"Lamiales\",\n              \"family\": \"Scrophulariaceae\",\n              \"phylum\": \"Tracheophyta\",\n              \"kingdom\": \"Plantae\"\n            },\n            \"gbif_id\": 3173338,\n            \"inaturalist_id\": 75916,\n            \"rank\": \"species\",\n            \"edible_parts\": null,\n            \"best_light_condition\": \"This plant thrives in full sun, needing at least six hours of direct sunlight each day to perform its best. It can tolerate partial shade, but too much shade can result in fewer flowers and a leggy growth habit. Planting it in a sunny spot will encourage robust growth and abundant blooms, making it a standout in any garden.\",\n            \"best_soil_type\": \"For optimal growth, this plant prefers well-drained soil that is moderately fertile. It can tolerate a range of soil types, including sandy, loamy, and clay soils, as long as there is good drainage. Adding organic matter like compost can improve soil fertility and structure, helping the plant to establish and thrive.\",\n            \"best_watering\": \"Watering this plant requires a balanced approach. It prefers well-drained soil and does not like to sit in water. Water it deeply but infrequently, allowing the soil to dry out between waterings. During the growing season, typically spring and summer, it may need more frequent watering, especially in hot, dry conditions. In contrast, reduce watering in the fall and winter when the plant is not actively growing.\",\n            \"language\": \"en\",\n            \"entity_id\": \"872243f84209c0c2\"\n          }\n        },\n        {\n          \"id\": \"3514ca9d9bfbba10\",\n          \"name\": \"Buddleja japonica\",\n          \"probability\": 0.0108,\n          \"similar_images\": [\n            {\n              \"id\": \"23054bfca484d221f66f172d03242896f1ea9cdb\",\n              \"url\": \"https://plant-id.ams3.cdn.digitaloceanspaces.com/similar_images/4/230/54bfca484d221f66f172d03242896f1ea9cdb.jpeg\",\n              \"license_name\": \"CC BY-SA 4.0\",\n              \"license_url\": \"https://creativecommons.org/licenses/by-sa/4.0/\",\n              \"citation\": \"Valentina Diakovasiliou\",\n              \"similarity\": 0.723,\n              \"url_small\": \"https://plant-id.ams3.cdn.digitaloceanspaces.com/similar_images/4/230/54bfca484d221f66f172d03242896f1ea9cdb.small.jpeg\"\n            },\n            {\n              \"id\": \"de6fb384640a6b498d452cd4da81f2cd52be41fe\",\n              \"url\": \"https://plant-id.ams3.cdn.digitaloceanspaces.com/similar_images/4/de6/fb384640a6b498d452cd4da81f2cd52be41fe.jpeg\",\n              \"license_name\": \"CC BY 4.0\",\n              \"license_url\": \"https://creativecommons.org/licenses/by/4.0/\",\n              \"citation\": \"joffrey calvel\",\n              \"similarity\": 0.697,\n              \"url_small\": \"https://plant-id.ams3.cdn.digitaloceanspaces.com/similar_images/4/de6/fb384640a6b498d452cd4da81f2cd52be41fe.small.jpeg\"\n            }\n          ],\n          \"details\": {\n            \"common_names\": null,\n            \"taxonomy\": {\n              \"class\": \"Magnoliopsida\",\n              \"genus\": \"Buddleja\",\n              \"order\": \"Lamiales\",\n              \"family\": \"Scrophulariaceae\",\n              \"phylum\": \"Tracheophyta\",\n              \"kingdom\": \"Plantae\"\n            },\n            \"gbif_id\": 4055769,\n            \"inaturalist_id\": 509187,\n            \"rank\": \"species\",\n            \"best_light_condition\": \"This plant thrives in full sun to partial shade. It needs at least six hours of direct sunlight each day for optimal growth and flowering. If grown in partial shade, it may produce fewer flowers. However, it can tolerate some shade, especially in hotter climates where intense afternoon sun might be too harsh.\",\n            \"best_soil_type\": \"Well-draining soil is essential for healthy growth. A mix of loamy soil with some sand or perlite works well to ensure proper drainage. The soil should be rich in organic matter to provide necessary nutrients. Avoid heavy clay soils that retain too much moisture, as this can lead to root problems.\",\n            \"best_watering\": \"Watering should be done regularly but not excessively. The soil should be kept moist, especially during the growing season. It\'s important to let the top inch of soil dry out between waterings to prevent root rot. During the winter months, reduce the frequency of watering as the plant\'s growth slows down.\",\n            \"language\": \"en\",\n            \"entity_id\": \"3514ca9d9bfbba10\"\n          }\n        },\n        {\n          \"id\": \"872243f84209c0c2\",\n          \"name\": \"Buddleja davidii\",\n          \"probability\": 0.9892,\n          \"similar_images\": [\n            {\n              \"id\": \"909f07fbf17c7dab80a175a1649173b24ae6adb6\",\n              \"url\": \"https://plant-id.ams3.cdn.digitaloceanspaces.com/similar_images/4/909/f07fbf17c7dab80a175a1649173b24ae6adb6.jpeg\",\n              \"license_name\": \"CC BY-NC-SA 4.0\",\n              \"license_url\": \"https://creativecommons.org/licenses/by-nc-sa/4.0/\",\n              \"citation\": \"FlowerChecker s.r.o.\",\n              \"similarity\": 0.758,\n              \"url_small\": \"https://plant-id.ams3.cdn.digitaloceanspaces.com/similar_images/4/909/f07fbf17c7dab80a175a1649173b24ae6adb6.small.jpeg\"\n            },\n            {\n              \"id\": \"808c7d58dabe9c3486549ea3e83de2fd9e86d581\",\n              \"url\": \"https://plant-id.ams3.cdn.digitaloceanspaces.com/similar_images/4/808/c7d58dabe9c3486549ea3e83de2fd9e86d581.jpeg\",\n              \"license_name\": \"CC BY-NC-SA 4.0\",\n              \"license_url\": \"https://creativecommons.org/licenses/by-nc-sa/4.0/\",\n              \"citation\": \"FlowerChecker s.r.o.\",\n              \"similarity\": 0.741,\n              \"url_small\": \"https://plant-id.ams3.cdn.digitaloceanspaces.com/similar_images/4/808/c7d58dabe9c3486549ea3e83de2fd9e86d581.small.jpeg\"\n            }\n          ],\n          \"details\": {\n            \"common_names\": [\n              \"orange-eyed butterfly-bush\",\n              \"Butterfly bush\",\n              \"summer lilac\",\n              \"orange-eye butterfly bush\",\n              \"Chinese Sagewood\"\n            ],\n            \"taxonomy\": {\n              \"class\": \"Magnoliopsida\",\n              \"genus\": \"Buddleja\",\n              \"order\": \"Lamiales\",\n              \"family\": \"Scrophulariaceae\",\n              \"phylum\": \"Tracheophyta\",\n              \"kingdom\": \"Plantae\"\n            },\n            \"gbif_id\": 3173338,\n            \"inaturalist_id\": 75916,\n            \"rank\": \"species\",\n            \"edible_parts\": null,\n            \"best_light_condition\": \"This plant thrives in full sun, needing at least six hours of direct sunlight each day to perform its best. It can tolerate partial shade, but too much shade can result in fewer flowers and a leggy growth habit. Planting it in a sunny spot will encourage robust growth and abundant blooms, making it a standout in any garden.\",\n            \"best_soil_type\": \"For optimal growth, this plant prefers well-drained soil that is moderately fertile. It can tolerate a range of soil types, including sandy, loamy, and clay soils, as long as there is good drainage. Adding organic matter like compost can improve soil fertility and structure, helping the plant to establish and thrive.\",\n            \"best_watering\": \"Watering this plant requires a balanced approach. It prefers well-drained soil and does not like to sit in water. Water it deeply but infrequently, allowing the soil to dry out between waterings. During the growing season, typically spring and summer, it may need more frequent watering, especially in hot, dry conditions. In contrast, reduce watering in the fall and winter when the plant is not actively growing.\",\n            \"language\": \"en\",\n            \"entity_id\": \"872243f84209c0c2\"\n          }\n        },\n        {\n          \"id\": \"3514ca9d9bfbba10\",\n          \"name\": \"Buddleja japonica\",\n          \"probability\": 0.0108,\n          \"similar_images\": [\n            {\n              \"id\": \"23054bfca484d221f66f172d03242896f1ea9cdb\",\n              \"url\": \"https://plant-id.ams3.cdn.digitaloceanspaces.com/similar_images/4/230/54bfca484d221f66f172d03242896f1ea9cdb.jpeg\",\n              \"license_name\": \"CC BY-SA 4.0\",\n              \"license_url\": \"https://creativecommons.org/licenses/by-sa/4.0/\",\n              \"citation\": \"Valentina Diakovasiliou\",\n              \"similarity\": 0.723,\n              \"url_small\": \"https://plant-id.ams3.cdn.digitaloceanspaces.com/similar_images/4/230/54bfca484d221f66f172d03242896f1ea9cdb.small.jpeg\"\n            },\n            {\n              \"id\": \"de6fb384640a6b498d452cd4da81f2cd52be41fe\",\n              \"url\": \"https://plant-id.ams3.cdn.digitaloceanspaces.com/similar_images/4/de6/fb384640a6b498d452cd4da81f2cd52be41fe.jpeg\",\n              \"license_name\": \"CC BY 4.0\",\n              \"license_url\": \"https://creativecommons.org/licenses/by/4.0/\",\n              \"citation\": \"joffrey calvel\",\n              \"similarity\": 0.697,\n              \"url_small\": \"https://plant-id.ams3.cdn.digitaloceanspaces.com/similar_images/4/de6/fb384640a6b498d452cd4da81f2cd52be41fe.small.jpeg\"\n            }\n          ],\n          \"details\": {\n            \"common_names\": null,\n            \"taxonomy\": {\n              \"class\": \"Magnoliopsida\",\n              \"genus\": \"Buddleja\",\n              \"order\": \"Lamiales\",\n              \"family\": \"Scrophulariaceae\",\n              \"phylum\": \"Tracheophyta\",\n              \"kingdom\": \"Plantae\"\n            },\n            \"gbif_id\": 4055769,\n            \"inaturalist_id\": 509187,\n            \"rank\": \"species\",\n            \"best_light_condition\": \"This plant thrives in full sun to partial shade. It needs at least six hours of direct sunlight each day for optimal growth and flowering. If grown in partial shade, it may produce fewer flowers. However, it can tolerate some shade, especially in hotter climates where intense afternoon sun might be too harsh.\",\n            \"best_soil_type\": \"Well-draining soil is essential for healthy growth. A mix of loamy soil with some sand or perlite works well to ensure proper drainage. The soil should be rich in organic matter to provide necessary nutrients. Avoid heavy clay soils that retain too much moisture, as this can lead to root problems.\",\n            \"best_watering\": \"Watering should be done regularly but not excessively. The soil should be kept moist, especially during the growing season. It\'s important to let the top inch of soil dry out between waterings to prevent root rot. During the winter months, reduce the frequency of watering as the plant\'s growth slows down.\",\n            \"language\": \"en\",\n            \"entity_id\": \"3514ca9d9bfbba10\"\n          }\n        }\n      ]\n    }\n  },\n  \"status\": \"COMPLETED\",\n  \"sla_compliant_client\": false,\n  \"sla_compliant_system\": true,\n  \"created\": 1722845805.899943,\n  \"completed\": 1722845806.315829\n}"
                             );
                             intent.putExtra("inputUriStr", imageUri.toString());
+                            intent.putExtra("savedImg", imageKey);
                             intent.putExtra("purpose", "identify");
                             startActivity(intent);
                             loadingIcon.setVisibility(View.GONE);
@@ -311,9 +340,15 @@ public class IdentifyFrag extends Fragment {
         JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(Request.Method.POST, plantApi, body, new Response.Listener<JSONObject>() {
             @Override
             public void onResponse(JSONObject response) {
+                try {
+                    uploadThread.join();
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
                 Intent intent = new Intent(getActivity(), IdResultActivity.class);
                 intent.putExtra("response", response.toString());
                 intent.putExtra("inputUriStr", imageUri.toString());
+                intent.putExtra("savedImg", imageKey);
                 intent.putExtra("purpose", "identify");
                 startActivity(intent);
 
@@ -400,4 +435,105 @@ public class IdentifyFrag extends Fragment {
 
         idPlant.setImageResource(R.drawable.identify_icon);
     }
+
+    private String uploadImgSupa(Context context, Uri uri) {
+        Matrix matrix = new Matrix();
+        switch (getBitmapOriention(getRealPathFromURI(context, uri))) {
+            case ExifInterface.ORIENTATION_NORMAL:
+                matrix.postRotate(0);
+                break;
+            case ExifInterface.ORIENTATION_ROTATE_90:
+                matrix.postRotate(90);
+                break;
+            case ExifInterface.ORIENTATION_ROTATE_180:
+                matrix.postRotate(180);
+                break;
+            case ExifInterface.ORIENTATION_ROTATE_270:
+                matrix.postRotate(270);
+                break;
+        }
+
+        Bitmap bitmap = null;
+        try {
+            bitmap = MediaStore.Images.Media.getBitmap(context.getContentResolver(), uri);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+        ByteArrayOutputStream bitmapStream = new ByteArrayOutputStream();
+        bitmap = Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true);
+        bitmap.compress(Bitmap.CompressFormat.JPEG, 75, bitmapStream);
+        byte[] inputData = bitmapStream.toByteArray();
+        bitmap.recycle();
+
+        Log.d("Storage API", "Building Request...");
+
+        RequestQueue queue = Volley.newRequestQueue(context);
+
+        Map<String, String> header = new HashMap<String, String>();
+        header.put("Authorization", "Bearer " + BuildConfig.SUPA_KEY);
+
+        String rng = String.valueOf((int) Math.floor(Math.random()*100000));
+        String apiUrl = "https://upevuilypqhjisraltzb.supabase.co/storage/v1/object/images/"
+                +  rng + ".jpg";
+
+        MultipartRequest request = new MultipartRequest(Request.Method.POST,
+                apiUrl, header,
+                new Response.Listener<NetworkResponse>() {
+                    @Override
+                    public void onResponse(NetworkResponse response) {
+                        if (response != null) {
+                            String responseData = new String(response.data, StandardCharsets.UTF_8);
+                            Log.d("Storage API", "onResponse: " + responseData);
+                        }
+                    }
+                }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                Log.e("Storage API Error", "Response Error: " + error.toString());
+                Log.e("Storage API Error", "Response Error: " + error.getMessage());
+
+                if (error.getClass() == NoConnectionError.class) {
+                    Toast.makeText(context.getApplicationContext(), "Please connect to internet", Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
+
+        request.addPart(new MultipartRequest.FilePart("", "image/jpg", null, inputData));
+
+        Log.d("Storage API", "Sent request: " + apiUrl);
+        queue.add(request);
+
+        return rng + ".jpg";
+    }
+
+    public static int getBitmapOriention(String path){
+        ExifInterface exif = null;
+        int orientation = 0;
+        try {
+            exif = new ExifInterface(path);
+            orientation = exif.getAttributeInt(ExifInterface.TAG_ORIENTATION,
+                    ExifInterface.ORIENTATION_UNDEFINED);
+            //Log.e("getBitmapOriention", "getBitmapOriention: "+orientation );
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return orientation;
+    }
+
+    public String getRealPathFromURI(Context context, Uri contentUri) {
+        Cursor cursor = null;
+        try {
+            String[] proj = { MediaStore.Images.Media.DATA };
+            cursor = context.getContentResolver().query(contentUri,  proj, null, null, null);
+            int column_index = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
+            cursor.moveToFirst();
+            return cursor.getString(column_index);
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+        }
+    }
+
 }

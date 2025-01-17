@@ -73,8 +73,8 @@ public class IdResultActivity extends AppCompatActivity {
         String recordId = getIntent().getStringExtra("recordId" );
         String imgKey= getIntent().getStringExtra("savedImg" );
         if (purpose != null && apiReply != null) {
-            if (purpose.equals("identify") && inputUriStr != null) {
-                loadResult(inputUriStr, apiReply);
+            if (purpose.equals("identify") && inputUriStr != null && imgKey != null) {
+                loadResult(inputUriStr, apiReply, imgKey);
             } else if (purpose.equals("check") && imgKey != null && recordId != null) {
                 toolbar.setVisibility(View.VISIBLE);
                 toolbar.inflateMenu(R.menu.id_menu);
@@ -144,7 +144,7 @@ public class IdResultActivity extends AppCompatActivity {
         }
     }
 
-    void loadResult(String inputUriStr, String apiReply) {
+    void loadResult(String inputUriStr, String apiReply, String imgKey) {
         inputImage.setImageURI(Uri.parse(inputUriStr));
 
         try {
@@ -165,7 +165,7 @@ public class IdResultActivity extends AppCompatActivity {
                 idHelper.insert(suggestions.getJSONObject(0).getString("name"),
                         suggestions.getJSONObject(0).getJSONObject("details")
                                 .getJSONArray("common_names").getString(0),
-                        Uri.parse(inputUriStr),
+                        imgKey,
                         LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss")),
                         suggestions.getJSONObject(0).getDouble("probability"),
                         apiReply,
