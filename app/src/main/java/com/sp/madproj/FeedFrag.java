@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.provider.MediaStore;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -19,6 +20,9 @@ import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.fragment.app.Fragment;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
 
 public class FeedFrag extends Fragment {
     private Animation fromBottomFabAnim;
@@ -34,6 +38,15 @@ public class FeedFrag extends Fragment {
     private FloatingActionButton openCamBtn;
     private FloatingActionButton openGalleryBtn;
     private TextView shade;
+
+    public final static String pfpStorage = "https://upevuilypqhjisraltzb.supabase.co/storage/v1/object/images/pfp/";
+    private final String databaseUrl = " https://plantopia-backend-ecce9-default-rtdb.asia-southeast1.firebasedatabase.app";
+    private final FirebaseDatabase database = FirebaseDatabase.getInstance(databaseUrl);
+
+    private FirebaseAuth auth = FirebaseAuth.getInstance();
+    private String username = "";
+    private String email = "";
+
 
     public FeedFrag() {
         // Required empty public constructor
@@ -56,6 +69,17 @@ public class FeedFrag extends Fragment {
         rotateAntiClockWiseFabAnim = AnimationUtils.loadAnimation(getContext(), R.anim.rotate_anti_clock_wise);
         fadeOutBg = AnimationUtils.loadAnimation(getContext(), R.anim.fadeout_bg);
         fadeInBg = AnimationUtils.loadAnimation(getContext(), R.anim.fadein_bg);
+
+        username = auth.getCurrentUser().getDisplayName();
+        email = auth.getCurrentUser().getEmail();
+
+        Log.d("USER NAME: ", username);
+        Log.d("USER EMAIL: ", email);
+
+//        DatabaseReference realtimeDB = database.getReference("message");
+//        Log.d("Realtime DB", realtimeDB.toString());
+//        String pushKey = realtimeDB.push().getKey();
+//        realtimeDB.child(pushKey).setValue(message);
 
         addPost = view.findViewById(R.id.addPost);
         addPost.setOnClickListener(

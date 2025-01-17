@@ -13,6 +13,7 @@ android {
     def plantKey = properties.getProperty('plantKey')
     def supaKey= properties.getProperty('supaKey')
     def anonSupaKey= properties.getProperty('anonSupaKey')
+    def astraDBToken= properties.getProperty('astraDBToken')
 
     defaultConfig {
         applicationId "com.sp.madproj"
@@ -27,6 +28,7 @@ android {
         buildConfigField "String" , "PLANT_KEY" , plantKey
         buildConfigField "String" , "SUPA_KEY" , supaKey
         buildConfigField "String" , "ANON_SUPA_KEY" , anonSupaKey
+        buildConfigField "String" , "ASTRA_DB_TOKEN" , astraDBToken
     }
 
     buildTypes {
@@ -53,6 +55,7 @@ dependencies {
     implementation libs.activity
     implementation libs.constraintlayout
     implementation libs.firebase.auth
+    implementation libs.firebase.database
     testImplementation libs.junit
     androidTestImplementation libs.ext.junit
     androidTestImplementation libs.espresso.core

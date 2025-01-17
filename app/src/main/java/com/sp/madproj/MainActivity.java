@@ -186,8 +186,8 @@ public class MainActivity extends AppCompatActivity {
                         .addToBackStack(null)
                         .commit();
             } else if (id == R.id.feedTab && fragManager.findFragmentById(R.id.viewFrag) != feedFrag) {
+//                auth.signOut();
                 currentUser = auth.getCurrentUser();
-                auth.signOut();
 
                 if (currentUser != null){
                     Log.i("USER", currentUser.getEmail());

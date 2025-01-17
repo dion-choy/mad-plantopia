@@ -119,8 +119,7 @@ public class IdResultActivity extends AppCompatActivity {
             JSONObject apiReplyObj = new JSONObject(apiReply);
 
             Picasso.get()
-                    .load("https://upevuilypqhjisraltzb.supabase.co/storage/v1/object/images/"
-                            + imgKey)
+                    .load(IdentifyFrag.identifStorage + imgKey)
                     .into(inputImage);
 
             boolean isPlant = apiReplyObj.getJSONObject("result")

@@ -83,6 +83,7 @@ public class IdentifyFrag extends Fragment {
     private IdentifAdapter idAdapter;
     private IdentificationHelper idHelper;
 
+    public final static String identifStorage = "https://upevuilypqhjisraltzb.supabase.co/storage/v1/object/images/identification/";
     private static String imageKey = "";
     private UploadThread uploadThread = null;
     private class UploadThread extends Thread {
@@ -269,8 +270,7 @@ public class IdentifyFrag extends Fragment {
                     100 * helper.getAccuracy(cursor)));
             holder.date.setText(helper.getDate(cursor).substring(0, 11));
 
-            String imageUrl = "https://upevuilypqhjisraltzb.supabase.co/storage/v1/object/images/"
-                    + helper.getImage(cursor);
+            String imageUrl = identifStorage + helper.getImage(cursor);
             Picasso.get().load(imageUrl).into(holder.image);
 
             holder.itemView.setOnClickListener(new View.OnClickListener() {
@@ -473,9 +473,8 @@ public class IdentifyFrag extends Fragment {
         Map<String, String> header = new HashMap<String, String>();
         header.put("Authorization", "Bearer " + BuildConfig.SUPA_KEY);
 
-        String rng = String.valueOf((int) Math.floor(Math.random()*100000));
-        String apiUrl = "https://upevuilypqhjisraltzb.supabase.co/storage/v1/object/images/"
-                +  rng + ".jpg";
+        String rng = String.valueOf((int) Math.floor(Math.random()*2147483647));
+        String apiUrl = identifStorage +  rng + ".jpg";
 
         MultipartRequest request = new MultipartRequest(Request.Method.POST,
                 apiUrl, header,
