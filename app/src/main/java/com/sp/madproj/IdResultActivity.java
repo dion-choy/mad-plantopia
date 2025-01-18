@@ -1,7 +1,6 @@
 package com.sp.madproj;
 
 import android.database.Cursor;
-import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
@@ -189,7 +188,7 @@ public class IdResultActivity extends AppCompatActivity {
         @Override
         public ResultsHolder onCreateViewHolder(ViewGroup parent, int viewType) {
             View view = LayoutInflater.from(parent.getContext())
-                    .inflate(R.layout.results_row, parent, false);
+                    .inflate(R.layout.row_results, parent, false);
             return new ResultsAdapter.ResultsHolder(view);
         }
 

@@ -10,6 +10,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
+import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -40,9 +41,9 @@ public class FeedFrag extends Fragment {
     private TextView shade;
 
     public final static String pfpStorage = "https://upevuilypqhjisraltzb.supabase.co/storage/v1/object/images/pfp/";
+
     private final String databaseUrl = " https://plantopia-backend-ecce9-default-rtdb.asia-southeast1.firebasedatabase.app";
     private final FirebaseDatabase database = FirebaseDatabase.getInstance(databaseUrl);
-
     private FirebaseAuth auth = FirebaseAuth.getInstance();
     private String username = "";
     private String email = "";
@@ -80,6 +81,12 @@ public class FeedFrag extends Fragment {
 //        Log.d("Realtime DB", realtimeDB.toString());
 //        String pushKey = realtimeDB.push().getKey();
 //        realtimeDB.child(pushKey).setValue(message);
+        ((Button) view.findViewById(R.id.goToChatTest)).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                startActivity(new Intent(getActivity(), ChatroomActivity.class));
+            }
+        });
 
         addPost = view.findViewById(R.id.addPost);
         addPost.setOnClickListener(

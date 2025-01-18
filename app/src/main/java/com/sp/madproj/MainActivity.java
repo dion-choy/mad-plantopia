@@ -16,10 +16,14 @@ import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.navigation.NavigationBarView;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.FirebaseDatabase;
 
 public class MainActivity extends AppCompatActivity {
     private BottomNavigationView navBar;
     private FragmentManager fragManager = getSupportFragmentManager();
+
+    private final String databaseUrl = " https://plantopia-backend-ecce9-default-rtdb.asia-southeast1.firebasedatabase.app";
+    private final FirebaseDatabase database = FirebaseDatabase.getInstance(databaseUrl);
 
     private HomeFrag homeFrag;
     private PlantFrag plantFrag;
@@ -91,6 +95,8 @@ public class MainActivity extends AppCompatActivity {
 
         context = getContext();
 
+        database.setPersistenceEnabled(true);
+
         currentUser = auth.getCurrentUser();
 
         gpsTracker = new GPSTracker(this);
@@ -137,6 +143,11 @@ public class MainActivity extends AppCompatActivity {
                         .commit();
             }
         }
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
     }
 
     public void updateLocation() {

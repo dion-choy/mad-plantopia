@@ -252,7 +252,7 @@ public class IdentifyFrag extends Fragment {
 
         @Override
         public IdentifHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-            View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.identif_row, parent, false);
+            View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.row_identif, parent, false);
             return new IdentifHolder(view);
         }
 

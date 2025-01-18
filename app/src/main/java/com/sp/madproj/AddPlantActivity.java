@@ -4,9 +4,7 @@ import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
-import android.view.LayoutInflater;
 import android.view.View;
-import android.view.ViewGroup;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.widget.AdapterView;
@@ -14,7 +12,6 @@ import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
 import android.widget.ImageButton;
 import android.widget.ImageView;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -88,7 +85,7 @@ public class AddPlantActivity extends AppCompatActivity {
 
         nameInput = findViewById(R.id.nameInput);
 
-        adapter = new ArrayAdapter<String>(this, R.layout.autocomplete_dropdown, model);
+        adapter = new ArrayAdapter<String>(this, R.layout.row_autocomplete_dropdown, model);
         speciesInput = findViewById(R.id.speciesInput);
         speciesInput.setAdapter(adapter);
         speciesInput.addTextChangedListener(new TextWatcher() {

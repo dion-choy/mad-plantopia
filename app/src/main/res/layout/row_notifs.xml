@@ -19,7 +19,7 @@
             android:orientation="horizontal">
 
             <ImageView
-                android:id="@+id/notifIcon"
+                android:id="@+id/pfpIcon"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_margin="10dp"
@@ -27,7 +27,7 @@
                 app:tint="?android:attr/textColor" />
 
             <TextView
-                android:id="@+id/notifText"
+                android:id="@+id/chatMessage"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Notification" />

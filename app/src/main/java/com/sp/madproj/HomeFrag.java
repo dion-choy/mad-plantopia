@@ -25,7 +25,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -136,7 +135,7 @@ public class HomeFrag extends Fragment {
         @Override
         public NotifsHolder onCreateViewHolder(ViewGroup parent, int viewType) {
             View view = LayoutInflater.from(parent.getContext())
-                    .inflate(R.layout.notifs_row, parent, false);
+                    .inflate(R.layout.row_notifs, parent, false);
             return new NotifsHolder(view);
         }
 
@@ -172,8 +171,8 @@ public class HomeFrag extends Fragment {
 
             public NotifsHolder(View itemView) {
                 super(itemView);
-                notifType = itemView.findViewById(R.id.notifIcon);
-                notifText = itemView.findViewById(R.id.notifText);
+                notifType = itemView.findViewById(R.id.pfpIcon);
+                notifText = itemView.findViewById(R.id.chatMessage);
             }
         }
     }
