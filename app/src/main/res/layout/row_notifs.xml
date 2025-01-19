@@ -27,7 +27,7 @@
                 app:tint="?android:attr/textColor" />
 
             <TextView
-                android:id="@+id/chatMessage"
+                android:id="@+id/notifMessage"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Notification" />

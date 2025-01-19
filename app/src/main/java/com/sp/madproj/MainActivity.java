@@ -16,6 +16,7 @@ import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.navigation.NavigationBarView;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 
 public class MainActivity extends AppCompatActivity {
@@ -58,9 +59,9 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     public void onBackPressed() {
-        if (fragManager.findFragmentById(R.id.viewFrag) == homeFrag) {
-            return;
-        }
+//        if (fragManager.findFragmentById(R.id.viewFrag) == homeFrag) {
+//            return;
+//        }
 
         if (fragManager.findFragmentById(R.id.viewFrag) == identifyFrag && identifyFrag.getView().findViewById(R.id.idPlant).getContentDescription().equals("Close options")) {
             identifyFrag.closeOptions();
@@ -97,10 +98,6 @@ public class MainActivity extends AppCompatActivity {
 
         database.setPersistenceEnabled(true);
 
-        currentUser = auth.getCurrentUser();
-
-        gpsTracker = new GPSTracker(this);
-
         navBar = findViewById(R.id.bottomNav);
         navBar.setOnItemSelectedListener(switchPage);
 
@@ -114,16 +111,23 @@ public class MainActivity extends AppCompatActivity {
         fragManager.beginTransaction()
                 .replace(R.id.viewFrag, homeFrag)
                 .setReorderingAllowed(false)
-                .addToBackStack(null)
+                .disallowAddToBackStack()
                 .commit();
-
-        sharedPref = getApplicationContext().getSharedPreferences("oldLocation", MODE_PRIVATE);
-        updateLocation();
     }
 
     @Override
     protected void onResume() {
         super.onResume();
+
+        DatabaseReference.goOnline();
+        currentUser = auth.getCurrentUser();
+
+        gpsTracker = new GPSTracker(this);
+
+        sharedPref = getApplicationContext().getSharedPreferences("oldLocation", MODE_PRIVATE);
+        updateLocation();
+
+        Log.d("RESUME", "FEED RESUMED");
 
         if (fragManager.findFragmentById(R.id.viewFrag) == feedFrag || fragManager.findFragmentById(R.id.viewFrag) == landingPageFrag) {
             currentUser = auth.getCurrentUser();
@@ -148,6 +152,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        DatabaseReference.goOffline();
     }
 
     public void updateLocation() {
@@ -197,7 +202,6 @@ public class MainActivity extends AppCompatActivity {
                         .addToBackStack(null)
                         .commit();
             } else if (id == R.id.feedTab && fragManager.findFragmentById(R.id.viewFrag) != feedFrag) {
-//                auth.signOut();
                 currentUser = auth.getCurrentUser();
 
                 if (currentUser != null){

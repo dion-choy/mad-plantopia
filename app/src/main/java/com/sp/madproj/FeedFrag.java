@@ -11,6 +11,7 @@ import android.view.ViewGroup;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -22,6 +23,7 @@ import androidx.fragment.app.Fragment;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 
@@ -45,6 +47,7 @@ public class FeedFrag extends Fragment {
     private final String databaseUrl = " https://plantopia-backend-ecce9-default-rtdb.asia-southeast1.firebasedatabase.app";
     private final FirebaseDatabase database = FirebaseDatabase.getInstance(databaseUrl);
     private FirebaseAuth auth = FirebaseAuth.getInstance();
+    private FirebaseUser currentUser;
     private String username = "";
     private String email = "";
 
@@ -56,6 +59,25 @@ public class FeedFrag extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        currentUser = auth.getCurrentUser();
+        Log.d("RESUME", "FEED RESUMED");
+        if (currentUser == null) {
+            getParentFragmentManager().beginTransaction()
+                    .replace(R.id.viewFrag, new LandingPageFrag())
+                    .addToBackStack(null)
+                    .commit();
+        } else {
+            username = currentUser.getDisplayName();
+            email = currentUser.getEmail();
+
+            Log.d("USER NAME: ", username);
+            Log.d("USER EMAIL: ", email);
+        }
     }
 
     @Override
@@ -71,12 +93,6 @@ public class FeedFrag extends Fragment {
         fadeOutBg = AnimationUtils.loadAnimation(getContext(), R.anim.fadeout_bg);
         fadeInBg = AnimationUtils.loadAnimation(getContext(), R.anim.fadein_bg);
 
-        username = auth.getCurrentUser().getDisplayName();
-        email = auth.getCurrentUser().getEmail();
-
-        Log.d("USER NAME: ", username);
-        Log.d("USER EMAIL: ", email);
-
 //        DatabaseReference realtimeDB = database.getReference("message");
 //        Log.d("Realtime DB", realtimeDB.toString());
 //        String pushKey = realtimeDB.push().getKey();
@@ -85,6 +101,14 @@ public class FeedFrag extends Fragment {
             @Override
             public void onClick(View view) {
                 startActivity(new Intent(getActivity(), ChatroomActivity.class));
+            }
+        });
+
+        ((ImageButton) view.findViewById(R.id.settingsBtn)).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent intent = new Intent(getActivity(), FeedSettingsActivity.class);
+                startActivity(intent);
             }
         });
 

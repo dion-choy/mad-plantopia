@@ -172,7 +172,7 @@ public class HomeFrag extends Fragment {
             public NotifsHolder(View itemView) {
                 super(itemView);
                 notifType = itemView.findViewById(R.id.pfpIcon);
-                notifText = itemView.findViewById(R.id.chatMessage);
+                notifText = itemView.findViewById(R.id.notifMessage);
             }
         }
     }

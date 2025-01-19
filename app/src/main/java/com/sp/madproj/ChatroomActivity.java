@@ -4,7 +4,9 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.DisplayMetrics;
 import android.util.Log;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.Animation;
@@ -13,10 +15,12 @@ import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.recyclerview.widget.DefaultItemAnimator;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -39,6 +43,9 @@ public class ChatroomActivity extends AppCompatActivity {
 
     private Animation disableSend;
     private Animation enableSend;
+
+    private ConstraintLayout root;
+    private DisplayMetrics displayMetrics;
 
     private EditText inputMsg;
     private ImageButton sendMsgBtn;
@@ -66,6 +73,10 @@ public class ChatroomActivity extends AppCompatActivity {
         username = auth.getCurrentUser().getDisplayName();
         pfp = auth.getCurrentUser().getPhotoUrl();
 
+        root = findViewById(R.id.root);
+        displayMetrics = new DisplayMetrics();
+        getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
+
         chatAdapter = new ChatAdapter(model);
         chatAdapter.registerAdapterDataObserver(new RecyclerView.AdapterDataObserver() {
             @Override
@@ -79,6 +90,7 @@ public class ChatroomActivity extends AppCompatActivity {
         chatMessages.setLayoutManager(new LinearLayoutManager(this));
         chatMessages.setItemAnimator(new DefaultItemAnimator());
         chatMessages.setAdapter(chatAdapter);
+        chatMessages.setOnTouchListener(swipeAway);
 
         realtimeDB = database.getReference("rooms");
         Log.d("Realtime DB", realtimeDB.toString());
@@ -111,21 +123,6 @@ public class ChatroomActivity extends AppCompatActivity {
             public void onCancelled(@NonNull DatabaseError error) {
             }
         });
-
-//        Query query = realtimeDB.orderByChild("timestamp")
-//                .limitToLast(10);
-//        query.getRef().get().addOnCompleteListener(new OnCompleteListener<DataSnapshot>() {
-//            @Override
-//            public void onComplete(@NonNull Task<DataSnapshot> task) {
-//                if (task.isSuccessful()) {
-//                    Log.d("REALTIME", task.getResult().toString());
-//                    for (DataSnapshot postSnap: task.getResult().getChildren()) {
-//                        model.add(postSnap.getValue(Message.class));
-//                        chatAdapter.notifyItemInserted(chatAdapter.getItemCount());
-//                    }
-//                }
-//            }
-//        });
 
         inputMsg = findViewById(R.id.inputMsg);
         inputMsg.addTextChangedListener(new TextWatcher() {
@@ -168,6 +165,65 @@ public class ChatroomActivity extends AppCompatActivity {
         });
     }
 
+
+    private boolean moving = false;
+    private float offsetX, initY;
+
+    View.OnTouchListener swipeAway = new View.OnTouchListener() {
+        @Override
+        public boolean onTouch(View view, MotionEvent motionEvent) {
+            switch(motionEvent.getAction()) {
+                case MotionEvent.ACTION_UP:
+                    if (root.getX() > (float) displayMetrics.widthPixels /2) {
+                        root.animate()
+                                .x(displayMetrics.widthPixels )
+                                .setDuration(200)
+                                .start();
+
+                        finish();
+                    } else {
+                        root.animate()
+                                .x(0)
+                                .setDuration(200)
+                                .start();
+                    }
+                    moving = false;
+
+                    break;
+                case MotionEvent.ACTION_MOVE:
+                    if (!moving) {
+                        offsetX = root.getX() - motionEvent.getRawX();
+                        initY = motionEvent.getRawY();
+                        moving = true;
+                        break;
+                    }
+
+                    if (Math.abs(motionEvent.getRawY() - initY) < (float) displayMetrics.heightPixels/8) {
+                        if (motionEvent.getRawX() > -offsetX || root.getX() > 0) {
+                            root.animate()
+                                    .x(motionEvent.getRawX() + offsetX)
+                                    .setDuration(0)
+                                    .start();
+                        } else {
+                            root.animate()
+                                    .x(50 * (motionEvent.getRawX() + offsetX) / displayMetrics.widthPixels)
+                                    .setDuration(0)
+                                    .start();
+                        }
+                    } else {
+                        offsetX = root.getX() - motionEvent.getRawX();
+                        root.animate()
+                                .x(0)
+                                .setDuration(0)
+                                .start();
+                    }
+                    break;
+            }
+            view.performClick();
+            return false;
+        }
+    };
+
     private class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ChatHolder> {
         private List<Message> messages = null;
         public ChatAdapter(List<Message> messages) {
@@ -183,12 +239,27 @@ public class ChatroomActivity extends AppCompatActivity {
 
         @Override
         public void onBindViewHolder(@NonNull ChatHolder holder, int position) {
+            String prevUsername = "";
+            if (position > 0) {
+                prevUsername = messages.get(position-1).username;
+            }
+
             Message message = messages.get(position);
-            Picasso.get()
-                    .load(message.pfp)
-                    .into(holder.pfpIcon);
             holder.chatMessage.setText(message.messageTxt);
-            holder.username.setText(message.username);
+
+            if (!message.username.equals(prevUsername)) {
+                holder.username.setText(message.username);
+                Picasso.get()
+                        .load(message.pfp)
+                        .into(holder.pfpIcon);
+            } else {
+                holder.pfpIcon.setVisibility(View.GONE);
+                holder.username.setVisibility(View.GONE);
+            }
+
+            holder.itemView.setOnClickListener(view -> {
+                Toast.makeText(ChatroomActivity.this.getApplicationContext(), "message clicked", Toast.LENGTH_SHORT).show();
+            });
         }
 
         @Override
