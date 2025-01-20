@@ -1,8 +1,12 @@
 package com.sp.madproj;
 
+import android.app.Activity;
+import android.content.ClipData;
+import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
+import android.provider.MediaStore;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.DisplayMetrics;
@@ -19,6 +23,10 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.activity.result.ActivityResult;
+import androidx.activity.result.ActivityResultCallback;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.constraintlayout.widget.ConstraintLayout;
@@ -35,6 +43,7 @@ import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.ValueEventListener;
 import com.squareup.picasso.Picasso;
 
 import java.util.ArrayList;
@@ -49,6 +58,7 @@ public class ChatFrag extends Fragment {
 
     private EditText inputMsg;
     private ImageButton sendMsgBtn;
+    private ActivityResultLauncher<Intent> getImage;
 
     private RecyclerView chatMessages;
     private List<Message> model = new ArrayList<Message>();
@@ -102,12 +112,11 @@ public class ChatFrag extends Fragment {
         chatAdapter = new ChatAdapter(model);
         chatAdapter.registerAdapterDataObserver(new RecyclerView.AdapterDataObserver() {
             @Override
-            public void onItemRangeInserted(int positionStart, int itemCount) {
-                super.onItemRangeInserted(positionStart, itemCount);
+            public void onChanged() {
+                super.onChanged();
                 chatMessages.smoothScrollToPosition(chatAdapter.getItemCount());
             }
         });
-
         chatMessages = view.findViewById(R.id.chatMessages);
         chatMessages.setLayoutManager(new LinearLayoutManager(getContext()));
         chatMessages.setItemAnimator(new DefaultItemAnimator());
@@ -118,30 +127,19 @@ public class ChatFrag extends Fragment {
         Log.d("Realtime DB", messages.toString());
 
         messages.keepSynced(true);
-        messages.addChildEventListener(new ChildEventListener() {
+        messages.addValueEventListener(new ValueEventListener() {
             @Override
-            public void onChildAdded(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) {
-                model.add(snapshot.getValue(Message.class));
-                chatAdapter.notifyItemInserted(model.size());
-            }
-
-            @Override
-            public void onChildChanged(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) {
-
-            }
-
-            @Override
-            public void onChildRemoved(@NonNull DataSnapshot snapshot) {
-
-            }
-
-            @Override
-            public void onChildMoved(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) {
-
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                model.clear();
+                for (DataSnapshot child: snapshot.getChildren()) {
+                    model.add(child.getValue(Message.class));
+                }
+                chatAdapter.notifyDataSetChanged();
             }
 
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
+
             }
         });
 
@@ -185,7 +183,67 @@ public class ChatFrag extends Fragment {
             }
         });
 
+        view.findViewById(R.id.sendImageBtn).setOnClickListener(
+                new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        Intent intent = new Intent(Intent.ACTION_GET_CONTENT)
+                                .putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true)
+                                .setType("image/*");
+                        getImage.launch(intent);
+                    }
+                }
+        );
+
+        getImage = registerForActivityResult(
+                new ActivityResultContracts.StartActivityForResult(),
+                new ActivityResultCallback<ActivityResult>() {
+                    @Override
+                    public void onActivityResult(ActivityResult result) {
+                        if (result.getResultCode() == Activity.RESULT_OK) {
+                            ClipData data = result.getData().getClipData();
+                            if (data == null) {
+                                Toast.makeText(getActivity().getApplicationContext(), "Error", Toast.LENGTH_SHORT).show();
+                                return;
+                            }
+                            UploadThread uploadThread = null;
+                            for (int i = 0; i < data.getItemCount(); i++) {
+                                Log.d("IMAGES", "onActivityResult: " + data.getItemAt(i).getUri().toString());
+
+                                uploadThread = new UploadThread(data.getItemAt(i).getUri());
+                                uploadThread.setPriority(i+1);
+                                uploadThread.start();
+                            }
+
+                            try {
+                                uploadThread.join();
+
+                                for (int i = 0; i < imageKeyList.size(); i++) {
+                                    Log.d("IMAGES KEY", "onActivityResult: " + imageKeyList.get(i));
+                                }
+                            } catch (InterruptedException e) {
+                                throw new RuntimeException(e);
+                            }
+
+//                            Toast.makeText(getActivity().getApplicationContext(), data.getData().toString(), Toast.LENGTH_SHORT).show();
+//                            Storage.uploadImgSupa(getContext(), data.getData(), Storage.chatroomImageStorage);
+                        }
+                    }
+                });
+
         return view;
+    }
+
+    private List<String> imageKeyList = new ArrayList<>();
+    private class UploadThread extends Thread {
+        Uri imageUri;
+        UploadThread(Uri imageUri) {
+            this.imageUri = imageUri;
+        }
+
+        public void run() {
+            imageKeyList.add(Storage.uploadImgSupa(getActivity(), imageUri, Storage.chatroomImageStorage));
+        }
     }
 
     @Override
@@ -239,7 +297,7 @@ public class ChatFrag extends Fragment {
                         break;
                     }
 
-                    if (Math.abs(motionEvent.getRawY() - initY) < (float) displayMetrics.heightPixels/8) {
+                    if (Math.abs(motionEvent.getRawY() - initY) < (float) displayMetrics.heightPixels/16) {
                         if (motionEvent.getRawX() > -offsetX || root.getX() > 0) {
                             root.animate()
                                     .x(motionEvent.getRawX() + offsetX)
@@ -293,6 +351,8 @@ public class ChatFrag extends Fragment {
                 Picasso.get()
                         .load(message.pfp)
                         .into(holder.pfpIcon);
+                holder.pfpIcon.setVisibility(View.VISIBLE);
+                holder.username.setVisibility(View.VISIBLE);
             } else {
                 holder.pfpIcon.setVisibility(View.GONE);
                 holder.username.setVisibility(View.GONE);

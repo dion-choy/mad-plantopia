@@ -96,34 +96,23 @@ public class FeedFrag extends Fragment {
             Log.d("USER EMAIL: ", email);
         }
 
-        DatabaseReference chats = Database.get().getReference();
-        chats.addChildEventListener(new ChildEventListener() {
+        model.clear();
+        DatabaseReference chats = Database.get().getReference().child("rooms");
+        chats.addValueEventListener(new ValueEventListener() {
             @Override
-            public void onChildAdded(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) {
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                model.clear();
                 updateMenu(snapshot);
             }
 
             @Override
-            public void onChildChanged(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) {
-                updateMenu(snapshot);
+            public void onCancelled(@NonNull DatabaseError error) {
+
             }
-
-            @Override
-            public void onChildRemoved(@NonNull DataSnapshot snapshot) {
-                updateMenu(snapshot);
-            }
-
-            @Override
-            public void onChildMoved(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) { }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError error) { }
         });
     }
 
     private void updateMenu(DataSnapshot snapshot) {
-        model.clear();
-
         for (DataSnapshot child: snapshot.getChildren()) {
             Log.d("REALTIME", "onChildAdded: " + child.toString());
             DatabaseReference chatInfo = child.getRef().child("info");
@@ -132,7 +121,7 @@ public class FeedFrag extends Fragment {
                 @Override
                 public void onDataChange(@NonNull DataSnapshot snapshot) {
                     model.add(snapshot.getValue(Chatroom.class));
-                    chatRoomAdapter.notifyItemInserted(model.size());
+                    chatRoomAdapter.notifyDataSetChanged();
                 }
 
                 @Override
@@ -250,8 +239,11 @@ public class FeedFrag extends Fragment {
         public void onBindViewHolder(@NonNull ChatRoomHolder holder, int position) {
 
             Chatroom chatroom = chatrooms.get(position);
-            holder.chatName.setText(chatroom.name);
+            if (chatroom == null) {
+                return;
+            }
 
+            holder.chatName.setText(chatroom.name);
             Picasso.get()
                     .load(Storage.chatroomIconStorage + chatroom.iconKey)
                     .into(holder.chatIcon);

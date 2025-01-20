@@ -47,6 +47,13 @@ public class FeedSettingsActivity extends AppCompatActivity {
             }
         });
 
+        findViewById(R.id.backBtn).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                finish();
+            }
+        });
+
         findViewById(R.id.delete).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -91,7 +98,7 @@ public class FeedSettingsActivity extends AppCompatActivity {
                 .load(currentUser.getPhotoUrl())
                 .into((ImageView) findViewById(R.id.pfpIcon));
 
-        ((TextView) findViewById(R.id.chatName))
+        ((TextView) findViewById(R.id.username))
                 .setText(currentUser.getDisplayName());
 
         ((TextView) findViewById(R.id.email))
