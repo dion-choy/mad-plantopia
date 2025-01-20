@@ -145,7 +145,7 @@ public class SignUpActivity extends AppCompatActivity {
                             if (user != null) {
                                 UserProfileChangeRequest profileUpdates = new UserProfileChangeRequest.Builder()
                                         .setDisplayName(username.getText().toString())
-                                        .setPhotoUri(Uri.parse(FeedFrag.pfpStorage + "default.png"))
+                                        .setPhotoUri(Uri.parse(Storage.pfpStorage + "default.png"))
                                         .build();
 
                                 user.updateProfile(profileUpdates)

@@ -118,7 +118,7 @@ public class IdResultActivity extends AppCompatActivity {
             JSONObject apiReplyObj = new JSONObject(apiReply);
 
             Picasso.get()
-                    .load(IdentifyFrag.identifStorage + imgKey)
+                    .load(Storage.identifStorage + imgKey)
                     .into(inputImage);
 
             boolean isPlant = apiReplyObj.getJSONObject("result")

@@ -57,7 +57,6 @@ public class FeedFrag extends Fragment {
     private FloatingActionButton openGalleryBtn;
     private TextView shade;
 
-    public final static String pfpStorage = "https://upevuilypqhjisraltzb.supabase.co/storage/v1/object/images/pfp/";
 
     private FirebaseAuth auth = FirebaseAuth.getInstance();
     private FirebaseUser currentUser;
@@ -127,12 +126,12 @@ public class FeedFrag extends Fragment {
 
         for (DataSnapshot child: snapshot.getChildren()) {
             Log.d("REALTIME", "onChildAdded: " + child.toString());
-            DatabaseReference chatInfo = child.getRef().child("info").child("name");
+            DatabaseReference chatInfo = child.getRef().child("info");
             Log.d("REALTIME", "onChildAdded: " + chatInfo);
             chatInfo.addListenerForSingleValueEvent(new ValueEventListener() {
                 @Override
                 public void onDataChange(@NonNull DataSnapshot snapshot) {
-                    model.add(new Chatroom((String) snapshot.getValue()));
+                    model.add(snapshot.getValue(Chatroom.class));
                     chatRoomAdapter.notifyItemInserted(model.size());
                 }
 
@@ -253,9 +252,9 @@ public class FeedFrag extends Fragment {
             Chatroom chatroom = chatrooms.get(position);
             holder.chatName.setText(chatroom.name);
 
-//            Picasso.get()
-//                    .load(message.pfp)
-//                    .into(holder.pfpIcon);
+            Picasso.get()
+                    .load(Storage.chatroomIconStorage + chatroom.iconKey)
+                    .into(holder.chatIcon);
 
             holder.itemView.setOnClickListener(new View.OnClickListener() {
                 @Override
@@ -278,9 +277,11 @@ public class FeedFrag extends Fragment {
 
         class ChatRoomHolder extends RecyclerView.ViewHolder{
             private TextView chatName;
+            private ImageView chatIcon;
             public ChatRoomHolder(View view) {
                 super(view);
                 this.chatName = view.findViewById(R.id.chatName);
+                this.chatIcon = view.findViewById(R.id.chatIcon);
             }
         }
     }

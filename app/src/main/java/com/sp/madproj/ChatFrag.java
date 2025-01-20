@@ -315,7 +315,7 @@ public class ChatFrag extends Fragment {
             public ChatHolder(View view) {
                 super(view);
                 this.chatMessage = view.findViewById(R.id.chatMessage);
-                this.username = view.findViewById(R.id.chatName);
+                this.username = view.findViewById(R.id.username);
                 this.pfpIcon = view.findViewById(R.id.pfpIcon);
             }
         }
