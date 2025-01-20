@@ -2,10 +2,12 @@ package com.sp.madproj;
 
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Handler;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.DisplayMetrics;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
@@ -19,8 +21,8 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.constraintlayout.widget.ConstraintLayout;
+import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.DefaultItemAnimator;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -33,14 +35,12 @@ import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.FirebaseDatabase;
 import com.squareup.picasso.Picasso;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class ChatroomActivity extends AppCompatActivity {
-
+public class ChatFrag extends Fragment {
     private Animation disableSend;
     private Animation enableSend;
 
@@ -54,28 +54,50 @@ public class ChatroomActivity extends AppCompatActivity {
     private List<Message> model = new ArrayList<Message>();
     private ChatAdapter chatAdapter;
 
-    private final String databaseUrl = " https://plantopia-backend-ecce9-default-rtdb.asia-southeast1.firebasedatabase.app";
-    private final FirebaseDatabase database = FirebaseDatabase.getInstance(databaseUrl);
     private FirebaseAuth auth = FirebaseAuth.getInstance();
-    private DatabaseReference realtimeDB;
+    private DatabaseReference messages;
 
     private String username = "";
     private Uri pfp = null;
 
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_chatroom);
+    public ChatFrag() {
+        // Required empty public constructor
+    }
 
-        disableSend = AnimationUtils.loadAnimation(this, R.anim.disable_send);
-        enableSend = AnimationUtils.loadAnimation(this, R.anim.enable_send);
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+    }
+
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+                             Bundle savedInstanceState) {
+        // Inflate the layout for this fragment
+        View view = inflater.inflate(R.layout.fragment_chatroom, container, false);
+
+        String roomName = getArguments().getString("roomName");
+        if (roomName == null) {
+            destroyFragment();
+        }
+
+        disableSend = AnimationUtils.loadAnimation(getContext(), R.anim.disable_send);
+        enableSend = AnimationUtils.loadAnimation(getContext(), R.anim.enable_send);
 
         username = auth.getCurrentUser().getDisplayName();
         pfp = auth.getCurrentUser().getPhotoUrl();
 
-        root = findViewById(R.id.root);
+        view.findViewById(R.id.backBtn).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                destroyFragment();
+            }
+        });
+
+        ((TextView) view.findViewById(R.id.groupName)).setText(roomName);
+
+        root = view.findViewById(R.id.root);
         displayMetrics = new DisplayMetrics();
-        getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
+        getActivity().getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
 
         chatAdapter = new ChatAdapter(model);
         chatAdapter.registerAdapterDataObserver(new RecyclerView.AdapterDataObserver() {
@@ -86,22 +108,21 @@ public class ChatroomActivity extends AppCompatActivity {
             }
         });
 
-        chatMessages = findViewById(R.id.chatMessages);
-        chatMessages.setLayoutManager(new LinearLayoutManager(this));
+        chatMessages = view.findViewById(R.id.chatMessages);
+        chatMessages.setLayoutManager(new LinearLayoutManager(getContext()));
         chatMessages.setItemAnimator(new DefaultItemAnimator());
         chatMessages.setAdapter(chatAdapter);
         chatMessages.setOnTouchListener(swipeAway);
 
-        realtimeDB = database.getReference("rooms");
-        Log.d("Realtime DB", realtimeDB.toString());
+        messages = Database.get().getReference("rooms").child(roomName).child("messages");
+        Log.d("Realtime DB", messages.toString());
 
-        realtimeDB.keepSynced(true);
-
-        realtimeDB.addChildEventListener(new ChildEventListener() {
+        messages.keepSynced(true);
+        messages.addChildEventListener(new ChildEventListener() {
             @Override
             public void onChildAdded(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) {
                 model.add(snapshot.getValue(Message.class));
-                chatAdapter.notifyItemInserted(chatAdapter.getItemCount());
+                chatAdapter.notifyItemInserted(model.size());
             }
 
             @Override
@@ -124,7 +145,7 @@ public class ChatroomActivity extends AppCompatActivity {
             }
         });
 
-        inputMsg = findViewById(R.id.inputMsg);
+        inputMsg = view.findViewById(R.id.inputMsg);
         inputMsg.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {}
@@ -144,16 +165,16 @@ public class ChatroomActivity extends AppCompatActivity {
             public void afterTextChanged(Editable editable) {}
         });
 
-        sendMsgBtn = findViewById(R.id.sendMessageBtn);
+        sendMsgBtn = view.findViewById(R.id.sendMessageBtn);
         sendMsgBtn.startAnimation(disableSend);
         sendMsgBtn.setEnabled(false);
         sendMsgBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                String pushKey = realtimeDB.push().getKey();
+                String pushKey = messages.push().getKey();
                 Log.d("Firebase realtime db", pushKey);
                 Message message = new Message(username, pfp, inputMsg.getText().toString().trim(), Timestamp.now());
-                realtimeDB.child(pushKey).setValue(message).addOnCompleteListener(new OnCompleteListener<Void>() {
+                messages.child(pushKey).setValue(message).addOnCompleteListener(new OnCompleteListener<Void>() {
                     @Override
                     public void onComplete(@NonNull Task<Void> task) {
                         Log.d("REALTIME DB ADD", "onComplete: Notification added successfully!");
@@ -163,8 +184,22 @@ public class ChatroomActivity extends AppCompatActivity {
                 inputMsg.setText("");
             }
         });
+
+        return view;
     }
 
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        model.clear();
+    }
+
+    private void destroyFragment() {
+        getParentFragmentManager()
+                .beginTransaction()
+                .remove(ChatFrag.this)
+                .commit();
+    }
 
     private boolean moving = false;
     private float offsetX, initY;
@@ -180,7 +215,13 @@ public class ChatroomActivity extends AppCompatActivity {
                                 .setDuration(200)
                                 .start();
 
-                        finish();
+                        Handler handler = new Handler();
+                        handler.postDelayed(new Runnable() {
+                                                @Override
+                                                public void run() {
+                                                    destroyFragment();
+                                                }
+                                            }, 200);
                     } else {
                         root.animate()
                                 .x(0)
@@ -232,13 +273,13 @@ public class ChatroomActivity extends AppCompatActivity {
 
         @NonNull
         @Override
-        public ChatHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+        public ChatAdapter.ChatHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
             View view = getLayoutInflater().inflate(R.layout.row_chat, parent, false);
-            return new ChatHolder(view);
+            return new ChatAdapter.ChatHolder(view);
         }
 
         @Override
-        public void onBindViewHolder(@NonNull ChatHolder holder, int position) {
+        public void onBindViewHolder(@NonNull ChatAdapter.ChatHolder holder, int position) {
             String prevUsername = "";
             if (position > 0) {
                 prevUsername = messages.get(position-1).username;
@@ -258,7 +299,7 @@ public class ChatroomActivity extends AppCompatActivity {
             }
 
             holder.itemView.setOnClickListener(view -> {
-                Toast.makeText(ChatroomActivity.this.getApplicationContext(), "message clicked", Toast.LENGTH_SHORT).show();
+                Toast.makeText(getActivity().getApplicationContext(), "message clicked", Toast.LENGTH_SHORT).show();
             });
         }
 
@@ -274,7 +315,7 @@ public class ChatroomActivity extends AppCompatActivity {
             public ChatHolder(View view) {
                 super(view);
                 this.chatMessage = view.findViewById(R.id.chatMessage);
-                this.username = view.findViewById(R.id.username);
+                this.username = view.findViewById(R.id.chatName);
                 this.pfpIcon = view.findViewById(R.id.pfpIcon);
             }
         }

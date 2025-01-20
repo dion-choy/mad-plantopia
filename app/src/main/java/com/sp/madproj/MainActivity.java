@@ -3,7 +3,6 @@ package com.sp.madproj;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.provider.MediaStore;
 import android.util.Log;
 import android.view.MenuItem;
 import android.widget.Toast;
@@ -17,14 +16,12 @@ import com.google.android.material.navigation.NavigationBarView;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.FirebaseDatabase;
+
+import java.util.Objects;
 
 public class MainActivity extends AppCompatActivity {
     private BottomNavigationView navBar;
     private FragmentManager fragManager = getSupportFragmentManager();
-
-    private final String databaseUrl = " https://plantopia-backend-ecce9-default-rtdb.asia-southeast1.firebasedatabase.app";
-    private final FirebaseDatabase database = FirebaseDatabase.getInstance(databaseUrl);
 
     private HomeFrag homeFrag;
     private PlantFrag plantFrag;
@@ -32,6 +29,7 @@ public class MainActivity extends AppCompatActivity {
     private FeedFrag feedFrag;
     private BadgeFrag badgeFrag;
     private LandingPageFrag landingPageFrag;
+    public ChatFrag chatFrag;
 
     public GPSTracker gpsTracker;
 
@@ -59,10 +57,6 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     public void onBackPressed() {
-//        if (fragManager.findFragmentById(R.id.viewFrag) == homeFrag) {
-//            return;
-//        }
-
         if (fragManager.findFragmentById(R.id.viewFrag) == identifyFrag && identifyFrag.getView().findViewById(R.id.idPlant).getContentDescription().equals("Close options")) {
             identifyFrag.closeOptions();
             return;
@@ -71,6 +65,11 @@ public class MainActivity extends AppCompatActivity {
             return;
         } else if (fragManager.findFragmentById(R.id.viewFrag) == plantFrag && plantFrag.getView().findViewById(R.id.openMenu).getContentDescription().equals("Close options")) {
             plantFrag.closeOptions();
+            return;
+        } else if (Objects.equals(fragManager.findFragmentById(R.id.chatFrag), chatFrag)) {
+            fragManager.beginTransaction()
+                    .remove(chatFrag)
+                    .commit();
             return;
         }
 
@@ -96,8 +95,6 @@ public class MainActivity extends AppCompatActivity {
 
         context = getContext();
 
-        database.setPersistenceEnabled(true);
-
         navBar = findViewById(R.id.bottomNav);
         navBar.setOnItemSelectedListener(switchPage);
 
@@ -107,6 +104,7 @@ public class MainActivity extends AppCompatActivity {
         feedFrag = new FeedFrag();
         badgeFrag = new BadgeFrag();
         landingPageFrag = new LandingPageFrag();
+        chatFrag = new ChatFrag();
 
         fragManager.beginTransaction()
                 .replace(R.id.viewFrag, homeFrag)

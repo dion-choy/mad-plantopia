@@ -7,12 +7,8 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import androidx.activity.EdgeToEdge;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.graphics.Insets;
-import androidx.core.view.ViewCompat;
-import androidx.core.view.WindowInsetsCompat;
 
 import com.android.volley.AuthFailureError;
 import com.android.volley.NoConnectionError;
@@ -27,9 +23,6 @@ import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.squareup.picasso.Picasso;
-
-import org.json.JSONException;
-import org.json.JSONObject;
 
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
@@ -98,7 +91,7 @@ public class FeedSettingsActivity extends AppCompatActivity {
                 .load(currentUser.getPhotoUrl())
                 .into((ImageView) findViewById(R.id.pfpIcon));
 
-        ((TextView) findViewById(R.id.username))
+        ((TextView) findViewById(R.id.chatName))
                 .setText(currentUser.getDisplayName());
 
         ((TextView) findViewById(R.id.email))
