@@ -22,7 +22,7 @@
             android:layout_height="?attr/actionBarSize"
             android:title="Identification"
             android:titleTextColor="@color/light_background"
-            android:visibility="gone" />
+            android:visibility="visible" />
 
     </com.google.android.material.appbar.AppBarLayout>
 

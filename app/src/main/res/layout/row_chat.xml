@@ -44,6 +44,101 @@
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/username" />
+
+        <androidx.cardview.widget.CardView
+            android:id="@+id/imageContainer"
+            android:layout_width="match_parent"
+            android:layout_height="330dp"
+            android:layout_marginStart="70dp"
+            android:layout_marginTop="10dp"
+            android:layout_marginEnd="10dp"
+            android:visibility="visible"
+            app:cardCornerRadius="16dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/chatMessage">
+
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent">
+
+                <ImageView
+                    android:id="@+id/imageTopLeft"
+                    android:layout_width="0dp"
+                    android:layout_height="0dp"
+                    android:scaleType="centerCrop"
+                    android:visibility="visible"
+                    app:layout_constraintBottom_toTopOf="@id/imageBottomLeft"
+                    app:layout_constraintEnd_toStartOf="@id/imageTopRight"
+                    app:layout_constraintHorizontal_weight="1"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:layout_constraintVertical_weight="1"
+                    app:srcCompat="@drawable/gallery"
+                    tools:layout_constraintEnd_toEndOf="parent" />
+
+                <ImageView
+                    android:id="@+id/imageTopRight"
+                    android:layout_width="0dp"
+                    android:layout_height="0dp"
+                    android:scaleType="centerCrop"
+                    android:visibility="visible"
+                    app:layout_constraintBottom_toTopOf="@id/imageBottomLeft"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintHorizontal_weight="1"
+                    app:layout_constraintStart_toEndOf="@id/imageTopLeft"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:layout_constraintVertical_weight="1"
+                    app:srcCompat="@drawable/gallery"
+                    tools:layout_constraintEnd_toEndOf="parent" />
+
+                <ImageView
+                    android:id="@+id/imageBottomLeft"
+                    android:layout_width="0dp"
+                    android:layout_height="0dp"
+                    android:scaleType="centerCrop"
+                    android:visibility="visible"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toStartOf="@id/imageBottomRight"
+                    app:layout_constraintHorizontal_weight="1"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@id/imageTopLeft"
+                    app:layout_constraintVertical_weight="1"
+                    app:srcCompat="@drawable/gallery"
+                    tools:layout_constraintEnd_toEndOf="parent" />
+
+                <ImageView
+                    android:id="@+id/imageBottomRight"
+                    android:layout_width="0dp"
+                    android:layout_height="0dp"
+                    android:scaleType="centerCrop"
+                    android:visibility="visible"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintHorizontal_weight="1"
+                    app:layout_constraintStart_toEndOf="@id/imageBottomLeft"
+                    app:layout_constraintTop_toBottomOf="@id/imageTopRight"
+                    app:layout_constraintVertical_weight="1"
+                    app:srcCompat="@drawable/gallery"
+                    tools:layout_constraintEnd_toEndOf="parent" />
+
+                <TextView
+                    android:id="@+id/extraImages"
+                    android:layout_width="0dp"
+                    android:layout_height="0dp"
+                    android:background="#B6000000"
+                    android:gravity="center"
+                    android:text="+0"
+                    android:textSize="48sp"
+                    app:layout_constraintBottom_toBottomOf="@id/imageBottomRight"
+                    app:layout_constraintEnd_toEndOf="@id/imageBottomRight"
+                    app:layout_constraintStart_toStartOf="@id/imageBottomRight"
+                    app:layout_constraintTop_toTopOf="@id/imageBottomRight" />
+
+            </androidx.constraintlayout.widget.ConstraintLayout>
+
+        </androidx.cardview.widget.CardView>
+
     </androidx.constraintlayout.widget.ConstraintLayout>
 
 </LinearLayout>

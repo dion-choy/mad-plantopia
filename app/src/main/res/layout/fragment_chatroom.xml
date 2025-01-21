@@ -67,6 +67,15 @@
             android:padding="8dp"
             app:layout_constraintBottom_toBottomOf="parent">
 
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/sendImagesList"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                app:layout_constraintBottom_toTopOf="@id/inputMsg"
+                app:layout_constraintTop_toTopOf="parent"
+                tools:layout_editor_absoluteX="8dp" />
+
             <ImageButton
                 android:id="@+id/sendImageBtn"
                 android:layout_width="48dp"

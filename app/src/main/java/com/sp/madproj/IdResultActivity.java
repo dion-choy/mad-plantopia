@@ -119,6 +119,7 @@ public class IdResultActivity extends AppCompatActivity {
 
             Picasso.get()
                     .load(Storage.identifStorage + imgKey)
+                    .placeholder(R.drawable.plant_flower)
                     .into(inputImage);
 
             boolean isPlant = apiReplyObj.getJSONObject("result")
@@ -224,7 +225,9 @@ public class IdResultActivity extends AppCompatActivity {
                     Picasso.get()
                             .load(result.getJSONArray("similar_images" ).getJSONObject(0)
                                             .getString("url")
-                            ).into(holder.similarImage);
+                            )
+                            .placeholder(R.drawable.plant_flower)
+                            .into(holder.similarImage);
                 }
             } catch (Exception e) {
                 Log.e("Malformed Response", e.toString());

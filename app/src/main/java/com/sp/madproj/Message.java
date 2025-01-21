@@ -5,15 +5,20 @@ import android.net.Uri;
 import com.google.firebase.Timestamp;
 import com.google.firebase.database.IgnoreExtraProperties;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @IgnoreExtraProperties
 public class Message {
     public String username;
     public String pfp;
     public String messageTxt;
     public TimestampLoader timestamp;
+    public List<String> imageKeys;
 
     public Message() {
         // Required empty constructor
+        imageKeys = new ArrayList<>();
     }
 
     public Message(String username, Uri pfp, String messageTxt, Timestamp timestamp) {
@@ -21,5 +26,6 @@ public class Message {
         this.pfp = pfp.toString();
         this.messageTxt = messageTxt;
         this.timestamp = new TimestampLoader(timestamp);
+        imageKeys = new ArrayList<>();
     }
 }

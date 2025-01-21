@@ -57,23 +57,17 @@ public class FeedSettingsActivity extends AppCompatActivity {
         findViewById(R.id.delete).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Thread thread = new Thread(new Runnable() {
-                    @Override
-                    public void run() {
-                        deleteUser(currentUser.getDisplayName());
-                    }
-                });
-                thread.start();
-
                 currentUser.delete().addOnCompleteListener(new OnCompleteListener<Void>() {
                     @Override
                     public void onComplete(@NonNull Task<Void> task) {
                         if (task.isSuccessful()) {
-                            try {
-                                thread.join();
-                            } catch (InterruptedException e) {
-                                throw new RuntimeException(e);
-                            }
+                            new Thread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    deleteUser(currentUser.getDisplayName());
+                                }
+                            }).start();
+
                             auth.signOut();
                             finish();
                         } else {
@@ -96,6 +90,7 @@ public class FeedSettingsActivity extends AppCompatActivity {
 
         Picasso.get()
                 .load(currentUser.getPhotoUrl())
+                .placeholder(R.mipmap.default_pfp_foreground)
                 .into((ImageView) findViewById(R.id.pfpIcon));
 
         ((TextView) findViewById(R.id.username))

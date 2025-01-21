@@ -16,8 +16,16 @@ import com.google.android.material.navigation.NavigationBarView;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DatabaseReference;
+import com.squareup.picasso.OkHttp3Downloader;
+import com.squareup.picasso.Picasso;
 
+import java.io.IOException;
 import java.util.Objects;
+
+import okhttp3.Interceptor;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
 
 public class MainActivity extends AppCompatActivity {
     private BottomNavigationView navBar;
@@ -111,6 +119,13 @@ public class MainActivity extends AppCompatActivity {
                 .setReorderingAllowed(false)
                 .disallowAddToBackStack()
                 .commit();
+
+        Picasso picasso = new Picasso
+                .Builder(this)
+                .downloader(new OkHttp3Downloader(okHttpClient))
+                .build();
+
+        Picasso.setSingletonInstance(picasso);
     }
 
     @Override
@@ -152,6 +167,33 @@ public class MainActivity extends AppCompatActivity {
         super.onDestroy();
         DatabaseReference.goOffline();
     }
+
+    private OkHttpClient okHttpClient = new OkHttpClient.Builder()
+            .addInterceptor(new Interceptor() {
+                @Override
+                public Response intercept(Chain chain) throws IOException {
+                    Request request = chain.request();
+                    Response response = chain.proceed(request);
+                    int tryCount = 0;
+                    while (!response.isSuccessful() && tryCount < 5) {
+                        tryCount++;
+                        try {
+                            Thread.sleep(2000);
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+                        response = chain.proceed(request);
+                        Log.i("Picasso Download Image", "Attempt: " + tryCount + ", " + 2*tryCount + "seconds");
+                    }
+                    if (response.isSuccessful()) {
+                        Log.i("Picasso Download Image", "Success: " + request.url());
+                    } else {
+                        Log.e("Picasso Download Image", "Failed: " + request.url());
+                    }
+                    return response;
+                }
+            })
+            .build();
 
     public void updateLocation() {
         if (gpsTracker.canGetLocation()) {

@@ -270,7 +270,10 @@ public class IdentifyFrag extends Fragment {
             holder.date.setText(helper.getDate(cursor).substring(0, 11));
 
             String imageUrl = Storage.identifStorage + helper.getImage(cursor);
-            Picasso.get().load(imageUrl).into(holder.image);
+            Picasso.get()
+                    .load(imageUrl)
+                    .placeholder(R.drawable.plant_flower)
+                    .into(holder.image);
 
             holder.itemView.setOnClickListener(new View.OnClickListener() {
                 @Override

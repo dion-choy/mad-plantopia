@@ -95,21 +95,6 @@ public class FeedFrag extends Fragment {
             Log.d("USER NAME: ", username);
             Log.d("USER EMAIL: ", email);
         }
-
-        model.clear();
-        DatabaseReference chats = Database.get().getReference().child("rooms");
-        chats.addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot snapshot) {
-                model.clear();
-                updateMenu(snapshot);
-            }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError error) {
-
-            }
-        });
     }
 
     private void updateMenu(DataSnapshot snapshot) {
@@ -152,18 +137,26 @@ public class FeedFrag extends Fragment {
         });
 
         chatRoomAdapter = new ChatRoomAdapter(model);
-        chatRoomAdapter.registerAdapterDataObserver(new RecyclerView.AdapterDataObserver() {
-            @Override
-            public void onItemRangeInserted(int positionStart, int itemCount) {
-                super.onItemRangeInserted(positionStart, itemCount);
-                chatRooms.smoothScrollToPosition(chatRoomAdapter.getItemCount());
-            }
-        });
 
         chatRooms = view.findViewById(R.id.chatRooms);
         chatRooms.setLayoutManager(new LinearLayoutManager(getContext()));
         chatRooms.setItemAnimator(new DefaultItemAnimator());
         chatRooms.setAdapter(chatRoomAdapter);
+
+        model.clear();
+        DatabaseReference chats = Database.get().getReference().child("rooms");
+        chats.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                model.clear();
+                updateMenu(snapshot);
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+
+            }
+        });
 
         addPost = view.findViewById(R.id.addPost);
         addPost.setOnClickListener(
@@ -246,6 +239,7 @@ public class FeedFrag extends Fragment {
             holder.chatName.setText(chatroom.name);
             Picasso.get()
                     .load(Storage.chatroomIconStorage + chatroom.iconKey)
+                    .placeholder(R.mipmap.default_pfp_foreground)
                     .into(holder.chatIcon);
 
             holder.itemView.setOnClickListener(new View.OnClickListener() {
