@@ -10,12 +10,14 @@ import android.provider.MediaStore;
 import android.util.Log;
 import android.widget.Toast;
 
+import com.android.volley.AuthFailureError;
 import com.android.volley.NetworkResponse;
 import com.android.volley.NoConnectionError;
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
+import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
 
 import java.io.ByteArrayOutputStream;
@@ -32,6 +34,38 @@ public class Storage {
     public final static String identifStorage = baseUrl + "identification/";
     public final static String chatroomIconStorage = baseUrl + "chatroom/icons/";
     public final static String chatroomImageStorage = baseUrl + "chatroom/images/";
+
+    public static void deleteObjSup(Context context, String storagePath) {
+
+        RequestQueue queue = Volley.newRequestQueue(context);
+
+        StringRequest request = new StringRequest(Request.Method.DELETE, storagePath,
+                new Response.Listener<String>() {
+                    @Override
+                    public void onResponse(String response) {
+                        Log.d("Storage API", "onResponse: " + response);
+                    }
+                }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                Log.e("Storage API Error", "Response Error: " + error.toString());
+                Log.e("Storage API Error", "Response Error: " + error.getMessage());
+
+                if (error.getClass() == NoConnectionError.class) {
+                    Toast.makeText(context.getApplicationContext(), "Please connect to internet", Toast.LENGTH_SHORT).show();
+                }
+            }
+        }) {
+            @Override
+            public Map<String, String> getHeaders() throws AuthFailureError {
+                Map<String, String> header = new HashMap<String, String>();
+                header.put("Authorization", "Bearer " + BuildConfig.SUPA_KEY);
+                return header;
+            }
+        };
+
+        queue.add(request);
+    }
 
     public static String uploadImgSupa(Context context, Uri uri, String storagePath) {
         Matrix matrix = new Matrix();
@@ -70,7 +104,7 @@ public class Storage {
         Map<String, String> header = new HashMap<String, String>();
         header.put("Authorization", "Bearer " + BuildConfig.SUPA_KEY);
 
-        String rng = String.valueOf((int) Math.floor(Math.random()*2147483647));
+        String rng = String.valueOf((int) Math.floor(Math.random()*Integer.MAX_VALUE));
         String apiUrl = storagePath +  rng + ".jpg";
 
         MultipartRequest request = new MultipartRequest(Request.Method.POST,

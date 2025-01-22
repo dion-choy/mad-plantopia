@@ -11,6 +11,7 @@ import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.DisplayMetrics;
 import android.util.Log;
+import android.view.DragEvent;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
@@ -264,8 +265,7 @@ public class ChatFrag extends Fragment {
                 .commit();
     }
 
-
-    View.OnTouchListener swipeAway = new View.OnTouchListener() {
+    private View.OnTouchListener swipeAway = new View.OnTouchListener() {
         private boolean moving = false;
         private float offsetX, initY;
 
@@ -478,6 +478,9 @@ public class ChatFrag extends Fragment {
             }
 
             holder.itemView.setOnClickListener(view -> {
+                Intent intent = new Intent(getContext(), ExpandImages.class);
+                intent.putStringArrayListExtra("images", (ArrayList<String>) message.imageKeys);
+                startActivity(intent);
                 Toast.makeText(getActivity().getApplicationContext(), "message clicked", Toast.LENGTH_SHORT).show();
             });
         }

@@ -82,6 +82,7 @@ public class IdResultActivity extends AppCompatActivity {
                     public boolean onMenuItemClick(MenuItem menuItem) {
                         if (menuItem.getItemId() == R.id.delete) {
                             idHelper.delete(recordId, imgKey, IdResultActivity.this);
+                            Storage.deleteObjSup(IdResultActivity.this, Storage.identifStorage + imgKey);
                             finish();
                             return true;
                         }

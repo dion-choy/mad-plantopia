@@ -175,7 +175,7 @@ public class AddPlantActivity extends AppCompatActivity {
                         speciesInput.setSelection(selectionStart, selectionEnd);
                     }
                     prevQuery = query;
-                    Toast.makeText(getApplicationContext(), "Response", Toast.LENGTH_SHORT).show();
+//                    Toast.makeText(getApplicationContext(), "Response", Toast.LENGTH_SHORT).show();
                     Log.d("Plant API Success", matches.getJSONObject(0).getString("entity_name"));
                 } catch (JSONException e) {
                     Log.e("Plant API Error", "Malformed Response: " + e.toString());

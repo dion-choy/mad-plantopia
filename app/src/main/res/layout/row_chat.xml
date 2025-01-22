@@ -129,6 +129,7 @@
                     android:background="#B6000000"
                     android:gravity="center"
                     android:text="+0"
+                    android:textColor="@color/dark_text"
                     android:textSize="48sp"
                     app:layout_constraintBottom_toBottomOf="@id/imageBottomRight"
                     app:layout_constraintEnd_toEndOf="@id/imageBottomRight"
