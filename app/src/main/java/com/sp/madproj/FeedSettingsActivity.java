@@ -3,12 +3,14 @@ package com.sp.madproj;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.constraintlayout.widget.ConstraintLayout;
 
 import com.android.volley.AuthFailureError;
 import com.android.volley.NoConnectionError;
@@ -20,6 +22,8 @@ import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
+import com.google.firebase.auth.AuthCredential;
+import com.google.firebase.auth.EmailAuthProvider;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.squareup.picasso.Picasso;
@@ -29,10 +33,21 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class FeedSettingsActivity extends AppCompatActivity {
-    private FirebaseAuth auth = FirebaseAuth.getInstance();
+    private final FirebaseAuth auth = FirebaseAuth.getInstance();
     private FirebaseUser currentUser;
 
-    private final String astraDbUrl = "https://60fa55e9-e981-4ca4-8e90-d1dacc1dac57-eu-west-1.apps.astra.datastax.com/api/rest/v2/cql?keyspaceQP=users";
+    private final String astraDbUrl = "https://60fa55e9-e981-4ca4-8e90-d1dacc1dac57-eu-west-1.apps.astra.datastax.com/api/rest/v2/cql?keyspaceQP=plantopia";
+
+    private ConstraintLayout authContainer;
+
+    @Override
+    public void onBackPressed() {
+        if (authContainer.getVisibility() == View.VISIBLE) {
+            authContainer.setVisibility(View.GONE);
+            return;
+        }
+        super.onBackPressed();
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -54,27 +69,64 @@ public class FeedSettingsActivity extends AppCompatActivity {
             }
         });
 
+        authContainer = findViewById(R.id.reauth_container);
+        authContainer.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                authContainer.setVisibility(View.GONE);
+            }
+        });
+
         findViewById(R.id.delete).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                currentUser.delete().addOnCompleteListener(new OnCompleteListener<Void>() {
-                    @Override
-                    public void onComplete(@NonNull Task<Void> task) {
-                        if (task.isSuccessful()) {
-                            new Thread(new Runnable() {
-                                @Override
-                                public void run() {
-                                    deleteUser(currentUser.getDisplayName());
-                                }
-                            }).start();
+                authContainer.setVisibility(View.VISIBLE);
+            }
+        });
 
-                            auth.signOut();
-                            finish();
-                        } else {
-                            Log.e("USER DELETE ERROR", task.getException().toString());
-                        }
-                    }
-                });
+        findViewById(R.id.authBtn).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+
+                AuthCredential credential = EmailAuthProvider
+                        .getCredential(
+                                user.getEmail(),
+                                ((EditText) findViewById(R.id.passwordReauth)).getText().toString());
+
+                user.reauthenticate(credential)
+                        .addOnCompleteListener(new OnCompleteListener<Void>() {
+                            @Override
+                            public void onComplete(@NonNull Task<Void> task) {
+                                if (task.isSuccessful()) {
+                                    Log.d("USER REAUTH SUCCESS", "User re-authenticated.");
+
+                                    String username = currentUser.getDisplayName();
+                                    currentUser.delete().addOnCompleteListener(new OnCompleteListener<Void>() {
+                                        @Override
+                                        public void onComplete(@NonNull Task<Void> task) {
+                                            if (task.isSuccessful()) {
+                                                new Thread(new Runnable() {
+                                                    @Override
+                                                    public void run() {
+                                                        deleteUser(username);
+                                                    }
+                                                }).start();
+
+                                                auth.signOut();
+                                                finish();
+                                            } else {
+                                                Log.e("USER DELETE ERROR", task.getException().toString());
+                                                Toast.makeText(getApplicationContext(), "Error deleting account", Toast.LENGTH_SHORT).show();
+                                            }
+                                        }
+                                    });
+                                } else {
+                                    Log.e("USER REAUTH ERROR", task.getException().toString());
+                                    Toast.makeText(getApplicationContext(), "Error reauthenticating account", Toast.LENGTH_SHORT).show();
+                                }
+                            }
+                        });
             }
         });
     }
@@ -110,7 +162,7 @@ public class FeedSettingsActivity extends AppCompatActivity {
                 new Response.Listener<String>() {
                     @Override
                     public void onResponse(String response) {
-                        Log.d("USERS", response.toString());
+                        Log.d("USERS", response);
                     }
                 }, new Response.ErrorListener() {
             @Override
@@ -124,7 +176,7 @@ public class FeedSettingsActivity extends AppCompatActivity {
         ) {
             @Override
             public byte[] getBody() throws AuthFailureError {
-                return (" DELETE FROM users.user_info WHERE username='" + username + "';").getBytes(StandardCharsets.UTF_8);
+                return ("DELETE FROM plantopia.user_info WHERE username='" + username + "';").getBytes(StandardCharsets.UTF_8);
             }
 
             @Override

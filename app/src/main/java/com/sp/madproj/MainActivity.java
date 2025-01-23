@@ -125,7 +125,12 @@ public class MainActivity extends AppCompatActivity {
                 .downloader(new OkHttp3Downloader(okHttpClient))
                 .build();
 
-        Picasso.setSingletonInstance(picasso);
+        try {
+            Picasso.setSingletonInstance(picasso);
+        } catch (IllegalStateException e) {
+            Log.e("Picasso", e.toString());
+            Log.e("Picasso", e.getMessage());
+        }
     }
 
     @Override
@@ -142,6 +147,7 @@ public class MainActivity extends AppCompatActivity {
 
         Log.d("RESUME", "FEED RESUMED");
 
+        navBar.setSelectedItemId(R.id.homeTab);
         if (fragManager.findFragmentById(R.id.viewFrag) == feedFrag || fragManager.findFragmentById(R.id.viewFrag) == landingPageFrag) {
             currentUser = auth.getCurrentUser();
             if (currentUser != null){

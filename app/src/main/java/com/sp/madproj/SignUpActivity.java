@@ -37,8 +37,8 @@ import java.util.Map;
 
 public class SignUpActivity extends AppCompatActivity {
 
-    private FirebaseAuth auth = FirebaseAuth.getInstance();
-    private final String astraDbUrl = "https://60fa55e9-e981-4ca4-8e90-d1dacc1dac57-eu-west-1.apps.astra.datastax.com/api/rest/v2/cql?keyspaceQP=users";
+    private final FirebaseAuth auth = FirebaseAuth.getInstance();
+    private final String astraDbUrl = "https://60fa55e9-e981-4ca4-8e90-d1dacc1dac57-eu-west-1.apps.astra.datastax.com/api/rest/v2/cql?keyspaceQP=plantopia";
 
     private TextInputEditText username;
     private TextInputEditText email;
@@ -90,6 +90,8 @@ public class SignUpActivity extends AppCompatActivity {
         public void onClick(View view) {
             if (username.getText().toString().isEmpty()) {
                 usernameContainer.setError("Enter your username");
+            } else if (username.getText().toString().contains(" ")) {
+                usernameContainer.setError("Username cannot contain space");
             } else {
                 if (usernameContainer.isErrorEnabled() && usernameContainer.getError().equals("Enter your username")) {
                     usernameContainer.setErrorEnabled(false);
@@ -191,7 +193,7 @@ public class SignUpActivity extends AppCompatActivity {
                 new Response.Listener<String>() {
                     @Override
                     public void onResponse(String response) {
-                        Log.d("USERS", response.toString());
+                        Log.d("USERS", response);
                     }
                 }, new Response.ErrorListener() {
             @Override
@@ -205,7 +207,7 @@ public class SignUpActivity extends AppCompatActivity {
         ) {
             @Override
             public byte[] getBody() throws AuthFailureError {
-                return ("INSERT INTO users.user_info (username, email) VALUES('" + username +
+                return ("INSERT INTO plantopia.user_info (username, email) VALUES('" + username +
                         "', '" + email + "');").getBytes(StandardCharsets.UTF_8);
             }
 
@@ -230,9 +232,9 @@ public class SignUpActivity extends AppCompatActivity {
                 new Response.Listener<String>() {
                     @Override
                     public void onResponse(String response) {
-                        Log.d("USERS", response.toString());
+                        Log.d("USERS", response);
                         try {
-                            JSONObject responseObj = new JSONObject(response.toString());
+                            JSONObject responseObj = new JSONObject(response);
                             if (responseObj.getInt("count") > 0) {
                                 usernameContainer.setError("Username in use already");
                                 continuteValidation(true);
@@ -250,6 +252,7 @@ public class SignUpActivity extends AppCompatActivity {
             @Override
             public void onErrorResponse(VolleyError error) {
                 Log.e("USERS ERROR", error.toString());
+                Log.e("USER ERROR", "SELECT * FROM user_info WHERE plantopia.username = '" + username + "';");
                 if (error.getClass() == NoConnectionError.class) {
                     Toast.makeText(getApplicationContext(), "Please connect to internet", Toast.LENGTH_SHORT).show();
                 }
@@ -258,7 +261,7 @@ public class SignUpActivity extends AppCompatActivity {
         ) {
             @Override
             public byte[] getBody() throws AuthFailureError {
-                return ("SELECT * FROM users.user_info WHERE username = '" + username + "';").getBytes(StandardCharsets.UTF_8);
+                return ("SELECT * FROM plantopia.user_info WHERE username = '" + username + "';").getBytes(StandardCharsets.UTF_8);
             }
 
             @Override

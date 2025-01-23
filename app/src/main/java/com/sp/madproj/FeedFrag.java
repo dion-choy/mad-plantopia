@@ -105,7 +105,8 @@ public class FeedFrag extends Fragment {
             chatInfo.addListenerForSingleValueEvent(new ValueEventListener() {
                 @Override
                 public void onDataChange(@NonNull DataSnapshot snapshot) {
-                    model.add(snapshot.getValue(Chatroom.class));
+                    model.add((Chatroom) snapshot.getValue(Chatroom.class)
+                            .setCode(child.getKey()));
                     chatRoomAdapter.notifyDataSetChanged();
                 }
 
@@ -246,6 +247,7 @@ public class FeedFrag extends Fragment {
                 @Override
                 public void onClick(View view) {
                     Bundle roomName = new Bundle();
+                    roomName.putString("roomCode", chatroom.code);
                     roomName.putString("roomName", chatroom.name);
                     ((MainActivity) getActivity()).chatFrag.setArguments(roomName);
                     getActivity().getSupportFragmentManager()

@@ -91,10 +91,12 @@ public class ChatFrag extends Fragment {
         // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_chatroom, container, false);
 
+        String roomCode = getArguments().getString("roomCode");
         String roomName = getArguments().getString("roomName");
-        if (roomName == null) {
+        if (roomCode == null) {
             destroyFragment();
         }
+        Log.d("ROOM INFO", "RoomCode: "+ roomCode + "RoomName:" + roomName);
 
         disableSend = AnimationUtils.loadAnimation(getContext(), R.anim.disable_send);
         enableSend = AnimationUtils.loadAnimation(getContext(), R.anim.enable_send);
@@ -129,7 +131,7 @@ public class ChatFrag extends Fragment {
         chatMessages.setAdapter(chatAdapter);
         chatMessages.setOnTouchListener(swipeAway);
 
-        messages = Database.get().getReference("rooms").child(roomName).child("messages");
+        messages = Database.get().getReference("rooms").child(roomCode).child("messages");
         Log.d("Realtime DB", messages.toString());
 
         messages.keepSynced(true);
@@ -273,7 +275,7 @@ public class ChatFrag extends Fragment {
         public boolean onTouch(View view, MotionEvent motionEvent) {
             switch(motionEvent.getAction()) {
                 case MotionEvent.ACTION_UP:
-                    if (root.getX() > (float) displayMetrics.widthPixels /4) {
+                    if (root.getX() > (float) displayMetrics.widthPixels /5) {
                         root.animate()
                                 .x(displayMetrics.widthPixels )
                                 .setDuration(200)
@@ -323,8 +325,10 @@ public class ChatFrag extends Fragment {
                                 .start();
                     }
                     break;
+                case MotionEvent.ACTION_BUTTON_RELEASE:
+                    view.performClick();
+                    break;
             }
-            view.performClick();
             return false;
         }
     };
@@ -477,11 +481,19 @@ public class ChatFrag extends Fragment {
                 holder.imageBottomRight.setVisibility(View.GONE);
             }
 
+            holder.itemView.setOnTouchListener(swipeAway);
+
             holder.itemView.setOnClickListener(view -> {
-                Intent intent = new Intent(getContext(), ExpandImages.class);
-                intent.putStringArrayListExtra("images", (ArrayList<String>) message.imageKeys);
-                startActivity(intent);
                 Toast.makeText(getActivity().getApplicationContext(), "message clicked", Toast.LENGTH_SHORT).show();
+            });
+
+            holder.imageContainer.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    Intent intent = new Intent(getContext(), ExpandImages.class);
+                    intent.putStringArrayListExtra("images", (ArrayList<String>) message.imageKeys);
+                    startActivity(intent);
+                }
             });
         }
 
