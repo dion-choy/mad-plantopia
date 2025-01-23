@@ -1,5 +1,9 @@
 package com.sp.madproj;
 
+import android.app.Activity;
+import android.content.ClipData;
+import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -8,6 +12,10 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.activity.result.ActivityResult;
+import androidx.activity.result.ActivityResultCallback;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.constraintlayout.widget.ConstraintLayout;
@@ -26,6 +34,8 @@ import com.google.firebase.auth.AuthCredential;
 import com.google.firebase.auth.EmailAuthProvider;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.auth.UserProfileChangeRequest;
+import com.squareup.picasso.Callback;
 import com.squareup.picasso.Picasso;
 
 import java.nio.charset.StandardCharsets;
@@ -39,6 +49,9 @@ public class FeedSettingsActivity extends AppCompatActivity {
     private final String astraDbUrl = "https://60fa55e9-e981-4ca4-8e90-d1dacc1dac57-eu-west-1.apps.astra.datastax.com/api/rest/v2/cql?keyspaceQP=plantopia";
 
     private ConstraintLayout authContainer;
+    private ActivityResultLauncher<Intent> getImage;
+
+    private ImageView pfpIcon;
 
     @Override
     public void onBackPressed() {
@@ -100,27 +113,7 @@ public class FeedSettingsActivity extends AppCompatActivity {
                             public void onComplete(@NonNull Task<Void> task) {
                                 if (task.isSuccessful()) {
                                     Log.d("USER REAUTH SUCCESS", "User re-authenticated.");
-
-                                    String username = currentUser.getDisplayName();
-                                    currentUser.delete().addOnCompleteListener(new OnCompleteListener<Void>() {
-                                        @Override
-                                        public void onComplete(@NonNull Task<Void> task) {
-                                            if (task.isSuccessful()) {
-                                                new Thread(new Runnable() {
-                                                    @Override
-                                                    public void run() {
-                                                        deleteUser(username);
-                                                    }
-                                                }).start();
-
-                                                auth.signOut();
-                                                finish();
-                                            } else {
-                                                Log.e("USER DELETE ERROR", task.getException().toString());
-                                                Toast.makeText(getApplicationContext(), "Error deleting account", Toast.LENGTH_SHORT).show();
-                                            }
-                                        }
-                                    });
+                                    deleteFromFirebase();
                                 } else {
                                     Log.e("USER REAUTH ERROR", task.getException().toString());
                                     Toast.makeText(getApplicationContext(), "Error reauthenticating account", Toast.LENGTH_SHORT).show();
@@ -129,6 +122,62 @@ public class FeedSettingsActivity extends AppCompatActivity {
                         });
             }
         });
+
+        findViewById(R.id.changePfp).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
+                intent.setType("image/*");
+                getImage.launch(intent);
+            }
+        });
+
+        getImage = registerForActivityResult(
+                new ActivityResultContracts.StartActivityForResult(),
+                new ActivityResultCallback<ActivityResult>() {
+                    @Override
+                    public void onActivityResult(ActivityResult result) {
+                        if (result.getResultCode() == Activity.RESULT_OK || result.getResultCode() == CamActivtity.IMAGE_URI
+                                && result.getData() != null) {
+                            Uri imageUri = result.getData().getData();
+                            Log.d("result", imageUri.toString());
+
+                            String imageKey = Storage.uploadImgSupa(FeedSettingsActivity.this, imageUri, Storage.pfpStorage);
+
+                            UserProfileChangeRequest profileUpdates = new UserProfileChangeRequest.Builder()
+                                    .setPhotoUri(Uri.parse(Storage.pfpStorage + imageKey))
+                                    .build();
+
+                            FirebaseUser user = auth.getCurrentUser();
+                            if (!user.getPhotoUrl().toString().equals(Storage.pfpStorage + "default.png")) {
+                                Storage.deleteObjSup(FeedSettingsActivity.this, auth.getCurrentUser().getPhotoUrl().toString());
+                            }
+
+                            user.updateProfile(profileUpdates)
+                                    .addOnCompleteListener(new OnCompleteListener<Void>() {
+                                        @Override
+                                        public void onComplete(@NonNull Task<Void> task) {
+                                            if (task.isSuccessful()) {
+                                                Log.d("USER PROFILE", "User profile updated.");
+                                                Picasso.get()
+                                                        .load(currentUser.getPhotoUrl())
+                                                        .placeholder(R.mipmap.default_pfp_foreground)
+                                                        .into(pfpIcon, new Callback() {
+                                                            @Override
+                                                            public void onSuccess() {
+                                                                pfpIcon.setImageTintList(null);
+                                                            }
+
+                                                            @Override
+                                                            public void onError(Exception e) {}
+                                                        });
+                                            }
+                                        }
+                                    });
+
+                        }
+                    }
+                });
     }
 
     @Override
@@ -140,10 +189,19 @@ public class FeedSettingsActivity extends AppCompatActivity {
             finish();
         }
 
+        pfpIcon = findViewById(R.id.pfpIcon);
         Picasso.get()
                 .load(currentUser.getPhotoUrl())
                 .placeholder(R.mipmap.default_pfp_foreground)
-                .into((ImageView) findViewById(R.id.pfpIcon));
+                .into(pfpIcon, new Callback() {
+                    @Override
+                    public void onSuccess() {
+                        pfpIcon.setImageTintList(null);
+                    }
+
+                    @Override
+                    public void onError(Exception e) {}
+                });
 
         ((TextView) findViewById(R.id.username))
                 .setText(currentUser.getDisplayName());
@@ -153,7 +211,31 @@ public class FeedSettingsActivity extends AppCompatActivity {
 
     }
 
-    private void deleteUser(String username) {
+    private void deleteFromFirebase() {
+        String username = currentUser.getDisplayName();
+        currentUser.delete().addOnCompleteListener(new OnCompleteListener<Void>() {
+            @Override
+            public void onComplete(@NonNull Task<Void> task) {
+                if (task.isSuccessful()) {
+                    new Thread(new Runnable() {
+                        @Override
+                        public void run() {
+                            deleteFromAstra(username);
+                        }
+                    }).start();
+
+                    auth.signOut();
+                    finish();
+                } else {
+                    Log.e("USER DELETE ERROR", task.getException().toString());
+                    Toast.makeText(getApplicationContext(), "Error deleting account", Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
+    }
+
+
+    private void deleteFromAstra(String username) {
         RequestQueue queue = Volley.newRequestQueue(FeedSettingsActivity.this);
 
         StringRequest stringRequest = new StringRequest(

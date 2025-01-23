@@ -34,13 +34,20 @@
                 android:src="@drawable/back_btn"
                 app:tint="?android:attr/textColor" />
 
-            <ImageView
-                android:id="@+id/groupIcon"
-                android:layout_width="44dp"
-                android:layout_height="44dp"
+            <androidx.cardview.widget.CardView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:elevation="0dp"
                 android:layout_marginHorizontal="10dp"
-                android:src="@mipmap/default_pfp_foreground"
-                app:tint="?android:attr/textColor" />
+                app:cardElevation="0dp"
+                app:cardCornerRadius="100dp">
+                <ImageView
+                    android:id="@+id/groupIcon"
+                    android:layout_width="44dp"
+                    android:layout_height="44dp"
+                    android:src="@mipmap/default_pfp_foreground"
+                    app:tint="?android:attr/textColor" />
+            </androidx.cardview.widget.CardView>
 
             <TextView
                 android:id="@+id/groupName"

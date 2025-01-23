@@ -10,6 +10,11 @@
         <item name="colorPrimaryContainer">@color/nav_bar_background</item>
     </style>
 
+    <style name="circleImageView" parent="">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">50%</item>
+    </style>
+
     <style name="Base.Theme.MADproj" parent="Theme.Material3.DayNight.NoActionBar">
         <!-- Customize your light theme here. -->
         <item name="android:textColor">@color/black</item>

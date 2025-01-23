@@ -34,6 +34,8 @@ import org.json.JSONObject;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Timer;
+import java.util.TimerTask;
 
 public class SignUpActivity extends AppCompatActivity {
 
@@ -160,7 +162,12 @@ public class SignUpActivity extends AppCompatActivity {
                                             }
                                         });
 
-                                findViewById(R.id.resendEmail).setVisibility(View.VISIBLE);
+                                new Timer().schedule(new TimerTask() {
+                                    @Override
+                                    public void run() {
+                                        findViewById(R.id.resendEmail).setVisibility(View.VISIBLE);
+                                    }
+                                }, 500);
                                 sendVerificationEmail(user);
                             }
                         } else {

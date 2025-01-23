@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.content.ClipData;
 import android.content.Context;
 import android.content.Intent;
+import android.content.res.ColorStateList;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
@@ -45,6 +46,7 @@ import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.ValueEventListener;
+import com.squareup.picasso.Callback;
 import com.squareup.picasso.Picasso;
 
 import java.util.ArrayList;
@@ -415,7 +417,15 @@ public class ChatFrag extends Fragment {
                 Picasso.get()
                         .load(message.pfp)
                         .placeholder(R.mipmap.default_pfp_foreground)
-                        .into(holder.pfpIcon);
+                        .into(holder.pfpIcon, new Callback() {
+                            @Override
+                            public void onSuccess() {
+                                holder.pfpIcon.setImageTintList(null);
+                            }
+
+                            @Override
+                            public void onError(Exception e) {}
+                        });
                 holder.pfpIcon.setVisibility(View.VISIBLE);
                 holder.username.setVisibility(View.VISIBLE);
             } else {

@@ -147,7 +147,6 @@ public class MainActivity extends AppCompatActivity {
 
         Log.d("RESUME", "FEED RESUMED");
 
-        navBar.setSelectedItemId(R.id.homeTab);
         if (fragManager.findFragmentById(R.id.viewFrag) == feedFrag || fragManager.findFragmentById(R.id.viewFrag) == landingPageFrag) {
             currentUser = auth.getCurrentUser();
             if (currentUser != null){
