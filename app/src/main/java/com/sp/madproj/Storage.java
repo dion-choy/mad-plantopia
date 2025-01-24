@@ -28,14 +28,14 @@ import java.util.Map;
 
 import uk.me.hardill.volley.multipart.MultipartRequest;
 
-public class Storage {
-    public final static String baseUrl = "https://upevuilypqhjisraltzb.supabase.co/storage/v1/object/images/";
-    public final static String pfpStorage = baseUrl + "pfp/";
-    public final static String identifStorage = baseUrl + "identification/";
-    public final static String chatroomIconStorage = baseUrl + "chatroom/icons/";
-    public final static String chatroomImageStorage = baseUrl + "chatroom/images/";
+public static class Storage {
+    public final String baseUrl = "https://upevuilypqhjisraltzb.supabase.co/storage/v1/object/images/";
+    public final String pfpStorage = baseUrl + "pfp/";
+    public final String identifStorage = baseUrl + "identification/";
+    public final String chatroomIconStorage = baseUrl + "chatroom/icons/";
+    public final String chatroomImageStorage = baseUrl + "chatroom/images/";
 
-    public static void deleteObjSup(Context context, String storagePath) {
+    public void deleteObjSup(Context context, String storagePath) {
 
         RequestQueue queue = Volley.newRequestQueue(context);
 
@@ -67,7 +67,7 @@ public class Storage {
         queue.add(request);
     }
 
-    public static String uploadImgSupa(Context context, Uri uri, String storagePath) {
+    public String uploadImgSupa(Context context, Uri uri, String storagePath) {
         Matrix matrix = new Matrix();
         switch (getBitmapOriention(getRealPathFromURI(context, uri))) {
             case ExifInterface.ORIENTATION_NORMAL:
@@ -137,7 +137,7 @@ public class Storage {
         return rng + ".jpg";
     }
 
-    public static int getBitmapOriention(String path){
+    public int getBitmapOriention(String path){
         ExifInterface exif = null;
         int orientation = 0;
         try {
@@ -151,7 +151,7 @@ public class Storage {
         return orientation;
     }
 
-    public static String getRealPathFromURI(Context context, Uri contentUri) {
+    public String getRealPathFromURI(Context context, Uri contentUri) {
         Cursor cursor = null;
         try {
             String[] proj = { MediaStore.Images.Media.DATA };
