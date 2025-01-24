@@ -1,8 +1,12 @@
 package com.sp.madproj;
 
 import android.database.Cursor;
+import android.graphics.Bitmap;
+import android.graphics.Matrix;
+import android.media.ExifInterface;
 import android.net.Uri;
 import android.os.Bundle;
+import android.provider.MediaStore;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
@@ -24,6 +28,8 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -145,7 +151,31 @@ public class IdResultActivity extends AppCompatActivity {
     }
 
     void loadResult(String inputUriStr, String apiReply, String imgKey) {
-        inputImage.setImageURI(Uri.parse(inputUriStr));
+        Matrix matrix = new Matrix();
+        switch (Storage.getBitmapOriention(Storage.getRealPathFromURI(this, Uri.parse(inputUriStr)))) {
+            case ExifInterface.ORIENTATION_NORMAL:
+                matrix.postRotate(0);
+                break;
+            case ExifInterface.ORIENTATION_ROTATE_90:
+                matrix.postRotate(90);
+                break;
+            case ExifInterface.ORIENTATION_ROTATE_180:
+                matrix.postRotate(180);
+                break;
+            case ExifInterface.ORIENTATION_ROTATE_270:
+                matrix.postRotate(270);
+                break;
+        }
+
+        Bitmap bitmap = null;
+        try {
+            bitmap = MediaStore.Images.Media.getBitmap(this.getContentResolver(), Uri.parse(inputUriStr));
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+        bitmap = Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true);
+        inputImage.setImageBitmap(bitmap);
 
         try {
             JSONObject apiReplyObj = new JSONObject(apiReply);

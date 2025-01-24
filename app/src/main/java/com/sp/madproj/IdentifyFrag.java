@@ -4,9 +4,6 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
-import android.graphics.Bitmap;
-import android.graphics.Matrix;
-import android.media.ExifInterface;
 import android.net.Uri;
 import android.os.Bundle;
 
@@ -20,7 +17,6 @@ import androidx.recyclerview.widget.DefaultItemAnimator;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import android.provider.MediaStore;
 import android.util.Base64;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -33,7 +29,6 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.android.volley.AuthFailureError;
-import com.android.volley.NetworkResponse;
 import com.android.volley.NoConnectionError;
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
@@ -52,13 +47,11 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
-import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 
 import pl.droidsonroids.gif.GifImageView;
-import uk.me.hardill.volley.multipart.MultipartRequest;
 
 public class IdentifyFrag extends Fragment {
     private Animation fromBottomFabAnim;
@@ -148,7 +141,7 @@ public class IdentifyFrag extends Fragment {
                 new View.OnClickListener() {
                     @Override
                     public void onClick(View view) {
-                        getImage.launch(new Intent(getActivity(), CamActivtity.class));
+                        getImage.launch(new Intent(getActivity(), CamActivity.class));
                     }
                 }
         );
@@ -178,7 +171,7 @@ public class IdentifyFrag extends Fragment {
                 new ActivityResultCallback<ActivityResult>() {
                     @Override
                     public void onActivityResult(ActivityResult result) {
-                        if (result.getResultCode() == Activity.RESULT_OK || result.getResultCode() == CamActivtity.IMAGE_URI
+                        if (result.getResultCode() == Activity.RESULT_OK || result.getResultCode() == CamActivity.IMAGE_URI
                         && result.getData() != null) {
                             Uri imageUri = result.getData().getData();
 //                            Toast.makeText(getActivity().getApplicationContext(), imageUri.toString(), Toast.LENGTH_SHORT).show();

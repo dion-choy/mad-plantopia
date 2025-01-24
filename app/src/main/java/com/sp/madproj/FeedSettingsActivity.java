@@ -1,7 +1,6 @@
 package com.sp.madproj;
 
 import android.app.Activity;
-import android.content.ClipData;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
@@ -137,7 +136,7 @@ public class FeedSettingsActivity extends AppCompatActivity {
                 new ActivityResultCallback<ActivityResult>() {
                     @Override
                     public void onActivityResult(ActivityResult result) {
-                        if (result.getResultCode() == Activity.RESULT_OK || result.getResultCode() == CamActivtity.IMAGE_URI
+                        if (result.getResultCode() == Activity.RESULT_OK || result.getResultCode() == CamActivity.IMAGE_URI
                                 && result.getData() != null) {
                             Uri imageUri = result.getData().getData();
                             Log.d("result", imageUri.toString());
@@ -159,6 +158,8 @@ public class FeedSettingsActivity extends AppCompatActivity {
                                         public void onComplete(@NonNull Task<Void> task) {
                                             if (task.isSuccessful()) {
                                                 Log.d("USER PROFILE", "User profile updated.");
+                                                Toast.makeText(FeedSettingsActivity.this, "Profile picture updated", Toast.LENGTH_SHORT)
+                                                                .show();
                                                 Picasso.get()
                                                         .load(currentUser.getPhotoUrl())
                                                         .placeholder(R.mipmap.default_pfp_foreground)

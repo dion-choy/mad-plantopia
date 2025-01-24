@@ -33,10 +33,11 @@ import com.google.common.util.concurrent.ListenableFuture;
 
 import java.util.concurrent.ExecutionException;
 
-public class CamActivtity extends AppCompatActivity {
+public class CamActivity extends AppCompatActivity {
 
 
     private static final int CAMERA_REQUEST_CODE = 10;
+    private static final int WRITE_REQUEST_CODE = 11;
     public static final int IMAGE_URI = 0;
     private PreviewView previewView;
     private ListenableFuture<ProcessCameraProvider> cameraProviderFuture;
@@ -100,7 +101,7 @@ public class CamActivtity extends AppCompatActivity {
                         try {
                             ProcessCameraProvider cameraProvider = cameraProviderFuture.get();
                             cameraProvider.unbindAll();
-                            cameraProvider.bindToLifecycle(CamActivtity.this, CameraSelector.DEFAULT_BACK_CAMERA, imageCapture);
+                            cameraProvider.bindToLifecycle(CamActivity.this, CameraSelector.DEFAULT_BACK_CAMERA, imageCapture);
                         } catch (ExecutionException | InterruptedException e) {
                             Log.d("error", "Could not open camera: " + e.getMessage());
                         }
@@ -135,6 +136,14 @@ public class CamActivtity extends AppCompatActivity {
                     new String[]{Manifest.permission.CAMERA},
                     CAMERA_REQUEST_CODE);
         }
+
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this,
+                    new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
+                    WRITE_REQUEST_CODE);
+        }
+
+
     }
 
     private void takePhoto() {
