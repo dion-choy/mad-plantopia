@@ -137,13 +137,13 @@ public class CamActivity extends AppCompatActivity {
                     CAMERA_REQUEST_CODE);
         }
 
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this,
-                    new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
-                    WRITE_REQUEST_CODE);
+        if (Build.VERSION.SDK_INT < 29) {
+            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+                ActivityCompat.requestPermissions(this,
+                        new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
+                        WRITE_REQUEST_CODE);
+            }
         }
-
-
     }
 
     private void takePhoto() {
