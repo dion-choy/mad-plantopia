@@ -95,7 +95,10 @@ public class SignUpActivity extends AppCompatActivity {
             } else if (username.getText().toString().contains(" ")) {
                 usernameContainer.setError("Username cannot contain space");
             } else {
-                if (usernameContainer.isErrorEnabled() && usernameContainer.getError().equals("Enter your username")) {
+                if (usernameContainer.isErrorEnabled() &&
+                        (usernameContainer.getError().equals("Enter your username") ||
+                                usernameContainer.getError().equals("Username cannot contain space"))
+                ) {
                     usernameContainer.setErrorEnabled(false);
                 }
 
@@ -162,12 +165,7 @@ public class SignUpActivity extends AppCompatActivity {
                                             }
                                         });
 
-                                new Timer().schedule(new TimerTask() {
-                                    @Override
-                                    public void run() {
-                                        findViewById(R.id.resendEmail).setVisibility(View.VISIBLE);
-                                    }
-                                }, 500);
+                                findViewById(R.id.resendEmail).setVisibility(View.VISIBLE);
                                 sendVerificationEmail(user);
                             }
                         } else {
