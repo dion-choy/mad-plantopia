@@ -29,6 +29,7 @@ import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
+import com.google.android.material.textfield.TextInputLayout;
 import com.google.firebase.auth.AuthCredential;
 import com.google.firebase.auth.EmailAuthProvider;
 import com.google.firebase.auth.FirebaseAuth;
@@ -99,12 +100,17 @@ public class FeedSettingsActivity extends AppCompatActivity {
         findViewById(R.id.authBtn).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                EditText passwordEdit = findViewById(R.id.passwordReauth);
+                if (passwordEdit.getText().toString().isEmpty()) {
+                    ((TextInputLayout) findViewById(R.id.passwordContainer)).setError("Enter a password");
+                    return;
+                }
                 FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
 
                 AuthCredential credential = EmailAuthProvider
                         .getCredential(
                                 user.getEmail(),
-                                ((EditText) findViewById(R.id.passwordReauth)).getText().toString());
+                                passwordEdit.getText().toString());
 
                 user.reauthenticate(credential)
                         .addOnCompleteListener(new OnCompleteListener<Void>() {
@@ -114,8 +120,9 @@ public class FeedSettingsActivity extends AppCompatActivity {
                                     Log.d("USER REAUTH SUCCESS", "User re-authenticated.");
                                     deleteFromFirebase();
                                 } else {
+                                    ((TextInputLayout) findViewById(R.id.passwordContainer)).setError("Wrong password");
                                     Log.e("USER REAUTH ERROR", task.getException().toString());
-                                    Toast.makeText(getApplicationContext(), "Error reauthenticating account", Toast.LENGTH_SHORT).show();
+//                                    Toast.makeText(getApplicationContext(), "Error reauthenticating account", Toast.LENGTH_SHORT).show();
                                 }
                             }
                         });
