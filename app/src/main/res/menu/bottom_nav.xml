@@ -16,7 +16,7 @@
     <item
         android:id="@+id/feedTab"
         android:icon="@drawable/feed_icon"
-        android:title="Feed" />
+        android:title="Community" />
     <item
         android:id="@+id/badgesTab"
         android:icon="@drawable/badge_icon"

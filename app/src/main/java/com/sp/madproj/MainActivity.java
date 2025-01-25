@@ -68,7 +68,7 @@ public class MainActivity extends AppCompatActivity {
         if (fragManager.findFragmentById(R.id.viewFrag) == identifyFrag && identifyFrag.getView().findViewById(R.id.idPlant).getContentDescription().equals("Close options")) {
             identifyFrag.closeOptions();
             return;
-        } else if (fragManager.findFragmentById(R.id.viewFrag) == feedFrag && feedFrag.getView().findViewById(R.id.openMenu).getContentDescription().equals("Close options")) {
+        } else if (fragManager.findFragmentById(R.id.viewFrag) == feedFrag && feedFrag.getView().findViewById(R.id.addRoom).getContentDescription().equals("Close options")) {
             feedFrag.closeOptions();
             return;
         } else if (fragManager.findFragmentById(R.id.viewFrag) == plantFrag && plantFrag.getView().findViewById(R.id.openMenu).getContentDescription().equals("Close options")) {

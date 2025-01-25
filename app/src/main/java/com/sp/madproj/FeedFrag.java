@@ -1,15 +1,17 @@
 package com.sp.madproj;
 
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
-import android.provider.MediaStore;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
+import android.view.inputmethod.InputMethodManager;
+import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -20,6 +22,7 @@ import androidx.activity.result.ActivityResultCallback;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
+import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.DefaultItemAnimator;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -31,10 +34,13 @@ import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.GenericTypeIndicator;
 import com.google.firebase.database.ValueEventListener;
+import com.squareup.picasso.Callback;
 import com.squareup.picasso.Picasso;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 public class FeedFrag extends Fragment {
@@ -47,10 +53,8 @@ public class FeedFrag extends Fragment {
 
     private ActivityResultLauncher<Intent> getImage;
 
-    private FloatingActionButton addPost;
-    private FloatingActionButton openCamBtn;
-    private FloatingActionButton openGalleryBtn;
-    private TextView shade;
+    private FloatingActionButton addServer;
+    private ConstraintLayout addServerContainer;
 
 
     private FirebaseAuth auth = FirebaseAuth.getInstance();
@@ -63,6 +67,8 @@ public class FeedFrag extends Fragment {
     private List<Chatroom> model = new ArrayList<Chatroom>();
     private ChatRoomAdapter chatRoomAdapter;
 
+    private EditText codeInput;
+
 
     public FeedFrag() {
         // Required empty public constructor
@@ -71,6 +77,22 @@ public class FeedFrag extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        model.clear();
+        DatabaseReference chats = Database.get().getReference().child("rooms");
+        chats.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                model.clear();
+                updateMenu(snapshot);
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+
+            }
+        });
+
     }
 
     @Override
@@ -95,20 +117,44 @@ public class FeedFrag extends Fragment {
     private void updateMenu(DataSnapshot snapshot) {
         for (DataSnapshot child: snapshot.getChildren()) {
             Log.d("REALTIME", "onChildAdded: " + child.toString());
-            DatabaseReference chatInfo = child.getRef().child("info");
-            Log.d("REALTIME", "onChildAdded: " + chatInfo);
-            chatInfo.addListenerForSingleValueEvent(new ValueEventListener() {
+            DatabaseReference chatMembers = child.getRef().child("members");
+
+            chatMembers.addListenerForSingleValueEvent(new ValueEventListener() {
                 @Override
                 public void onDataChange(@NonNull DataSnapshot snapshot) {
-                    model.add((Chatroom) snapshot.getValue(Chatroom.class)
-                            .setCode(child.getKey()));
-                    chatRoomAdapter.notifyDataSetChanged();
+                    GenericTypeIndicator<HashMap<String, String>> t = new GenericTypeIndicator<HashMap<String, String>>() {};
+                    HashMap<String, String> members = snapshot.getValue(t);
+                    if (members != null) {
+                        Log.d("REALTIME", "onChildAdded: " + members.toString());
+                        if (members.containsValue(currentUser.getEmail())) {
+                            addChatroomToModel(child);
+                        }
+                    }
                 }
 
                 @Override
                 public void onCancelled(@NonNull DatabaseError error) {}
             });
+
         }
+    }
+
+    private void addChatroomToModel(DataSnapshot child) {
+        DatabaseReference chatInfo = child.getRef().child("info");
+        Log.d("REALTIME", "onChildAdded: " + chatInfo);
+        chatInfo.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                model.add((Chatroom) snapshot.getValue(Chatroom.class)
+                        .setCode(child.getKey()));
+                if (chatRoomAdapter != null) {
+                    chatRoomAdapter.notifyDataSetChanged();
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {}
+        });
     }
 
     @Override
@@ -139,57 +185,22 @@ public class FeedFrag extends Fragment {
         chatRooms.setItemAnimator(new DefaultItemAnimator());
         chatRooms.setAdapter(chatRoomAdapter);
 
-        model.clear();
-        DatabaseReference chats = Database.get().getReference().child("rooms");
-        chats.addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot snapshot) {
-                model.clear();
-                updateMenu(snapshot);
-            }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError error) {
-
-            }
-        });
-
-        addPost = view.findViewById(R.id.addPost);
-        addPost.setOnClickListener(
+        addServer = view.findViewById(R.id.addRoom);
+        addServer.setOnClickListener(
                 new View.OnClickListener() {
                     @Override
                     public void onClick(View view) {
-                        if (addPost.getContentDescription().equals("Open options")) {
+                        if (addServer.getContentDescription().equals("Open options")) {
                             openOptions();
-                        } else if (addPost.getContentDescription().equals("Close options")) {
+                        } else if (addServer.getContentDescription().equals("Close options")) {
                             closeOptions();
                         }
                     }
                 }
         );
 
-        openCamBtn = view.findViewById(R.id.openCam);
-        openCamBtn.setOnClickListener(
-                new View.OnClickListener() {
-                    @Override
-                    public void onClick(View view) {
-                        getImage.launch(new Intent(getActivity(), CamActivity.class));
-                    }
-                }
-        );
-
-        openGalleryBtn = view.findViewById(R.id.openMenu);
-        openGalleryBtn.setOnClickListener(
-                new View.OnClickListener() {
-                    @Override
-                    public void onClick(View view) {
-                        getImage.launch(new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.INTERNAL_CONTENT_URI));
-                    }
-                }
-        );
-
-        shade = view.findViewById(R.id.shade);
-        shade.setOnClickListener(new View.OnClickListener() {
+        addServerContainer = view.findViewById(R.id.add_room_container);
+        addServerContainer.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 closeOptions();
@@ -208,6 +219,15 @@ public class FeedFrag extends Fragment {
                     }
                 });
 
+        codeInput = view.findViewById(R.id.codeInput);
+
+        view.findViewById(R.id.createRoom).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent intent = new Intent(getActivity(), CreateRoomActivity.class);
+                getActivity().startActivity(intent);
+            }
+        });
         return view;
     }
 
@@ -236,7 +256,15 @@ public class FeedFrag extends Fragment {
             Picasso.get()
                     .load(Storage.chatroomIconStorage + chatroom.iconKey)
                     .placeholder(R.mipmap.default_pfp_foreground)
-                    .into(holder.chatIcon);
+                    .into(holder.chatIcon, new Callback() {
+                        @Override
+                        public void onSuccess() {
+                            holder.chatIcon.setImageTintList(null);
+                        }
+
+                        @Override
+                        public void onError(Exception e) {}
+                    });
 
             holder.itemView.setOnClickListener(new View.OnClickListener() {
                 @Override
@@ -270,34 +298,30 @@ public class FeedFrag extends Fragment {
     }
 
     public void openOptions() {
-        openCamBtn.setVisibility(View.VISIBLE);
-        openGalleryBtn.setVisibility(View.VISIBLE);
-        shade.setVisibility(View.VISIBLE);
-        addPost.setContentDescription("Close options");
+        addServerContainer.setVisibility(View.VISIBLE);
+        addServer.setContentDescription("Close options");
 
-        shade.startAnimation(fadeInBg);
-        addPost.startAnimation(rotateClockWiseFabAnim);
-        openGalleryBtn.startAnimation(fromBottomFabAnim);
-        openCamBtn.startAnimation(fromBottomFabAnim);
+        addServerContainer.startAnimation(fadeInBg);
+        addServer.startAnimation(rotateClockWiseFabAnim);
 
-        shade.setClickable(true);
+        addServerContainer.setClickable(true);
 
-        addPost.setImageResource(R.drawable.cancel);
+        addServer.setImageResource(R.drawable.cancel);
     }
 
     public void closeOptions() {
-        openCamBtn.setVisibility(View.GONE);
-        openGalleryBtn.setVisibility(View.GONE);
-        shade.setVisibility(View.GONE);
-        addPost.setContentDescription("Open options");
+        addServerContainer.setVisibility(View.GONE);
+        addServer.setContentDescription("Open options");
 
-        shade.startAnimation(fadeOutBg);
-        addPost.startAnimation(rotateAntiClockWiseFabAnim);
-        openGalleryBtn.startAnimation(toBottomFabAnim);
-        openCamBtn.startAnimation(toBottomFabAnim);
+        addServerContainer.startAnimation(fadeOutBg);
+        addServer.startAnimation(rotateAntiClockWiseFabAnim);
 
-        shade.setClickable(false);
+        addServerContainer.setClickable(false);
+        codeInput.setText("");
 
-        addPost.setImageResource(R.drawable.icon_camera);
+        InputMethodManager imm = (InputMethodManager)getActivity().getSystemService(Context.INPUT_METHOD_SERVICE);
+        imm.hideSoftInputFromWindow(getView().getWindowToken(), 0);
+
+        addServer.setImageResource(R.drawable.icon_add);
     }
 }

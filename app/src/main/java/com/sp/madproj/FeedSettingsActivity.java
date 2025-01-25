@@ -4,8 +4,11 @@ import android.app.Activity;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Handler;
 import android.util.Log;
 import android.view.View;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -53,9 +56,14 @@ public class FeedSettingsActivity extends AppCompatActivity {
 
     private ImageView pfpIcon;
 
+    private Animation fadeOutBg;
+    private Animation fadeInBg;
+
     @Override
     public void onBackPressed() {
         if (authContainer.getVisibility() == View.VISIBLE) {
+            authContainer.startAnimation(fadeOutBg);
+            Log.d("FADE OUT BACK", "now");
             authContainer.setVisibility(View.GONE);
             return;
         }
@@ -66,6 +74,9 @@ public class FeedSettingsActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_feed_settings);
+
+        fadeOutBg = AnimationUtils.loadAnimation(this, R.anim.fadeout_bg);
+        fadeInBg = AnimationUtils.loadAnimation(this, R.anim.fadein_bg);
 
         findViewById(R.id.logOut).setOnClickListener(new View.OnClickListener() {
             @Override
@@ -86,13 +97,23 @@ public class FeedSettingsActivity extends AppCompatActivity {
         authContainer.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                Log.d("FADE OUT CLICK", "now");
+                authContainer.startAnimation(fadeOutBg);
                 authContainer.setVisibility(View.GONE);
+                new Handler().postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        authContainer.clearAnimation();
+                    }
+                }, 300);
             }
         });
 
         findViewById(R.id.delete).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                Log.d("FADE in", "now");
+                authContainer.startAnimation(fadeInBg);
                 authContainer.setVisibility(View.VISIBLE);
             }
         });

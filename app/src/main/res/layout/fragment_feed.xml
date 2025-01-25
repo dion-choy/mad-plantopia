@@ -18,69 +18,104 @@
 
         <ImageButton
             android:id="@+id/settingsBtn"
-            android:layout_width="24dp"
-            android:layout_height="24dp"
-            android:layout_marginTop="10dp"
-            android:layout_marginEnd="10dp"
+            android:layout_width="44dp"
+            android:layout_height="44dp"
             android:background="#00FFFFFF"
+            android:contentDescription="settings"
+            android:padding="10dp"
             android:scaleType="fitCenter"
             android:src="@drawable/icon_settings_selector"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
-        <TextView
-            android:id="@+id/shade"
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/add_room_container"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:background="#80000000"
-            android:visibility="gone"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
-
-        <com.google.android.material.floatingactionbutton.FloatingActionButton
-            android:id="@+id/openMenu"
-            android:layout_width="wrap_content"
-            android:layout_height="0dp"
-            android:layout_marginEnd="16dp"
-            android:backgroundTint="@color/light_primary"
             android:clickable="true"
-            android:contentDescription="Identify new plant"
-            android:src="@drawable/gallery"
-            android:visibility="gone"
-            app:fabCustomSize="40dp"
-            app:layout_constraintBottom_toTopOf="@id/openCam"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:shapeAppearanceOverlay="@style/fab"
-            app:tint="@color/nav_bar_background" />
+            android:visibility="gone">
+
+            <androidx.cardview.widget.CardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="50dp"
+                app:cardBackgroundColor="?attr/colorSurfaceContainer"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="0dp"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                tools:layout_editor_absoluteX="100dp">
+
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:padding="10dp">
+
+                    <TextView
+                        android:id="@+id/textView"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginHorizontal="10dp"
+                        android:text="Join a room:"
+                        android:textSize="16sp"
+                        android:textStyle="bold"
+                        app:layout_constraintTop_toTopOf="parent"
+                        tools:layout_editor_absoluteX="10dp" />
+
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:id="@+id/codeContainer"
+                        style="?attr/textInputFilledStyle"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:hint="Code"
+                        app:boxBackgroundColor="?attr/colorSurfaceContainer"
+                        app:hintTextColor="?android:attr/textColor"
+                        app:layout_constraintTop_toBottomOf="@id/textView"
+                        tools:layout_editor_absoluteX="10dp">
+
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/codeInput"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:inputType="number|numberDecimal"
+                            android:maxLength="6" />
+
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                    <Button
+                        android:id="@+id/joinBtn"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:text="Join"
+                        app:layout_constraintTop_toBottomOf="@id/codeContainer"
+                        tools:layout_editor_absoluteX="80dp" />
+
+                    <Button
+                        android:id="@+id/createRoom"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:text="Create"
+                        app:layout_constraintTop_toBottomOf="@id/joinBtn"
+                        tools:layout_editor_absoluteX="80dp" />
+
+                </androidx.constraintlayout.widget.ConstraintLayout>
+
+            </androidx.cardview.widget.CardView>
+        </androidx.constraintlayout.widget.ConstraintLayout>
 
         <com.google.android.material.floatingactionbutton.FloatingActionButton
-            android:id="@+id/openCam"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginEnd="16dp"
-            android:layout_marginBottom="8dp"
-            android:backgroundTint="@color/light_primary"
-            android:clickable="true"
-            android:contentDescription="Identify new plant"
-            android:src="@drawable/cam"
-            android:visibility="gone"
-            app:fabCustomSize="40dp"
-            app:layout_constraintBottom_toTopOf="@id/addPost"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:shapeAppearanceOverlay="@style/fab"
-            app:tint="@color/nav_bar_background" />
-
-        <com.google.android.material.floatingactionbutton.FloatingActionButton
-            android:id="@+id/addPost"
+            android:id="@+id/addRoom"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginEnd="16dp"
             android:layout_marginBottom="16dp"
             android:clickable="true"
             android:contentDescription="Open options"
-            android:src="@drawable/icon_camera"
+            android:src="@drawable/icon_add"
             app:fabSize="normal"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"

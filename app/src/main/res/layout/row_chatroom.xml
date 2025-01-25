@@ -26,7 +26,7 @@
                 android:layout_width="50dp"
                 android:layout_height="50dp"
                 android:elevation="0dp"
-                android:scaleType="fitCenter"
+                android:scaleType="centerCrop"
                 android:src="@mipmap/default_pfp_foreground"
                 app:tint="?android:attr/textColor" />
         </androidx.cardview.widget.CardView>
