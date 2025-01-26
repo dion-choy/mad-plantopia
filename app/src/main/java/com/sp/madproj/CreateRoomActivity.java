@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
+import android.provider.ContactsContract;
 import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
@@ -77,9 +78,6 @@ public class CreateRoomActivity extends AppCompatActivity {
                     public void onComplete(@NonNull Task<Void> task) {
                         if (task.isSuccessful()) {
                             Log.d("REALTIME DB ADD", "onComplete: Chatroom added successfully!");
-                            String memberKey = rooms.child(pushKey)
-                                    .child("members")
-                                    .push().getKey();
                             rooms.child(pushKey)
                                     .child("members")
                                     .child(pushKey)
@@ -159,42 +157,24 @@ public class CreateRoomActivity extends AppCompatActivity {
     });
 
     private void insertRoom(String id) {
-        RequestQueue queue = Volley.newRequestQueue(this);
-
-        StringRequest stringRequest = new StringRequest(
-                Request.Method.POST,
-                Database.astraDbQueryUrl,
+        Database.queryAstra(this,
+                "INSERT INTO plantopia.rooms (id) VALUES('" + id + "');",
                 new Response.Listener<String>() {
                     @Override
                     public void onResponse(String response) {
                         Log.d("CREATE", "Room inserted successfully");
                     }
-                }, new Response.ErrorListener() {
-            @Override
-            public void onErrorResponse(VolleyError error) {
-                Log.e("USERS ERROR", error.toString());
-                Log.e("USER ERROR", "INSERT INTO plantopia.rooms (id) VALUES('" + id + "');");
-                if (error.getClass() == NoConnectionError.class) {
-                    Toast.makeText(getApplicationContext(), "Please connect to internet", Toast.LENGTH_SHORT).show();
+                },
+                new Response.ErrorListener() {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        Log.e("USERS ERROR", error.toString());
+                        Log.e("USER ERROR", "INSERT INTO plantopia.rooms (id) VALUES('" + id + "');");
+                        if (error.getClass() == NoConnectionError.class) {
+                            Toast.makeText(getApplicationContext(), "Please connect to internet", Toast.LENGTH_SHORT).show();
+                        }
+                    }
                 }
-            }
-        }
-        ) {
-            @Override
-            public byte[] getBody() throws AuthFailureError {
-                return ("INSERT INTO plantopia.rooms (id) VALUES('" + id + "');")
-                        .getBytes(StandardCharsets.UTF_8);
-            }
-
-            @Override
-            public Map<String, String> getHeaders() {
-                Map<String, String> headers = new HashMap<>();
-                headers.put("x-cassandra-token", BuildConfig.ASTRA_DB_TOKEN);
-                headers.put("Content-Type", "text/plain");
-                return headers;
-            }
-        };
-
-        queue.add(stringRequest);
+        );
     }
 }

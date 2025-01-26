@@ -95,11 +95,11 @@ public class FeedFrag extends Fragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        model.clear();
         DatabaseReference chats = Database.get().getReference().child("rooms");
         chats.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
+                Log.d("REALTIME ROOT", snapshot.toString());
                 model.clear();
                 updateMenu(snapshot);
             }
@@ -123,6 +123,7 @@ public class FeedFrag extends Fragment {
                     .addToBackStack(null)
                     .commit();
         } else {
+            currentUser.reload();
             username = currentUser.getDisplayName();
             email = currentUser.getEmail();
 
@@ -133,7 +134,7 @@ public class FeedFrag extends Fragment {
 
     private void updateMenu(DataSnapshot snapshot) {
         for (DataSnapshot child: snapshot.getChildren()) {
-            Log.d("REALTIME", "onChildAdded: " + child.toString());
+            Log.d("REALTIME CHILD", child.toString());
             DatabaseReference chatMembers = child.getRef().child("members");
 
             chatMembers.addListenerForSingleValueEvent(new ValueEventListener() {
@@ -142,11 +143,12 @@ public class FeedFrag extends Fragment {
                     GenericTypeIndicator<HashMap<String, String>> t = new GenericTypeIndicator<HashMap<String, String>>() {};
                     HashMap<String, String> members = snapshot.getValue(t);
                     if (members != null) {
-                        Log.d("REALTIME", "onChildAdded: " + members.toString());
-                        if (members.containsValue(currentUser.getEmail())) {
+                        Log.d("REALTIME", "onDataChanged: " + members.toString());
+                        if (currentUser != null && members.containsValue(currentUser.getEmail())) {
                             addChatroomToModel(child);
                         }
                     }
+                    chatMembers.removeEventListener(this);
                 }
 
                 @Override
@@ -162,8 +164,11 @@ public class FeedFrag extends Fragment {
         chatInfo.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
-                model.add((Chatroom) snapshot.getValue(Chatroom.class)
-                        .setKey(child.getKey()));
+                Chatroom chatroom = (Chatroom) snapshot.getValue(Chatroom.class)
+                        .setKey(child.getKey());
+                if (!model.contains(chatroom)) {
+                    model.add(chatroom);
+                }
                 if (chatRoomAdapter != null) {
                     chatRoomAdapter.notifyDataSetChanged();
                 }
@@ -263,11 +268,8 @@ public class FeedFrag extends Fragment {
     }
 
     private void getCode(String code) {
-        RequestQueue queue = Volley.newRequestQueue(getActivity());
-
-        StringRequest stringRequest = new StringRequest(
-                Request.Method.POST,
-                Database.astraDbQueryUrl,
+        Database.queryAstra(getActivity(),
+                "SELECT * FROM plantopia.rooms WHERE code = '" + code + "';",
                 new Response.Listener<String>() {
                     @Override
                     public void onResponse(String response) {
@@ -298,32 +300,17 @@ public class FeedFrag extends Fragment {
                             throw new RuntimeException(e);
                         }
                     }
-                }, new Response.ErrorListener() {
-            @Override
-            public void onErrorResponse(VolleyError error) {
-                Log.e("USERS ERROR", error.toString());
-                Log.e("USER ERROR", "SELECT * FROM user_info WHERE plantopia.username = '" + code + "';");
-                if (error.getClass() == NoConnectionError.class) {
-                    Toast.makeText(getActivity(), "Please connect to internet", Toast.LENGTH_SHORT).show();
+                },
+                new Response.ErrorListener() {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        Log.e("USERS ERROR", error.toString());
+                        if (error.getClass() == NoConnectionError.class) {
+                            Toast.makeText(getActivity(), "Please connect to internet", Toast.LENGTH_SHORT).show();
+                        }
+                    }
                 }
-            }
-        }
-        ) {
-            @Override
-            public byte[] getBody() throws AuthFailureError {
-                return ("SELECT * FROM plantopia.rooms WHERE code = '" + code + "';").getBytes(StandardCharsets.UTF_8);
-            }
-
-            @Override
-            public Map<String, String> getHeaders() {
-                Map<String, String> headers = new HashMap<>();
-                headers.put("x-cassandra-token", BuildConfig.ASTRA_DB_TOKEN);
-                headers.put("Content-Type", "text/plain");
-                return headers;
-            }
-        };
-
-        queue.add(stringRequest);
+        );
     }
 
     private void addUser(String roomKey) {
@@ -366,43 +353,25 @@ public class FeedFrag extends Fragment {
     }
 
     private void removeExpiredCode(String id) {
-        RequestQueue queue = Volley.newRequestQueue(getActivity());
-
-        StringRequest stringRequest = new StringRequest(
-                Request.Method.POST,
-                Database.astraDbQueryUrl,
+        Database.queryAstra(getActivity(),
+                "UPDATE plantopia.rooms SET code=NULL, generated_time=NULL WHERE id= '" + id + "';",
                 new Response.Listener<String>() {
                     @Override
                     public void onResponse(String response) {
                         Log.d("CODE", "Expired code removed successfully");
                     }
-                }, new Response.ErrorListener() {
-            @Override
-            public void onErrorResponse(VolleyError error) {
-                Log.e("USERS ERROR", error.toString());
-                Log.e("USER ERROR", "UPDATE plantopia.rooms SET code=NULL, generated_time=NULL WHERE id= '" + id + "';");
-                if (error.getClass() == NoConnectionError.class) {
-                    Toast.makeText(getActivity(), "Please connect to internet", Toast.LENGTH_SHORT).show();
+                },
+                new Response.ErrorListener() {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        Log.e("USERS ERROR", error.toString());
+                        Log.e("USER ERROR", "UPDATE plantopia.rooms SET code=NULL, generated_time=NULL WHERE id= '" + id + "';");
+                        if (error.getClass() == NoConnectionError.class) {
+                            Toast.makeText(getActivity(), "Please connect to internet", Toast.LENGTH_SHORT).show();
+                        }
+                    }
                 }
-            }
-        }
-        ) {
-            @Override
-            public byte[] getBody() throws AuthFailureError {
-                return ("UPDATE plantopia.rooms SET code=NULL, generated_time=NULL WHERE id= '" + id + "';")
-                        .getBytes(StandardCharsets.UTF_8);
-            }
-
-            @Override
-            public Map<String, String> getHeaders() {
-                Map<String, String> headers = new HashMap<>();
-                headers.put("x-cassandra-token", BuildConfig.ASTRA_DB_TOKEN);
-                headers.put("Content-Type", "text/plain");
-                return headers;
-            }
-        };
-
-        queue.add(stringRequest);
+        );
     }
 
     private class ChatRoomAdapter extends RecyclerView.Adapter<ChatRoomAdapter.ChatRoomHolder> {

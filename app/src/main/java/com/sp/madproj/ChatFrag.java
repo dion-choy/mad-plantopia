@@ -6,6 +6,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.res.ColorStateList;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.text.Editable;
@@ -230,16 +231,21 @@ public class ChatFrag extends Fragment {
                             ClipData data = result.getData().getClipData();
                             if (data == null) {
                                 Toast.makeText(getActivity().getApplicationContext(), "Error", Toast.LENGTH_SHORT).show();
-                                return;
+                                if (Build.VERSION.SDK_INT < 29 && result.getData().getData() != null) {
+                                    imagePreviewModel.add(result.getData().getData());
+                                } else {
+                                    return;
+                                }
                             } else if (data.getItemCount() > 10) {
                                 Toast.makeText(getActivity().getApplicationContext(), "Too many images (Limit: 10)", Toast.LENGTH_SHORT).show();
                                 return;
+                            } else {
+                                for (int i = 0; i < data.getItemCount(); i++) {
+                                    imagePreviewModel.add(data.getItemAt(i).getUri());
+                                    Log.d("IMAGES", "onActivityResult: " + data.getItemAt(i).getUri().toString());
+                                }
                             }
 
-                            for (int i = 0; i < data.getItemCount(); i++) {
-                                imagePreviewModel.add(data.getItemAt(i).getUri());
-                                Log.d("IMAGES", "onActivityResult: " + data.getItemAt(i).getUri().toString());
-                            }
                             sendMsgBtn.startAnimation(enableSend);
                             sendMsgBtn.setEnabled(true);
                             imagePreviewAdapter.notifyDataSetChanged();

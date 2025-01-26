@@ -263,40 +263,23 @@ public class FeedSettingsActivity extends AppCompatActivity {
 
 
     private void deleteFromAstra(String username) {
-        RequestQueue queue = Volley.newRequestQueue(FeedSettingsActivity.this);
-
-        StringRequest stringRequest = new StringRequest(
-                Request.Method.POST,
-                Database.astraDbQueryUrl,
+        Database.queryAstra(this,
+                "DELETE FROM plantopia.user_info WHERE username='" + username + "';",
                 new Response.Listener<String>() {
                     @Override
                     public void onResponse(String response) {
                         Log.d("USERS", response);
                     }
-                }, new Response.ErrorListener() {
-            @Override
-            public void onErrorResponse(VolleyError error) {
-                Log.e("USERS ERROR", error.toString());
-                if (error.getClass() == NoConnectionError.class) {
-                    Toast.makeText(getApplicationContext(), "Please connect to internet", Toast.LENGTH_SHORT).show();
+                },
+                new Response.ErrorListener() {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        Log.e("USERS ERROR", error.toString());
+                        if (error.getClass() == NoConnectionError.class) {
+                            Toast.makeText(getApplicationContext(), "Please connect to internet", Toast.LENGTH_SHORT).show();
+                        }
+                    }
                 }
-            }
-        }
-        ) {
-            @Override
-            public byte[] getBody() throws AuthFailureError {
-                return ("DELETE FROM plantopia.user_info WHERE username='" + username + "';").getBytes(StandardCharsets.UTF_8);
-            }
-
-            @Override
-            public Map<String, String> getHeaders() {
-                Map<String, String> headers = new HashMap<>();
-                headers.put("x-cassandra-token", BuildConfig.ASTRA_DB_TOKEN);
-                headers.put("Content-Type", "text/plain");
-                return headers;
-            }
-        };
-
-        queue.add(stringRequest);
+        );
     }
 }

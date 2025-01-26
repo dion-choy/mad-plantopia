@@ -187,50 +187,30 @@ public class SignUpActivity extends AppCompatActivity {
     }
 
     private void addUsername(String username, String email) {
-        RequestQueue queue = Volley.newRequestQueue(SignUpActivity.this);
-
-        StringRequest stringRequest = new StringRequest(
-                Request.Method.POST,
-                Database.astraDbQueryUrl,
+        Database.queryAstra(this,
+                "INSERT INTO plantopia.user_info (username, email) VALUES('" + username +
+                        "', '" + email + "');",
                 new Response.Listener<String>() {
                     @Override
                     public void onResponse(String response) {
                         Log.d("USERS", response);
                     }
-                }, new Response.ErrorListener() {
-            @Override
-            public void onErrorResponse(VolleyError error) {
-                Log.e("USERS ERROR", error.toString());
-                if (error.getClass() == NoConnectionError.class) {
-                    Toast.makeText(getApplicationContext(), "Please connect to internet", Toast.LENGTH_SHORT).show();
+                },
+                new Response.ErrorListener() {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        Log.e("USERS ERROR", error.toString());
+                        if (error.getClass() == NoConnectionError.class) {
+                            Toast.makeText(getApplicationContext(), "Please connect to internet", Toast.LENGTH_SHORT).show();
+                        }
+                    }
                 }
-            }
-        }
-        ) {
-            @Override
-            public byte[] getBody() throws AuthFailureError {
-                return ("INSERT INTO plantopia.user_info (username, email) VALUES('" + username +
-                        "', '" + email + "');").getBytes(StandardCharsets.UTF_8);
-            }
-
-            @Override
-            public Map<String, String> getHeaders() {
-                Map<String, String> headers = new HashMap<>();
-                headers.put("x-cassandra-token", BuildConfig.ASTRA_DB_TOKEN);
-                headers.put("Content-Type", "text/plain");
-                return headers;
-            }
-        };
-
-        queue.add(stringRequest);
+        );
     }
 
     private void checkUsernames(String username) {
-        RequestQueue queue = Volley.newRequestQueue(SignUpActivity.this);
-
-        StringRequest stringRequest = new StringRequest(
-                Request.Method.POST,
-                Database.astraDbQueryUrl,
+        Database.queryAstra(this,
+                "SELECT * FROM plantopia.user_info WHERE username = '" + username + "';",
                 new Response.Listener<String>() {
                     @Override
                     public void onResponse(String response) {
@@ -250,32 +230,17 @@ public class SignUpActivity extends AppCompatActivity {
                             throw new RuntimeException(e);
                         }
                     }
-                }, new Response.ErrorListener() {
-            @Override
-            public void onErrorResponse(VolleyError error) {
-                Log.e("USERS ERROR", error.toString());
-                Log.e("USER ERROR", "SELECT * FROM user_info WHERE plantopia.username = '" + username + "';");
-                if (error.getClass() == NoConnectionError.class) {
-                    Toast.makeText(getApplicationContext(), "Please connect to internet", Toast.LENGTH_SHORT).show();
+                },
+                new Response.ErrorListener() {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        Log.e("USERS ERROR", error.toString());
+                        if (error.getClass() == NoConnectionError.class) {
+                            Toast.makeText(getApplicationContext(), "Please connect to internet", Toast.LENGTH_SHORT).show();
+                        }
+                    }
                 }
-            }
-        }
-        ) {
-            @Override
-            public byte[] getBody() throws AuthFailureError {
-                return ("SELECT * FROM plantopia.user_info WHERE username = '" + username + "';").getBytes(StandardCharsets.UTF_8);
-            }
-
-            @Override
-            public Map<String, String> getHeaders() {
-                Map<String, String> headers = new HashMap<>();
-                headers.put("x-cassandra-token", BuildConfig.ASTRA_DB_TOKEN);
-                headers.put("Content-Type", "text/plain");
-                return headers;
-            }
-        };
-
-        queue.add(stringRequest);
+        );
     }
 
     private void sendVerificationEmail(FirebaseUser user) {

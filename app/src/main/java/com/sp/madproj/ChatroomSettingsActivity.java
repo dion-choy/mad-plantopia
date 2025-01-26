@@ -140,53 +140,30 @@ public class ChatroomSettingsActivity extends AppCompatActivity {
     }
 
     private void updateCodeDb(String id, String code) {
-        RequestQueue queue = Volley.newRequestQueue(this);
-
-        StringRequest stringRequest = new StringRequest(
-                Request.Method.POST,
-                Database.astraDbQueryUrl,
+        Database.queryAstra(this,
+                "UPDATE plantopia.rooms SET code='" + code + "', generated_time=toTimestamp(now()) WHERE id = '" + id + "';",
                 new Response.Listener<String>() {
                     @Override
                     public void onResponse(String response) {
                         Log.d("ROOMS", code);
                         Toast.makeText(ChatroomSettingsActivity.this, "Code: " + code, Toast.LENGTH_LONG).show();
                     }
-                }, new Response.ErrorListener() {
-            @Override
-            public void onErrorResponse(VolleyError error) {
-                Log.e("USERS ERROR", error.toString());
-                Log.e("USER ERROR", "UPDATE plantopia.rooms SET code='" + code + "', generated_time=toTimestamp(now()) WHERE id = '" + id + "';");
-                if (error.getClass() == NoConnectionError.class) {
-                    Toast.makeText(getApplicationContext(), "Please connect to internet", Toast.LENGTH_SHORT).show();
+                },
+                new Response.ErrorListener() {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        Log.e("UPDATE CODE ERROR", error.toString());
+                        if (error.getClass() == NoConnectionError.class) {
+                            Toast.makeText(getApplicationContext(), "Please connect to internet", Toast.LENGTH_SHORT).show();
+                        }
+                    }
                 }
-            }
-        }
-        ) {
-            @Override
-            public byte[] getBody() throws AuthFailureError {
-                return ("UPDATE plantopia.rooms SET code='" + code + "', generated_time=toTimestamp(now()) WHERE id = '" + id + "';")
-                        .getBytes(StandardCharsets.UTF_8);
-            }
-
-            @Override
-            public Map<String, String> getHeaders() {
-                Map<String, String> headers = new HashMap<>();
-                headers.put("x-cassandra-token", BuildConfig.ASTRA_DB_TOKEN);
-                headers.put("Content-Type", "text/plain");
-                return headers;
-            }
-        };
-
-        queue.add(stringRequest);
+        );
     }
 
-
     private void getCode(String id) {
-        RequestQueue queue = Volley.newRequestQueue(this);
-
-        StringRequest stringRequest = new StringRequest(
-                Request.Method.POST,
-                Database.astraDbQueryUrl,
+        Database.queryAstra(this,
+                "SELECT * FROM plantopia.rooms WHERE id = '" + id + "';",
                 new Response.Listener<String>() {
                     @Override
                     public void onResponse(String response) {
@@ -214,33 +191,18 @@ public class ChatroomSettingsActivity extends AppCompatActivity {
                             throw new RuntimeException(e);
                         }
                     }
-                }, new Response.ErrorListener() {
-            @Override
-            public void onErrorResponse(VolleyError error) {
-                Log.e("USERS ERROR", error.toString());
-                Log.e("USER ERROR", "SELECT * FROM user_info WHERE plantopia.username = '" + id + "';");
-                if (error.getClass() == NoConnectionError.class) {
-                    Toast.makeText(getApplicationContext(), "Please connect to internet", Toast.LENGTH_SHORT).show();
-                }
-            }
-        }
-        ) {
-            @Override
-            public byte[] getBody() throws AuthFailureError {
-                return ("SELECT * FROM plantopia.rooms WHERE id = '" + id + "';").getBytes(StandardCharsets.UTF_8);
-            }
-
-            @Override
-            public Map<String, String> getHeaders() {
-                Map<String, String> headers = new HashMap<>();
-                headers.put("x-cassandra-token", BuildConfig.ASTRA_DB_TOKEN);
-                headers.put("Content-Type", "text/plain");
-                return headers;
-            }
-        };
-
-        queue.add(stringRequest);
+                },
+                new Response.ErrorListener() {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        Log.e("GET CODE ERROR", error.toString());
+                        if (error.getClass() == NoConnectionError.class) {
+                            Toast.makeText(getApplicationContext(), "Please connect to internet", Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                });
     }
+
 
     private final ActivityResultLauncher<Intent> getImage = registerForActivityResult(
             new ActivityResultContracts.StartActivityForResult(),
