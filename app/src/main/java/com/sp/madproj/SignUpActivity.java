@@ -34,13 +34,10 @@ import org.json.JSONObject;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Timer;
-import java.util.TimerTask;
 
 public class SignUpActivity extends AppCompatActivity {
 
     private final FirebaseAuth auth = FirebaseAuth.getInstance();
-    private final String astraDbUrl = "https://60fa55e9-e981-4ca4-8e90-d1dacc1dac57-eu-west-1.apps.astra.datastax.com/api/rest/v2/cql?keyspaceQP=plantopia";
 
     private TextInputEditText username;
     private TextInputEditText email;
@@ -194,7 +191,7 @@ public class SignUpActivity extends AppCompatActivity {
 
         StringRequest stringRequest = new StringRequest(
                 Request.Method.POST,
-                astraDbUrl,
+                Database.astraDbQueryUrl,
                 new Response.Listener<String>() {
                     @Override
                     public void onResponse(String response) {
@@ -233,7 +230,7 @@ public class SignUpActivity extends AppCompatActivity {
 
         StringRequest stringRequest = new StringRequest(
                 Request.Method.POST,
-                astraDbUrl,
+                Database.astraDbQueryUrl,
                 new Response.Listener<String>() {
                     @Override
                     public void onResponse(String response) {

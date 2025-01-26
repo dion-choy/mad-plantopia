@@ -3,7 +3,7 @@ package com.sp.madproj;
 public class Chatroom {
     public String name;
     public String iconKey;
-    public String code;
+    public String key;
 
     public Chatroom() {
     }
@@ -13,8 +13,8 @@ public class Chatroom {
         this.iconKey = iconKey;
     }
 
-    public Chatroom setCode(String code) {
-        this.code = code;
+    public Chatroom setKey(String key) {
+        this.key = key;
         return this;
     }
 }

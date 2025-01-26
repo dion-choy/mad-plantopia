@@ -93,12 +93,13 @@ public class ChatFrag extends Fragment {
         // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_chatroom, container, false);
 
-        String roomCode = getArguments().getString("roomCode");
+        String roomKey = getArguments().getString("roomKey");
         String roomName = getArguments().getString("roomName");
-        if (roomCode == null) {
+        String iconKey = getArguments().getString("iconKey");
+        if (roomKey == null) {
             destroyFragment();
         }
-        Log.d("ROOM INFO", "RoomCode: "+ roomCode + "RoomName:" + roomName);
+        Log.d("ROOM INFO", "RoomCode: "+ roomKey + "RoomName:" + roomName);
 
         disableSend = AnimationUtils.loadAnimation(getContext(), R.anim.disable_send);
         enableSend = AnimationUtils.loadAnimation(getContext(), R.anim.enable_send);
@@ -113,7 +114,31 @@ public class ChatFrag extends Fragment {
             }
         });
 
+        ImageView groupIcon = view.findViewById(R.id.groupIcon);
+        Picasso.get()
+                .load(Storage.chatroomIconStorage + iconKey)
+                .placeholder(R.mipmap.default_pfp_foreground)
+                .into(groupIcon, new Callback() {
+                    @Override
+                    public void onSuccess() {
+                        groupIcon.setImageTintList(null);
+                    }
+
+                    @Override
+                    public void onError(Exception e) {}
+                });
+
         ((TextView) view.findViewById(R.id.groupName)).setText(roomName);
+
+        view.findViewById(R.id.chatTopBar).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent intent = new Intent(getActivity(), ChatroomSettingsActivity.class);
+                intent.putExtra("roomKey", roomKey);
+                startActivity(intent);
+            }
+        });
+
 
         root = view.findViewById(R.id.root);
         displayMetrics = new DisplayMetrics();
@@ -133,7 +158,7 @@ public class ChatFrag extends Fragment {
         chatMessages.setAdapter(chatAdapter);
         chatMessages.setOnTouchListener(swipeAway);
 
-        messages = Database.get().getReference("rooms").child(roomCode).child("messages");
+        messages = Database.get().getReference("rooms").child(roomKey).child("messages");
         Log.d("Realtime DB", messages.toString());
 
         messages.keepSynced(true);

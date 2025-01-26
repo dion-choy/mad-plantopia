@@ -28,6 +28,16 @@ import androidx.recyclerview.widget.DefaultItemAnimator;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.android.volley.AuthFailureError;
+import com.android.volley.NoConnectionError;
+import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.StringRequest;
+import com.android.volley.toolbox.Volley;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -39,9 +49,16 @@ import com.google.firebase.database.ValueEventListener;
 import com.squareup.picasso.Callback;
 import com.squareup.picasso.Picasso;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.nio.charset.StandardCharsets;
+import java.time.OffsetDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class FeedFrag extends Fragment {
     private Animation fromBottomFabAnim;
@@ -146,7 +163,7 @@ public class FeedFrag extends Fragment {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 model.add((Chatroom) snapshot.getValue(Chatroom.class)
-                        .setCode(child.getKey()));
+                        .setKey(child.getKey()));
                 if (chatRoomAdapter != null) {
                     chatRoomAdapter.notifyDataSetChanged();
                 }
@@ -221,6 +238,20 @@ public class FeedFrag extends Fragment {
 
         codeInput = view.findViewById(R.id.codeInput);
 
+        view.findViewById(R.id.joinBtn).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if (codeInput.getText().length() != 6) {
+                    codeInput.setError("Code must be 6 digits");
+                    return;
+                }
+
+                String inputCode = codeInput.getText().toString();
+                codeInput.setText("");
+                getCode(inputCode);
+            }
+        });
+
         view.findViewById(R.id.createRoom).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -229,6 +260,149 @@ public class FeedFrag extends Fragment {
             }
         });
         return view;
+    }
+
+    private void getCode(String code) {
+        RequestQueue queue = Volley.newRequestQueue(getActivity());
+
+        StringRequest stringRequest = new StringRequest(
+                Request.Method.POST,
+                Database.astraDbQueryUrl,
+                new Response.Listener<String>() {
+                    @Override
+                    public void onResponse(String response) {
+                        Log.d("CODE", response);
+                        try {
+                            JSONObject responseObj = new JSONObject(response);
+                            Log.d("CODE", responseObj.toString());
+                            if (responseObj.getJSONArray("data").getJSONObject(0).isNull("generated_time")) {
+                                Toast.makeText(getActivity(), "Code expired or not generated", Toast.LENGTH_LONG).show();
+                                return;
+                            }
+
+                            OffsetDateTime generatedTime = OffsetDateTime.parse(responseObj.getJSONArray("data").getJSONObject(0).getString("generated_time"));
+                            OffsetDateTime nowTime = OffsetDateTime.now();
+                            long time = ChronoUnit.HOURS.between(generatedTime, nowTime);
+                            if (time > 1) {
+                                Toast.makeText(getActivity(), "Code expired or not generated", Toast.LENGTH_LONG).show();
+                                String id = responseObj.getJSONArray("data").getJSONObject(0).getString("id");
+                                removeExpiredCode(id);
+                            } else {
+                                String roomKey = responseObj.getJSONArray("data").getJSONObject(0).getString("id");
+                                Log.d("CODE", roomKey);
+                                addUser(roomKey);
+                                closeOptions();
+                            }
+
+                        } catch (JSONException e) {
+                            throw new RuntimeException(e);
+                        }
+                    }
+                }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                Log.e("USERS ERROR", error.toString());
+                Log.e("USER ERROR", "SELECT * FROM user_info WHERE plantopia.username = '" + code + "';");
+                if (error.getClass() == NoConnectionError.class) {
+                    Toast.makeText(getActivity(), "Please connect to internet", Toast.LENGTH_SHORT).show();
+                }
+            }
+        }
+        ) {
+            @Override
+            public byte[] getBody() throws AuthFailureError {
+                return ("SELECT * FROM plantopia.rooms WHERE code = '" + code + "';").getBytes(StandardCharsets.UTF_8);
+            }
+
+            @Override
+            public Map<String, String> getHeaders() {
+                Map<String, String> headers = new HashMap<>();
+                headers.put("x-cassandra-token", BuildConfig.ASTRA_DB_TOKEN);
+                headers.put("Content-Type", "text/plain");
+                return headers;
+            }
+        };
+
+        queue.add(stringRequest);
+    }
+
+    private void addUser(String roomKey) {
+        DatabaseReference chatMembers = Database.get()
+                .getReference()
+                .child("rooms")
+                .child(roomKey)
+                .child("members");
+
+        chatMembers.get().addOnCompleteListener(new OnCompleteListener<DataSnapshot>() {
+            @Override
+            public void onComplete(@NonNull Task<DataSnapshot> task) {
+                if (!task.isSuccessful()) {
+                    return;
+                }
+
+                GenericTypeIndicator<HashMap<String, String>> t = new GenericTypeIndicator<HashMap<String, String>>() {};
+                HashMap<String, String> members = task.getResult().getValue(t);
+
+                if (members.containsValue(currentUser.getEmail())) {
+                    Toast.makeText(getActivity(), "Already a member", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+
+                String newMemberKey = chatMembers.push().getKey();
+
+                chatMembers.child(newMemberKey)
+                        .setValue(currentUser.getEmail())
+                        .addOnCompleteListener(new OnCompleteListener<Void>() {
+                            @Override
+                            public void onComplete(@NonNull Task<Void> task) {
+                                if (task.isSuccessful()) {
+                                    Log.d("REALTIME DB ADD", "onComplete: Member added successfully!");
+                                }
+                            }
+                        });
+            }
+        });
+
+    }
+
+    private void removeExpiredCode(String id) {
+        RequestQueue queue = Volley.newRequestQueue(getActivity());
+
+        StringRequest stringRequest = new StringRequest(
+                Request.Method.POST,
+                Database.astraDbQueryUrl,
+                new Response.Listener<String>() {
+                    @Override
+                    public void onResponse(String response) {
+                        Log.d("CODE", "Expired code removed successfully");
+                    }
+                }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                Log.e("USERS ERROR", error.toString());
+                Log.e("USER ERROR", "UPDATE plantopia.rooms SET code=NULL, generated_time=NULL WHERE id= '" + id + "';");
+                if (error.getClass() == NoConnectionError.class) {
+                    Toast.makeText(getActivity(), "Please connect to internet", Toast.LENGTH_SHORT).show();
+                }
+            }
+        }
+        ) {
+            @Override
+            public byte[] getBody() throws AuthFailureError {
+                return ("UPDATE plantopia.rooms SET code=NULL, generated_time=NULL WHERE id= '" + id + "';")
+                        .getBytes(StandardCharsets.UTF_8);
+            }
+
+            @Override
+            public Map<String, String> getHeaders() {
+                Map<String, String> headers = new HashMap<>();
+                headers.put("x-cassandra-token", BuildConfig.ASTRA_DB_TOKEN);
+                headers.put("Content-Type", "text/plain");
+                return headers;
+            }
+        };
+
+        queue.add(stringRequest);
     }
 
     private class ChatRoomAdapter extends RecyclerView.Adapter<ChatRoomAdapter.ChatRoomHolder> {
@@ -270,8 +444,9 @@ public class FeedFrag extends Fragment {
                 @Override
                 public void onClick(View view) {
                     Bundle roomName = new Bundle();
-                    roomName.putString("roomCode", chatroom.code);
+                    roomName.putString("roomKey", chatroom.key);
                     roomName.putString("roomName", chatroom.name);
+                    roomName.putString("iconKey", chatroom.iconKey);
                     ((MainActivity) getActivity()).chatFrag.setArguments(roomName);
                     getActivity().getSupportFragmentManager()
                             .beginTransaction()

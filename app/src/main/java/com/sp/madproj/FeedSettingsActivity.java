@@ -49,8 +49,6 @@ public class FeedSettingsActivity extends AppCompatActivity {
     private final FirebaseAuth auth = FirebaseAuth.getInstance();
     private FirebaseUser currentUser;
 
-    private final String astraDbUrl = "https://60fa55e9-e981-4ca4-8e90-d1dacc1dac57-eu-west-1.apps.astra.datastax.com/api/rest/v2/cql?keyspaceQP=plantopia";
-
     private ConstraintLayout authContainer;
     private ActivityResultLauncher<Intent> getImage;
 
@@ -269,7 +267,7 @@ public class FeedSettingsActivity extends AppCompatActivity {
 
         StringRequest stringRequest = new StringRequest(
                 Request.Method.POST,
-                astraDbUrl,
+                Database.astraDbQueryUrl,
                 new Response.Listener<String>() {
                     @Override
                     public void onResponse(String response) {

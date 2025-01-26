@@ -16,6 +16,14 @@ import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.android.volley.AuthFailureError;
+import com.android.volley.NoConnectionError;
+import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.StringRequest;
+import com.android.volley.toolbox.Volley;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.android.material.textfield.TextInputEditText;
@@ -25,15 +33,18 @@ import com.google.firebase.database.DatabaseReference;
 import com.squareup.picasso.Callback;
 import com.squareup.picasso.Picasso;
 
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class CreateRoomActivity extends AppCompatActivity {
     private TextInputEditText groupName;
     private ImageView groupIcon;
-    private ActivityResultLauncher<Intent> getImage;
     private String curImgKey = "default.png";
     private DatabaseReference rooms;
+    private boolean success = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -81,6 +92,8 @@ public class CreateRoomActivity extends AppCompatActivity {
                                         public void onComplete(@NonNull Task<Void> task) {
                                             if (task.isSuccessful()) {
                                                 Log.d("REALTIME DB ADD", "onComplete: Member added successfully!");
+                                                success = true;
+                                                insertRoom(pushKey);
                                             }
                                         }
                                     });
@@ -102,36 +115,86 @@ public class CreateRoomActivity extends AppCompatActivity {
             }
         });
 
-        getImage = registerForActivityResult(
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+
+        if (!success) {
+            Storage.deleteObjSup(CreateRoomActivity.this, Storage.chatroomIconStorage + curImgKey);
+        }
+    }
+
+    private final ActivityResultLauncher<Intent> getImage = registerForActivityResult(
                 new ActivityResultContracts.StartActivityForResult(),
                 new ActivityResultCallback<ActivityResult>() {
-                    @Override
-                    public void onActivityResult(ActivityResult result) {
-                        if (result.getResultCode() == Activity.RESULT_OK || result.getResultCode() == CamActivity.IMAGE_URI
-                                && result.getData() != null) {
-                            Uri imageUri = result.getData().getData();
-                            Log.d("result", imageUri.toString());
+        @Override
+        public void onActivityResult(ActivityResult result) {
+            if (result.getResultCode() == Activity.RESULT_OK || result.getResultCode() == CamActivity.IMAGE_URI
+                    && result.getData() != null) {
+                Uri imageUri = result.getData().getData();
+                Log.d("result", imageUri.toString());
 
-                            curImgKey = Storage.uploadImgSupa(CreateRoomActivity.this, imageUri, Storage.chatroomIconStorage);
+                curImgKey = Storage.uploadImgSupa(CreateRoomActivity.this, imageUri, Storage.chatroomIconStorage);
 
-                            if (!curImgKey.equals(Storage.pfpStorage + "default.png")) {
-                                Storage.deleteObjSup(CreateRoomActivity.this, Storage.chatroomIconStorage + curImgKey);
+                if (!curImgKey.equals(Storage.pfpStorage + "default.png")) {
+                    Storage.deleteObjSup(CreateRoomActivity.this, Storage.chatroomIconStorage + curImgKey);
+                }
+
+                Picasso.get()
+                        .load(Storage.chatroomIconStorage + curImgKey)
+                        .placeholder(R.mipmap.default_pfp_foreground)
+                        .into(groupIcon, new Callback() {
+                            @Override
+                            public void onSuccess() {
+                                groupIcon.setImageTintList(null);
                             }
 
-                            Picasso.get()
-                                    .load(Storage.chatroomIconStorage + curImgKey)
-                                    .placeholder(R.mipmap.default_pfp_foreground)
-                                    .into(groupIcon, new Callback() {
-                                        @Override
-                                        public void onSuccess() {
-                                            groupIcon.setImageTintList(null);
-                                        }
+                            @Override
+                            public void onError(Exception e) {}
+                        });
+            }
+        }
+    });
 
-                                        @Override
-                                        public void onError(Exception e) {}
-                                    });
-                        }
+    private void insertRoom(String id) {
+        RequestQueue queue = Volley.newRequestQueue(this);
+
+        StringRequest stringRequest = new StringRequest(
+                Request.Method.POST,
+                Database.astraDbQueryUrl,
+                new Response.Listener<String>() {
+                    @Override
+                    public void onResponse(String response) {
+                        Log.d("CREATE", "Room inserted successfully");
                     }
-                });
+                }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                Log.e("USERS ERROR", error.toString());
+                Log.e("USER ERROR", "INSERT INTO plantopia.rooms (id) VALUES('" + id + "');");
+                if (error.getClass() == NoConnectionError.class) {
+                    Toast.makeText(getApplicationContext(), "Please connect to internet", Toast.LENGTH_SHORT).show();
+                }
+            }
+        }
+        ) {
+            @Override
+            public byte[] getBody() throws AuthFailureError {
+                return ("INSERT INTO plantopia.rooms (id) VALUES('" + id + "');")
+                        .getBytes(StandardCharsets.UTF_8);
+            }
+
+            @Override
+            public Map<String, String> getHeaders() {
+                Map<String, String> headers = new HashMap<>();
+                headers.put("x-cassandra-token", BuildConfig.ASTRA_DB_TOKEN);
+                headers.put("Content-Type", "text/plain");
+                return headers;
+            }
+        };
+
+        queue.add(stringRequest);
     }
 }
