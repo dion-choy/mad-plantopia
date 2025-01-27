@@ -54,6 +54,7 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.GenericTypeIndicator;
 import com.google.firebase.database.ValueEventListener;
 import com.squareup.picasso.Callback;
 import com.squareup.picasso.Picasso;
@@ -178,6 +179,29 @@ public class ChatFrag extends Fragment {
         chatMessages.setItemAnimator(new DefaultItemAnimator());
         chatMessages.setAdapter(chatAdapter);
         chatMessages.setOnTouchListener(swipeAway);
+
+        Database.get()
+                .getReference("rooms")
+                .child(roomKey)
+                .child("members")
+                .addValueEventListener(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot snapshot) {
+                        GenericTypeIndicator<HashMap<String, String>> t = new GenericTypeIndicator<HashMap<String, String>>() {};
+                        HashMap<String, String> info = snapshot.getValue(t);
+                        if (!info.containsValue(email)) {
+                            new Handler().postDelayed(new Runnable() {
+                                @Override
+                                public void run() {
+                                    destroyFragment();
+                                }
+                            }, 150);
+                        }
+                    }
+
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError error) {}
+                });
 
         messages = Database.get().getReference("rooms").child(roomKey).child("messages");
         Log.d("Realtime DB", messages.toString());

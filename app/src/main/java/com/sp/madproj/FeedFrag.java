@@ -280,7 +280,7 @@ public class FeedFrag extends Fragment {
                         try {
                             JSONObject responseObj = new JSONObject(response);
                             Log.d("CODE", responseObj.toString());
-                            if (responseObj.getJSONArray("data").getJSONObject(0).isNull("generated_time")) {
+                            if (responseObj.getJSONArray("data").length() == 0 || responseObj.getJSONArray("data").getJSONObject(0).isNull("generated_time")) {
                                 Toast.makeText(getActivity(), "Code expired or not generated", Toast.LENGTH_LONG).show();
                                 return;
                             }

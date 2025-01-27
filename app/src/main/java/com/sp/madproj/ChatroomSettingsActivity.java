@@ -29,6 +29,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.android.volley.NoConnectionError;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
+import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -274,16 +275,23 @@ public class ChatroomSettingsActivity extends AppCompatActivity {
         }
 
         Log.d("GET USERS", members + ", " + allUsers.toString());
+        boolean thisIn = false;
         for (int i = 0; i < allUsers.length(); i++) {
             try {
                 JSONObject row = allUsers.getJSONObject(i);
                 if (members.containsValue(row.getString("email"))) {
+                    if (row.getString("email").equals(FirebaseAuth.getInstance().getCurrentUser().getEmail())) {
+                        thisIn = true;
+                    }
                     membersModel.add(new User(row.getString("username"), row.getString("email"), row.getString("pfp")));
                 }
             } catch (JSONException e) {
                 throw new RuntimeException(e);
             }
             membersAdapter.notifyDataSetChanged();
+        }
+        if (!thisIn) {
+            finish();
         }
     }
     private void getUsers() {
