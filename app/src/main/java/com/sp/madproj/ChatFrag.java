@@ -22,6 +22,7 @@ import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.WindowManager;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.widget.EditText;
@@ -43,6 +44,9 @@ import androidx.recyclerview.widget.DefaultItemAnimator;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.android.volley.NoConnectionError;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.Timestamp;
@@ -54,10 +58,16 @@ import com.google.firebase.database.ValueEventListener;
 import com.squareup.picasso.Callback;
 import com.squareup.picasso.Picasso;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 public class ChatFrag extends Fragment {
     private Animation disableSend;
@@ -82,6 +92,7 @@ public class ChatFrag extends Fragment {
     private DatabaseReference messages;
 
     private String username = "";
+    private String email = "";
     private Uri pfp = null;
 
     public ChatFrag() {
@@ -91,6 +102,7 @@ public class ChatFrag extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        getActivity().getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
     }
 
     @Override
@@ -98,6 +110,8 @@ public class ChatFrag extends Fragment {
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_chatroom, container, false);
+
+        getUsers();
 
         String roomKey = getArguments().getString("roomKey");
         String roomName = getArguments().getString("roomName");
@@ -111,6 +125,7 @@ public class ChatFrag extends Fragment {
         enableSend = AnimationUtils.loadAnimation(getContext(), R.anim.enable_send);
 
         username = auth.getCurrentUser().getDisplayName();
+        email = auth.getCurrentUser().getEmail();
         pfp = auth.getCurrentUser().getPhotoUrl();
 
         view.findViewById(R.id.backBtn).setOnClickListener(new View.OnClickListener() {
@@ -267,7 +282,7 @@ public class ChatFrag extends Fragment {
         public void onClick(View view) {
             String pushKey = messages.push().getKey();
             Log.d("Firebase realtime db", pushKey);
-            Message message = new Message(username, pfp, inputMsg.getText().toString().trim(), Timestamp.now());
+            Message message = new Message(username, email, pfp, inputMsg.getText().toString().trim(), Timestamp.now());
             if (!imagePreviewModel.isEmpty()) {
                 List<String> imageKeyList = new ArrayList<>();
                 for (int i = 0; i < imagePreviewModel.size(); i++) {
@@ -296,6 +311,7 @@ public class ChatFrag extends Fragment {
     public void onDestroyView() {
         super.onDestroyView();
         model.clear();
+        getActivity().getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_NOTHING);
     }
 
     private void destroyFragment() {
@@ -433,7 +449,7 @@ public class ChatFrag extends Fragment {
             return imageUris.size();
         }
 
-        class ImagePreviewHolder extends RecyclerView.ViewHolder{
+        class ImagePreviewHolder extends RecyclerView.ViewHolder {
             private ImageView image;
             public ImagePreviewHolder(View view) {
                 super(view);
@@ -471,21 +487,40 @@ public class ChatFrag extends Fragment {
             }
 
             if (!message.username.equals(prevUsername)) {
-                holder.username.setText(message.username);
-                Picasso.get()
-                        .load(message.pfp)
-                        .placeholder(R.mipmap.default_pfp_foreground)
-                        .into(holder.pfpIcon, new Callback() {
-                            @Override
-                            public void onSuccess() {
-                                holder.pfpIcon.setImageTintList(null);
-                            }
+                if (!users.isEmpty() && users.get(message.email) != null){
+                    Log.d("GET USERS", users.toString());
+                    Picasso.get()
+                            .load(users.get(message.email).get("pfp"))
+                            .placeholder(R.mipmap.default_pfp_foreground)
+                            .into(holder.pfpIcon, new Callback() {
+                                @Override
+                                public void onSuccess() {
+                                    holder.pfpIcon.setImageTintList(null);
+                                }
 
-                            @Override
-                            public void onError(Exception e) {}
-                        });
-                holder.pfpIcon.setVisibility(View.VISIBLE);
-                holder.username.setVisibility(View.VISIBLE);
+                                @Override
+                                public void onError(Exception e) {}
+                            });
+
+                    holder.username.setText(users.get(message.email).get("username"));
+                } else {
+                    holder.username.setText(message.username);
+                    Picasso.get()
+                            .load(message.pfp)
+                            .placeholder(R.mipmap.default_pfp_foreground)
+                            .into(holder.pfpIcon, new Callback() {
+                                @Override
+                                public void onSuccess() {
+                                    holder.pfpIcon.setImageTintList(null);
+                                }
+
+                                @Override
+                                public void onError(Exception e) {
+                                }
+                            });
+                    holder.pfpIcon.setVisibility(View.VISIBLE);
+                    holder.username.setVisibility(View.VISIBLE);
+                }
             } else {
                 holder.pfpIcon.setVisibility(View.GONE);
                 holder.username.setVisibility(View.GONE);
@@ -595,5 +630,44 @@ public class ChatFrag extends Fragment {
                 this.imageBottomRight = view.findViewById(R.id.imageBottomRight);
             }
         }
+    }
+
+    private Map<String, Map<String, String>> users = new HashMap<String, Map<String, String>>();
+
+    private void getUsers() {
+        Database.queryAstra(getActivity(),
+                "SELECT * FROM plantopia.user_info",
+                new Response.Listener<String>() {
+                    @Override
+                    public void onResponse(String response) {
+                        Log.d("GET USERS", response);
+
+                        try {
+                            JSONObject responseObj = new JSONObject(response);
+                            JSONArray data = responseObj.getJSONArray("data");
+                            for (int i = 0; i < data.length(); i++) {
+                                JSONObject row = data.getJSONObject(i);
+                                Map<String, String> usernamePfp = new HashMap<String, String>();
+                                usernamePfp.put("username", row.getString("username"));
+                                usernamePfp.put("pfp", row.getString("pfp"));
+                                users.put(row.getString("email"), usernamePfp);
+                            }
+
+                            Log.d("GET USERS", users.toString());
+                        } catch (JSONException e) {
+                            throw new RuntimeException(e);
+                        }
+                    }
+                },
+                new Response.ErrorListener() {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        Log.e("GET USERS ERROR", error.toString());
+                        if (error.getClass() == NoConnectionError.class) {
+                            Toast.makeText(getActivity(), "Please connect to internet", Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                }
+        );
     }
 }

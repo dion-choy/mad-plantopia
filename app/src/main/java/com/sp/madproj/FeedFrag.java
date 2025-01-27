@@ -100,7 +100,6 @@ public class FeedFrag extends Fragment {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 Log.d("REALTIME ROOT", snapshot.toString());
-                model.clear();
                 updateMenu(snapshot);
             }
 
@@ -133,6 +132,7 @@ public class FeedFrag extends Fragment {
     }
 
     private void updateMenu(DataSnapshot snapshot) {
+        model.clear();
         for (DataSnapshot child: snapshot.getChildren()) {
             Log.d("REALTIME CHILD", child.toString());
             DatabaseReference chatMembers = child.getRef().child("members");
@@ -143,9 +143,12 @@ public class FeedFrag extends Fragment {
                     GenericTypeIndicator<HashMap<String, String>> t = new GenericTypeIndicator<HashMap<String, String>>() {};
                     HashMap<String, String> members = snapshot.getValue(t);
                     if (members != null) {
-                        Log.d("REALTIME", "onDataChanged: " + members.toString());
                         if (currentUser != null && members.containsValue(currentUser.getEmail())) {
+                            Log.d("REALTIME", "added: " + snapshot);
                             addChatroomToModel(child);
+                        }
+                        if (chatRoomAdapter != null) {
+                            chatRoomAdapter.notifyDataSetChanged();
                         }
                     }
                     chatMembers.removeEventListener(this);
@@ -330,7 +333,7 @@ public class FeedFrag extends Fragment {
                 GenericTypeIndicator<HashMap<String, String>> t = new GenericTypeIndicator<HashMap<String, String>>() {};
                 HashMap<String, String> members = task.getResult().getValue(t);
 
-                if (members.containsValue(currentUser.getEmail())) {
+                if (members != null && members.containsValue(currentUser.getEmail())) {
                     Toast.makeText(getActivity(), "Already a member", Toast.LENGTH_SHORT).show();
                     return;
                 }

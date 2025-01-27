@@ -41,10 +41,6 @@ import com.google.firebase.auth.UserProfileChangeRequest;
 import com.squareup.picasso.Callback;
 import com.squareup.picasso.Picasso;
 
-import java.nio.charset.StandardCharsets;
-import java.util.HashMap;
-import java.util.Map;
-
 public class FeedSettingsActivity extends AppCompatActivity {
     private final FirebaseAuth auth = FirebaseAuth.getInstance();
     private FirebaseUser currentUser;
@@ -186,6 +182,9 @@ public class FeedSettingsActivity extends AppCompatActivity {
                                                 Log.d("USER PROFILE", "User profile updated.");
                                                 Toast.makeText(FeedSettingsActivity.this, "Profile picture updated", Toast.LENGTH_SHORT)
                                                                 .show();
+
+                                                updatePfp(currentUser.getPhotoUrl().toString());
+
                                                 Picasso.get()
                                                         .load(currentUser.getPhotoUrl())
                                                         .placeholder(R.mipmap.default_pfp_foreground)
@@ -236,6 +235,27 @@ public class FeedSettingsActivity extends AppCompatActivity {
         ((TextView) findViewById(R.id.email))
                 .setText(currentUser.getEmail());
 
+    }
+
+    private void updatePfp(String pfpUrl) {
+        Database.queryAstra(this,
+                "UPDATE plantopia.user_info SET pfp='" + pfpUrl + "' WHERE username='" + currentUser.getDisplayName() + "';",
+                new Response.Listener<String>() {
+                    @Override
+                    public void onResponse(String response) {
+                        Log.i("PFP UPDATE", "Success");
+                    }
+                },
+                new Response.ErrorListener() {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        Log.e("PFP UPDATE ERROR", error.toString());
+                        if (error.getClass() == NoConnectionError.class) {
+                            Toast.makeText(getApplicationContext(), "Please connect to internet", Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                }
+        );
     }
 
     private void deleteFromFirebase() {

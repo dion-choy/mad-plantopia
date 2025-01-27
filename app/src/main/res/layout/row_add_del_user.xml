@@ -15,6 +15,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:background="#00FFFFFF"
+            android:foreground="@drawable/send_icon_ripple"
             android:scaleX="0.7"
             android:scaleY="0.7"
             android:tint="?android:attr/textColor"
