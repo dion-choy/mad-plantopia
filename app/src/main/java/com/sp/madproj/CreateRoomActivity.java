@@ -26,6 +26,7 @@ import com.android.volley.VolleyError;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
 import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.firebase.Timestamp;
@@ -70,34 +71,25 @@ public class CreateRoomActivity extends AppCompatActivity {
                 String pushKey = rooms.push().getKey();
                 Log.d("Firebase realtime db", pushKey);
 
-                rooms.child(pushKey)
-                        .child("info")
-                        .setValue(new Chatroom(groupName.getText().toString(), curImgKey))
-                        .addOnCompleteListener(new OnCompleteListener<Void>() {
-                    @Override
-                    public void onComplete(@NonNull Task<Void> task) {
-                        if (task.isSuccessful()) {
-                            Log.d("REALTIME DB ADD", "onComplete: Chatroom added successfully!");
-                            rooms.child(pushKey)
-                                    .child("members")
-                                    .child(pushKey)
-                                    .setValue(
-                                            FirebaseAuth.getInstance()
-                                                    .getCurrentUser()
-                                                    .getEmail()
-                                    ). addOnCompleteListener(new OnCompleteListener<Void>() {
-                                        @Override
-                                        public void onComplete(@NonNull Task<Void> task) {
-                                            if (task.isSuccessful()) {
-                                                Log.d("REALTIME DB ADD", "onComplete: Member added successfully!");
-                                                success = true;
-                                                insertRoom(pushKey);
-                                            }
-                                        }
-                                    });
-                        }
-                    }
-                });
+                Map<String, Object> childUpdate = new HashMap<>();
+                childUpdate.put("/" + pushKey + "/info/", new Chatroom(groupName.getText().toString(), curImgKey));
+
+                childUpdate.put("/" + pushKey + "/members/" + pushKey + "/",
+                        FirebaseAuth.getInstance()
+                                .getCurrentUser()
+                                .getEmail()
+                        );
+
+                rooms.updateChildren(childUpdate)
+                        .addOnSuccessListener(new OnSuccessListener<Void>() {
+                            @Override
+                            public void onSuccess(Void unused) {
+                                Log.d("REALTIME DB ADD", "onComplete: Member added successfully!");
+                                success = true;
+                                insertRoom(pushKey);
+                            }
+                       }
+                );
 
                 Log.d("Output", groupName.getText().toString() + ", " + curImgKey);
                 finish();

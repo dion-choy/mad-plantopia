@@ -22,6 +22,7 @@ import com.android.volley.toolbox.Volley;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
@@ -69,7 +70,7 @@ public class Storage {
 
     public static String uploadImgSupa(Context context, Uri uri, String storagePath) {
         Matrix matrix = new Matrix();
-        switch (getBitmapOriention(getRealPathFromURI(context, uri))) {
+        switch (getBitmapOriention(context, uri)) {
             case ExifInterface.ORIENTATION_NORMAL:
                 matrix.postRotate(0);
                 break;
@@ -137,32 +138,34 @@ public class Storage {
         return rng + ".jpg";
     }
 
-    public static int getBitmapOriention(String path){
+    public static int getBitmapOriention(Context context, Uri uri){
         ExifInterface exif = null;
         int orientation = 0;
         try {
-            exif = new ExifInterface(path);
+            InputStream input = context.getContentResolver().openInputStream(uri);
+            exif = new ExifInterface(input);
             orientation = exif.getAttributeInt(ExifInterface.TAG_ORIENTATION,
                     ExifInterface.ORIENTATION_UNDEFINED);
-            //Log.e("getBitmapOriention", "getBitmapOriention: "+orientation );
+//            Log.e("getBitmapOriention", "getBitmapOriention: " + orientation);
         } catch (Exception e) {
             e.printStackTrace();
+            Log.e("getBitmapOriention", "getBitmapOriention: " + e.getMessage());
         }
         return orientation;
     }
 
-    public static String getRealPathFromURI(Context context, Uri contentUri) {
-        Cursor cursor = null;
-        try {
-            String[] proj = { MediaStore.Images.Media.DATA };
-            cursor = context.getContentResolver().query(contentUri,  proj, null, null, null);
-            int column_index = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
-            cursor.moveToFirst();
-            return cursor.getString(column_index);
-        } finally {
-            if (cursor != null) {
-                cursor.close();
-            }
-        }
-    }
+//    public static String getRealPathFromURI(Context context, Uri contentUri) {
+//        Cursor cursor = null;
+//        try {
+//            String[] proj = { MediaStore.Images.Media.DATA };
+//            cursor = context.getContentResolver().query(contentUri,  proj, null, null, null);
+//            int column_index = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
+//            cursor.moveToFirst();
+//            return cursor.getString(column_index);
+//        } finally {
+//            if (cursor != null) {
+//                cursor.close();
+//            }
+//        }
+//    }
 }

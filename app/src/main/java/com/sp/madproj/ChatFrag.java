@@ -5,10 +5,14 @@ import android.content.ClipData;
 import android.content.Context;
 import android.content.Intent;
 import android.content.res.ColorStateList;
+import android.graphics.Bitmap;
+import android.graphics.Matrix;
+import android.media.ExifInterface;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.provider.MediaStore;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.DisplayMetrics;
@@ -50,6 +54,7 @@ import com.google.firebase.database.ValueEventListener;
 import com.squareup.picasso.Callback;
 import com.squareup.picasso.Picasso;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -230,10 +235,10 @@ public class ChatFrag extends Fragment {
                         if (result.getResultCode() == Activity.RESULT_OK) {
                             ClipData data = result.getData().getClipData();
                             if (data == null) {
-                                Toast.makeText(getActivity().getApplicationContext(), "Error", Toast.LENGTH_SHORT).show();
                                 if (Build.VERSION.SDK_INT < 29 && result.getData().getData() != null) {
                                     imagePreviewModel.add(result.getData().getData());
                                 } else {
+                                    Toast.makeText(getActivity().getApplicationContext(), "Error", Toast.LENGTH_SHORT).show();
                                     return;
                                 }
                             } else if (data.getItemCount() > 10) {
@@ -382,10 +387,32 @@ public class ChatFrag extends Fragment {
         @Override
         public void onBindViewHolder(@NonNull ImagePreviewHolder holder, int position) {
             Uri uri = imageUris.get(position);
-            Picasso.get()
-                    .load(uri)
-                    .placeholder(R.drawable.gallery)
-                    .into(holder.image);
+
+            Matrix matrix = new Matrix();
+            switch (Storage.getBitmapOriention(getActivity(), uri)) {
+                case ExifInterface.ORIENTATION_NORMAL:
+                    matrix.postRotate(0);
+                    break;
+                case ExifInterface.ORIENTATION_ROTATE_90:
+                    matrix.postRotate(90);
+                    break;
+                case ExifInterface.ORIENTATION_ROTATE_180:
+                    matrix.postRotate(180);
+                    break;
+                case ExifInterface.ORIENTATION_ROTATE_270:
+                    matrix.postRotate(270);
+                    break;
+            }
+
+            Bitmap bitmap = null;
+            try {
+                bitmap = MediaStore.Images.Media.getBitmap(getActivity().getContentResolver(), uri);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+
+            bitmap = Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true);
+            holder.image.setImageBitmap(bitmap);
 
             holder.itemView.setOnClickListener(new View.OnClickListener() {
                 @Override

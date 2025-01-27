@@ -152,7 +152,7 @@ public class IdResultActivity extends AppCompatActivity {
 
     void loadResult(String inputUriStr, String apiReply, String imgKey) {
         Matrix matrix = new Matrix();
-        switch (Storage.getBitmapOriention(Storage.getRealPathFromURI(this, Uri.parse(inputUriStr)))) {
+        switch (Storage.getBitmapOriention(this, Uri.parse(inputUriStr))) {
             case ExifInterface.ORIENTATION_NORMAL:
                 matrix.postRotate(0);
                 break;
