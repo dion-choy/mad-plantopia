@@ -67,6 +67,8 @@ dependencies {
 
     implementation 'pl.droidsonroids.gif:android-gif-drawable:1.2.17'
 
+    implementation libs.core.splashscreen
+
     def camerax_version = "1.2.2"
     implementation "androidx.camera:camera-core:${camerax_version}"
     implementation "androidx.camera:camera-camera2:${camerax_version}"

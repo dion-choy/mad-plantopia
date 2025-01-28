@@ -137,7 +137,7 @@ public class CamActivity extends AppCompatActivity {
                     CAMERA_REQUEST_CODE);
         }
 
-        if (Build.VERSION.SDK_INT < 29) {
+        if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.P) {
             if (ActivityCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
                 ActivityCompat.requestPermissions(this,
                         new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
@@ -152,7 +152,7 @@ public class CamActivity extends AppCompatActivity {
         contentValues.put(MediaStore.MediaColumns.DISPLAY_NAME, timeStamp);
         contentValues.put(MediaStore.MediaColumns.MIME_TYPE, "image/jpeg");
 
-        if(Build.VERSION.SDK_INT > Build.VERSION_CODES.P) {
+        if (Build.VERSION.SDK_INT > Build.VERSION_CODES.P) {
             contentValues.put(MediaStore.Images.Media.RELATIVE_PATH, "Pictures/CameraX-Image");
         }
 

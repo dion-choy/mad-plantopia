@@ -9,6 +9,12 @@
         <item name="cornerSizeBottomRight">100dp</item>
         <item name="colorPrimaryContainer">@color/nav_bar_dark_background</item>
     </style>
+    <style name="Theme.Splash" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenAnimatedIcon">@drawable/splash_screen</item>
+        <item name="windowSplashScreenAnimationDuration">2000</item>
+        <item name="windowSplashScreenBackground">@color/dark_background</item>
+        <item name="postSplashScreenTheme">@style/Base.Theme.MADproj</item>
+    </style>
 
     <!-- Base application theme. -->
     <style name="Base.Theme.MADproj" parent="Theme.Material3.DayNight.NoActionBar">

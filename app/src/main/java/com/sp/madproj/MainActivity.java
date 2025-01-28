@@ -2,13 +2,21 @@ package com.sp.madproj;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.graphics.drawable.AnimatedVectorDrawable;
+import android.media.MediaPlayer;
+import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
 import android.util.Log;
 import android.view.MenuItem;
+import android.view.MotionEvent;
+import android.view.View;
+import android.widget.ImageView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.splashscreen.SplashScreen;
 import androidx.fragment.app.FragmentManager;
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
@@ -98,8 +106,30 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        SplashScreen.installSplashScreen(this);
+
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        // SPLASH SCREEN CODE
+        ImageView splashScreenImg = findViewById(R.id.splashScreen);
+        if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.P) {
+            new Handler().postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    ((AnimatedVectorDrawable) splashScreenImg.getDrawable()).start();
+                    new Handler().postDelayed(new Runnable() {
+                        @Override
+                        public void run() {
+                            splashScreenImg.setVisibility(View.GONE);
+                        }
+                    }, 1800);
+                }
+            }, 1000);
+        } else {
+            splashScreenImg.setVisibility(View.GONE);
+        }
+        // SPLASH SCREEN CODE END
 
         context = getContext();
 
