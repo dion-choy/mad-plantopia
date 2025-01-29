@@ -68,8 +68,6 @@ public class FeedFrag extends Fragment {
     private Animation fadeOutBg;
     private Animation fadeInBg;
 
-    private ActivityResultLauncher<Intent> getImage;
-
     private FloatingActionButton addServer;
     private ConstraintLayout addServerContainer;
 
@@ -231,18 +229,6 @@ public class FeedFrag extends Fragment {
                 closeOptions();
             }
         });
-
-        getImage = registerForActivityResult(
-                new ActivityResultContracts.StartActivityForResult(),
-                new ActivityResultCallback<ActivityResult>() {
-                    @Override
-                    public void onActivityResult(ActivityResult result) {
-                        if (result.getResultCode() == Activity.RESULT_OK) {
-                            Intent data = result.getData();
-                            Toast.makeText(getActivity().getApplicationContext(), data.toUri(Intent.URI_ALLOW_UNSAFE), Toast.LENGTH_SHORT).show();
-                        }
-                    }
-                });
 
         codeInput = view.findViewById(R.id.codeInput);
 

@@ -1,5 +1,6 @@
 package com.sp.madproj;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -15,6 +16,7 @@ import android.widget.ImageView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.splashscreen.SplashScreen;
 
 import com.android.volley.AuthFailureError;
 import com.android.volley.NoConnectionError;
@@ -62,6 +64,8 @@ public class AddPlantActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        SplashScreen.installSplashScreen(this);
+
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_add_plant);
 
@@ -144,6 +148,12 @@ public class AddPlantActivity extends AppCompatActivity {
                 }
 
                 Log.d("Output", nameInput.getText().toString() + ", " + selectAccessToken + ", " + selectedIcon);
+                setResult(1,
+                        new Intent()
+                                .putExtra("name", nameInput.getText().toString())
+                                .putExtra("accessToken", selectAccessToken)
+                                .putExtra("icon", selectedIcon)
+                );
                 finish();
             }
         });
