@@ -124,9 +124,9 @@ public class PlantFrag extends Fragment {
                 Sprite potSprite2 = canvas.new Sprite(CanvasView.DP, pot, 55f, 402f, pxFromDp(72, context)/pot.getWidth(), false);
                 Sprite potSprite1 = canvas.new Sprite(CanvasView.DP, pot, -5.73f, 399f, 1, false);
 
-                Sprite potSprite4 = canvas.new Sprite(CanvasView.DP, pot, 246f, 406f, pxFromDp(61, context)/pot.getWidth(), false);
-                Sprite potSprite5 = canvas.new Sprite(CanvasView.DP, pot, 285.28f, 402f, pxFromDp(72, context)/pot.getWidth(), false);
-                Sprite potSprite6 = canvas.new Sprite(CanvasView.DP, pot, 335.09f, 399f, 1, false);
+                Sprite potSprite4 = canvas.new Sprite(CanvasView.DP, pot, 246f, 406f, pxFromDp(61, context)/pot.getWidth());
+                Sprite potSprite5 = canvas.new Sprite(CanvasView.DP, pot, 285.28f, 402f, pxFromDp(72, context)/pot.getWidth());
+                Sprite potSprite6 = canvas.new Sprite(CanvasView.DP, pot, 335.09f, 399f, 1);
 
                 canvas.add(potSprite3);
                 canvas.add(potSprite2);

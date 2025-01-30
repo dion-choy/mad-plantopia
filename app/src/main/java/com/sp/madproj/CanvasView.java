@@ -22,9 +22,28 @@ public class CanvasView extends View {
     public static final int DP = 0;
     public static final int PX = 1;
 
+    public static Bitmap getBitmapFromVectorDrawable(Context context, int drawableId) {
+        Drawable drawable = ContextCompat.getDrawable(context, drawableId);
+
+        Bitmap bitmap = Bitmap.createBitmap(drawable.getIntrinsicWidth(),
+                drawable.getIntrinsicHeight(), Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(bitmap);
+        drawable.setBounds(0, 0, canvas.getWidth(), canvas.getHeight());
+        drawable.draw(canvas);
+
+        return bitmap;
+    }
+
+    public static float pxFromDp(final float dp, Context context) {
+        return dp * context.getResources().getDisplayMetrics().density;
+    }
+
+    public static float dpFromPx(final float px, Context context) {
+        return px / context.getResources().getDisplayMetrics().density;
+    }
+
     private final Context context;
     private Bitmap bg = null;
-
     private Bitmap buffer;
     private final Canvas bufferCanvas = new Canvas();
 
@@ -32,6 +51,7 @@ public class CanvasView extends View {
         super(context);
         this.context = context;
     }
+
     public CanvasView(Context context, int backgroundDrawableResource) {
         super(context);
         this.context = context;
@@ -54,18 +74,24 @@ public class CanvasView extends View {
 
         setOnTouchListener(new View.OnTouchListener() {
             private float initY = 0;
+            private float initX = 0;
             private float initPos = 0;
 
             @Override
             public boolean onTouch(View view, MotionEvent motionEvent) {
 //                Log.d("Canvas", "onClick:" + motionEvent + motionEvent.getX() + ", " + motionEvent.getY());
-                if (motionEvent.getAction() == MotionEvent.ACTION_DOWN) {
-                    initY = motionEvent.getY();
-                    initPos = scrollY;
-                    return true;
-                }
-                if (motionEvent.getAction() == MotionEvent.ACTION_MOVE) {
-                    if (initY - motionEvent.getY() != 0) {
+                switch (motionEvent.getAction()) {
+                    case MotionEvent.ACTION_DOWN:
+                        initY = motionEvent.getY();
+                        initX = motionEvent.getX();
+                        initPos = scrollY;
+                        return true;
+
+                    case MotionEvent.ACTION_MOVE:
+                        if (initY - motionEvent.getY() == 0) {
+                            return true;
+                        }
+
                         scrollY = initPos + initY - motionEvent.getY();
 
                         if (scrollY < 0) {
@@ -78,17 +104,14 @@ public class CanvasView extends View {
                             invalidate();
                             prevY = scrollY;
                         }
-                    }
 
-                    return true;
-                }
-
-                if (motionEvent.getAction() == MotionEvent.ACTION_UP) {
-                    if (initY == motionEvent.getY()) {
-                        clickAt(motionEvent.getX(), motionEvent.getY());
-                        performClick();
-                    }
-                    return true;
+                        return true;
+                    case MotionEvent.ACTION_UP:
+                        if (Math.abs(initY - motionEvent.getY()) < 10 && Math.abs(initX - motionEvent.getX()) < 10) {
+                            clickAt(motionEvent.getX(), motionEvent.getY());
+                            performClick();
+                        }
+                        return true;
                 }
 
                 return false;
@@ -126,37 +149,6 @@ public class CanvasView extends View {
         return super.performClick();
     }
 
-    public void clickAt(float x, float y) {
-        Log.d("Sprite", clickableSprites.toString());
-        for (Sprite sprite: clickableSprites) {
-            if (sprite.contains(x, y)) {
-                Log.d("Sprite", "Clicked");
-                Toast.makeText(getContext(), "Clicked", Toast.LENGTH_SHORT).show();
-                break;
-            }
-        }
-    }
-
-    public static Bitmap getBitmapFromVectorDrawable(Context context, int drawableId) {
-        Drawable drawable = ContextCompat.getDrawable(context, drawableId);
-
-        Bitmap bitmap = Bitmap.createBitmap(drawable.getIntrinsicWidth(),
-                drawable.getIntrinsicHeight(), Bitmap.Config.ARGB_8888);
-        Canvas canvas = new Canvas(bitmap);
-        drawable.setBounds(0, 0, canvas.getWidth(), canvas.getHeight());
-        drawable.draw(canvas);
-
-        return bitmap;
-    }
-
-    public static float pxFromDp(final float dp, Context context) {
-        return dp * context.getResources().getDisplayMetrics().density;
-    }
-
-    public static float dpFromPx(final float px, Context context) {
-        return px / context.getResources().getDisplayMetrics().density;
-    }
-
     public boolean remove(Sprite sprite) {
         return allSprites.remove(sprite);
     }
@@ -165,6 +157,15 @@ public class CanvasView extends View {
         allSprites.add(sprite);
     }
 
+    private void clickAt(float x, float y) {
+        Log.d("Sprite", clickableSprites.toString());
+        for (Sprite sprite: clickableSprites) {
+            if (sprite.contains(x, y)) {
+                sprite.click();
+                break;
+            }
+        }
+    }
 
     private final List<Sprite> allSprites = new ArrayList<>();
     private final List<Sprite> clickableSprites = new ArrayList<>();
@@ -204,6 +205,11 @@ public class CanvasView extends View {
 
         private boolean contains(float x, float y) {
             return position.contains(x/scale, (y+ scrollY)/scale);
+        }
+
+        private void click() {
+            Log.d("Sprite", "Clicked");
+            Toast.makeText(getContext(), "Clicked", Toast.LENGTH_SHORT).show();
         }
 
         public Bitmap getBitmap() {
