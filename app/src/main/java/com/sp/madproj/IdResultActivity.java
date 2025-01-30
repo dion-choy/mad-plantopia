@@ -3,7 +3,7 @@ package com.sp.madproj;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.Matrix;
-import android.media.ExifInterface;
+import androidx.exifinterface.media.ExifInterface;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
@@ -38,7 +38,6 @@ import java.util.Locale;
 
 public class IdResultActivity extends AppCompatActivity {
     private ImageView inputImage;
-    private Toolbar toolbar;
 
     private RecyclerView results;
     private List<JSONObject> model = new ArrayList<>();
@@ -65,7 +64,7 @@ public class IdResultActivity extends AppCompatActivity {
         results.setItemAnimator(new DefaultItemAnimator());
 
         inputImage = findViewById(R.id.inputImg);
-        toolbar = findViewById(R.id.toolbar);
+        Toolbar toolbar = findViewById(R.id.toolbar);
 
         findViewById(R.id.returnBtn).setOnClickListener(new View.OnClickListener() {
             @Override

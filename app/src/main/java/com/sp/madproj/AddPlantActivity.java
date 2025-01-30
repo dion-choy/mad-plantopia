@@ -32,7 +32,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.UnsupportedEncodingException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -56,8 +56,8 @@ public class AddPlantActivity extends AppCompatActivity {
     ImageView vineTick;
     ImageView cactusTick;
 
-    List<String> model = new ArrayList<String>();
-    List<String> queries = new ArrayList<String>();
+    List<String> model = new ArrayList<>();
+    List<String> queries = new ArrayList<>();
     ArrayAdapter<String> adapter = null;
 
     boolean queueFilled = false;
@@ -89,7 +89,7 @@ public class AddPlantActivity extends AppCompatActivity {
 
         nameInput = findViewById(R.id.nameInput);
 
-        adapter = new ArrayAdapter<String>(this, R.layout.row_autocomplete_dropdown, model);
+        adapter = new ArrayAdapter<>(this, R.layout.row_autocomplete_dropdown, model);
         speciesInput = findViewById(R.id.speciesInput);
         speciesInput.setAdapter(adapter);
         speciesInput.addTextChangedListener(new TextWatcher() {
@@ -188,7 +188,7 @@ public class AddPlantActivity extends AppCompatActivity {
 //                    Toast.makeText(getApplicationContext(), "Response", Toast.LENGTH_SHORT).show();
                     Log.d("Plant API Success", matches.getJSONObject(0).getString("entity_name"));
                 } catch (JSONException e) {
-                    Log.e("Plant API Error", "Malformed Response: " + e.toString());
+                    Log.e("Plant API Error", "Malformed Response: " + e);
                 }
             }
         }, new Response.ErrorListener() {
@@ -204,12 +204,8 @@ public class AddPlantActivity extends AppCompatActivity {
                 }
 
                 if (error.networkResponse != null) {
-                    try {
-                        String bodyStr = new String(error.networkResponse.data,"UTF-8");
-                        Log.d("Plant API Error", bodyStr);
-                    } catch (UnsupportedEncodingException e) {
-                        // exception
-                    }
+                    String bodyStr = new String(error.networkResponse.data, StandardCharsets.UTF_8);
+                    Log.d("Plant API Error", bodyStr);
                 }
 
 //                Log.d("Plant API Error", "Response Error: " + error.networkResponse.statusCode);
@@ -217,7 +213,7 @@ public class AddPlantActivity extends AppCompatActivity {
         }) {
             @Override
             public Map<String, String> getHeaders() throws AuthFailureError {
-                Map<String, String> params = new HashMap<String, String>();
+                Map<String, String> params = new HashMap<>();
                 params.put("Content-Type", "application/json");
                 params.put("Api-Key", BuildConfig.PLANT_KEY);
                 return params;

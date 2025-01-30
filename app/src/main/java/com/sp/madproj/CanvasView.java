@@ -3,6 +3,7 @@ package com.sp.madproj;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.PorterDuff;
 import android.graphics.RectF;
 import android.graphics.drawable.Drawable;
@@ -18,35 +19,29 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class CanvasView extends View {
-    private final Context context;
-    private final Bitmap bg;
-    private final Bitmap pot;
-    private final Bitmap cactus;
-    private final Bitmap flower;
-    private final Bitmap upright;
-    private final Bitmap vine;
+    public static final int DP = 0;
+    public static final int PX = 1;
 
-    public static List<Sprite> pots = new ArrayList<>();
-    public static List<Sprite> plants = new ArrayList<>();
+    private final Context context;
+    private Bitmap bg = null;
 
     private Bitmap buffer;
-    private static final Canvas bufferCanvas = new Canvas();
+    private final Canvas bufferCanvas = new Canvas();
 
+    public CanvasView(Context context) {
+        super(context);
+        this.context = context;
+    }
     public CanvasView(Context context, int backgroundDrawableResource) {
         super(context);
         this.context = context;
         bg = getBitmapFromVectorDrawable(context, backgroundDrawableResource);
-        pot = getBitmapFromVectorDrawable(context, R.drawable.pot);
-        cactus = getBitmapFromVectorDrawable(context, R.drawable.plant_cactus);
-        flower = getBitmapFromVectorDrawable(context, R.drawable.plant_flower);
-        upright = getBitmapFromVectorDrawable(context, R.drawable.plant_upright);
-        vine = getBitmapFromVectorDrawable(context, R.drawable.plant_vine);
 
         Log.d("Canvas", "New canvas");
     }
 
-    private static float bgScale = 1;
-    private static float posY = 0;
+    private float bgScale = 1;
+    private float scrollY = 0;
     private float prevY = 0;
     @Override
     protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
@@ -57,13 +52,6 @@ public class CanvasView extends View {
         buffer = Bitmap.createBitmap(getWidth(), (int) (bg.getHeight()* bgScale), Bitmap.Config.ARGB_8888);
         bufferCanvas.setBitmap(buffer);
 
-        bufferCanvas.save();
-        bufferCanvas.scale(bgScale, bgScale);
-
-        bufferCanvas.drawBitmap(bg, 0, 0, null);
-
-        bufferCanvas.restore();
-
         setOnTouchListener(new View.OnTouchListener() {
             private float initY = 0;
             private float initPos = 0;
@@ -73,22 +61,22 @@ public class CanvasView extends View {
 //                Log.d("Canvas", "onClick:" + motionEvent + motionEvent.getX() + ", " + motionEvent.getY());
                 if (motionEvent.getAction() == MotionEvent.ACTION_DOWN) {
                     initY = motionEvent.getY();
-                    initPos = posY;
+                    initPos = scrollY;
                     return true;
                 }
                 if (motionEvent.getAction() == MotionEvent.ACTION_MOVE) {
                     if (initY - motionEvent.getY() != 0) {
-                        posY = initPos + initY - motionEvent.getY();
+                        scrollY = initPos + initY - motionEvent.getY();
 
-                        if (posY < 0) {
-                            posY = 0;
-                        } else if (posY >= bg.getHeight()* bgScale - bottom) {
-                            posY = bg.getHeight() * bgScale - bottom;
+                        if (scrollY < 0) {
+                            scrollY = 0;
+                        } else if (scrollY >= bg.getHeight()* bgScale - bottom) {
+                            scrollY = bg.getHeight() * bgScale - bottom;
                         }
 
-                        if (posY != prevY){
+                        if (scrollY != prevY){
                             invalidate();
-                            prevY = posY;
+                            prevY = scrollY;
                         }
                     }
 
@@ -113,7 +101,24 @@ public class CanvasView extends View {
         super.onDraw(canvas);
         Log.d("Canvas", "onDraw");
 
-        canvas.drawBitmap(buffer, 0, -posY, null);
+        //Clear canvas
+        bufferCanvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR);
+
+        //Draw background
+        bufferCanvas.save();
+        bufferCanvas.scale(bgScale, bgScale);
+
+        bufferCanvas.drawBitmap(bg, 0, 0, null);
+
+        bufferCanvas.restore();
+
+        //Draw sprites
+        for (Sprite sprite: allSprites) {
+            sprite.draw();
+        }
+
+        //Draw from buffer scroll pos
+        canvas.drawBitmap(buffer, 0, -scrollY, null);
     }
 
     @Override
@@ -148,30 +153,48 @@ public class CanvasView extends View {
         return dp * context.getResources().getDisplayMetrics().density;
     }
 
-    private static List<Sprite> clickableSprites = new ArrayList<>();
-    public static class Sprite {
+    public static float dpFromPx(final float px, Context context) {
+        return px / context.getResources().getDisplayMetrics().density;
+    }
+
+    public boolean remove(Sprite sprite) {
+        return allSprites.remove(sprite);
+    }
+
+    public void add(Sprite sprite) {
+        allSprites.add(sprite);
+    }
+
+
+    private final List<Sprite> allSprites = new ArrayList<>();
+    private final List<Sprite> clickableSprites = new ArrayList<>();
+    public class Sprite {
         private Bitmap bm;
         private RectF position;
         private float scale;
 
-        public Sprite(Bitmap bm, float left, float top, float scale) {
+        public Sprite(int units, Bitmap bm, float left, float top, float scale) {
             this.bm = bm;
             this.scale = scale;
+            if (units == CanvasView.DP) {
+                left = pxFromDp(left, context);
+                top = pxFromDp(top, context);
+            }
             position = new RectF(left, top, left + bm.getWidth(), top + bm.getHeight());
 
             clickableSprites.add(this);
         }
 
-        public Sprite(Bitmap bm, float left, float top, float scale, boolean clickable) {
-            this(bm, left, top, scale);
+        public Sprite(int units, Bitmap bm, float left, float top, float scale, boolean clickable) {
+            this(units, bm, left, top, scale);
             if (clickable) {
                 clickableSprites.remove(this);
             }
         }
 
-        public void draw() {
+        private void draw() {
             bufferCanvas.save();
-            bufferCanvas.scale(CanvasView.bgScale, CanvasView.bgScale);
+            bufferCanvas.scale(CanvasView.this.bgScale, CanvasView.this.bgScale);
             bufferCanvas.scale(scale, scale, position.left, position.top);
 
             bufferCanvas.drawBitmap(bm, position.left, position.top, null);
@@ -179,8 +202,8 @@ public class CanvasView extends View {
             bufferCanvas.restore();
         }
 
-        public boolean contains(float x, float y) {
-            return position.contains(x/scale, (y+posY)/scale);
+        private boolean contains(float x, float y) {
+            return position.contains(x/scale, (y+ scrollY)/scale);
         }
 
         public Bitmap getBitmap() {
