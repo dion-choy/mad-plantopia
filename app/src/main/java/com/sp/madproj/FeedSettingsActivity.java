@@ -23,14 +23,9 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.splashscreen.SplashScreen;
 
-import com.android.volley.AuthFailureError;
 import com.android.volley.NoConnectionError;
-import com.android.volley.Request;
-import com.android.volley.RequestQueue;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
-import com.android.volley.toolbox.StringRequest;
-import com.android.volley.toolbox.Volley;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.android.material.textfield.TextInputLayout;
@@ -174,7 +169,7 @@ public class FeedSettingsActivity extends AppCompatActivity {
 
                             FirebaseUser user = auth.getCurrentUser();
                             if (!user.getPhotoUrl().toString().equals(Storage.pfpStorage + "default.png")) {
-                                Storage.deleteObjSup(FeedSettingsActivity.this, auth.getCurrentUser().getPhotoUrl().toString());
+                                Storage.deleteObjSupa(FeedSettingsActivity.this, auth.getCurrentUser().getPhotoUrl().toString());
                             }
 
                             user.updateProfile(profileUpdates)

@@ -1,7 +1,6 @@
 package com.sp.madproj;
 
 import android.content.Context;
-import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.Matrix;
 import android.media.ExifInterface;
@@ -36,7 +35,7 @@ public class Storage {
     public final static String chatroomIconStorage = baseUrl + "chatroom/icons/";
     public final static String chatroomImageStorage = baseUrl + "chatroom/images/";
 
-    public static void deleteObjSup(Context context, String storagePath) {
+    public static void deleteObjSupa(Context context, String storagePath) {
 
         RequestQueue queue = Volley.newRequestQueue(context);
 

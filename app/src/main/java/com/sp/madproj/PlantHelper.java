@@ -22,24 +22,23 @@ import org.json.JSONObject;
 import java.util.HashMap;
 import java.util.Map;
 
-public class IdentificationHelper extends SQLiteOpenHelper {
-    private static final String DATABASE_NAME = "identification.db";
+public class PlantHelper extends SQLiteOpenHelper {
+    private static final String DATABASE_NAME = "plant.db";
     private static final int SCHEMA_VERSION = 1;
 
-    public IdentificationHelper(Context context) {
+    public PlantHelper(Context context) {
         super(context, DATABASE_NAME, null, SCHEMA_VERSION);
     }
 
     @Override
     public void onCreate(SQLiteDatabase db) {
-        db.execSQL("CREATE TABLE identification_table (" +
+        db.execSQL("CREATE TABLE plant_table (" +
                 "_id INTEGER PRIMARY KEY AUTOINCREMENT," +
-                "speciesName TEXT," +
-                "commonName TEXT," +
-                "date TEXT," +
-                "accuracy REAL," +
-                "jsonReply TEXT," +
-                "plantImageKey TEXT);");
+                "position INTEGER," +
+                "accessKey TEXT," +
+                "icon TEXT," +
+                "name TEXT," +
+                "species TEXT);");
     }
 
     @Override
@@ -48,57 +47,55 @@ public class IdentificationHelper extends SQLiteOpenHelper {
 
     public Cursor getAll() {
         return (getReadableDatabase().rawQuery(
-                "SELECT * FROM identification_table;", null));
+                "SELECT * FROM plant_table;", null));
     }
 
     public Cursor getIdentificationById(String id) {
         return (getReadableDatabase().rawQuery(
-                "SELECT * FROM identification_table " +
+                "SELECT * FROM plant_table " +
                         "WHERE _id = ?", new String[]{id}));
     }
 
-    public void insert(String species, String common, String imgKey, String date, double accuracy, String jsonReply) {
+    public void insert(int position, String accessKey, String icon, String name, String species, Context context) {
         ContentValues cv = new ContentValues();
-        cv.put("speciesName", species);
-        cv.put("commonName", common);
-        cv.put("date", date);
-        cv.put("accuracy", accuracy);
-        cv.put("jsonReply", jsonReply);
-        cv.put("plantImageKey", imgKey);
 
-        getWritableDatabase().insert("identification_table", "speciesName", cv);
+        cv.put("position", position);
+        cv.put("accessKey", accessKey);
+        cv.put("icon", icon);
+        cv.put("name", name);
+        cv.put("species", species);
+
+        getWritableDatabase().insert("plant_table", "position", cv);
     }
+
 
     public void delete(String id, String imgKey, Context context) {
         Storage.deleteObjSupa(context, Storage.identifStorage + imgKey);
-        getWritableDatabase().delete("identification_table", "_id=?", new String[]{id});
+        getWritableDatabase().delete("plant_table", "_id=?", new String[]{id});
     }
+
 
     public String getID(Cursor c) {
         return c.getString(0);
     }
 
-    public String getSpecies(Cursor c) {
-        return c.getString(1);
+    public int getPosition(Cursor c) {
+        return c.getInt(1);
     }
 
-    public String getCommon(Cursor c) {
+    public String getAccessKey(Cursor c) {
         return c.getString(2);
     }
 
-    public String getDate(Cursor c) {
+    public String getIcon(Cursor c) {
         return c.getString(3);
     }
 
-    public double getAccuracy(Cursor c) {
-        return c.getDouble(4);
+    public String getName(Cursor c) {
+        return c.getString(4);
     }
 
-    public String getJsonReply(Cursor c) {
+    public String getSpecies(Cursor c) {
         return c.getString(5);
-    }
-
-    public String getImage(Cursor c) {
-        return c.getString(6);
     }
 }

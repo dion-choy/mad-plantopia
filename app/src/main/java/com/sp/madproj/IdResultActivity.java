@@ -29,7 +29,6 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -91,7 +90,7 @@ public class IdResultActivity extends AppCompatActivity {
                     public boolean onMenuItemClick(MenuItem menuItem) {
                         if (menuItem.getItemId() == R.id.delete) {
                             idHelper.delete(recordId, imgKey, IdResultActivity.this);
-                            Storage.deleteObjSup(IdResultActivity.this, Storage.identifStorage + imgKey);
+                            Storage.deleteObjSupa(IdResultActivity.this, Storage.identifStorage + imgKey);
                             finish();
                             return true;
                         }
@@ -201,8 +200,7 @@ public class IdResultActivity extends AppCompatActivity {
                         imgKey,
                         LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss")),
                         suggestions.getJSONObject(0).getDouble("probability"),
-                        apiReply,
-                        this);
+                        apiReply);
             } else {
                 inputImage.setImageResource(R.drawable.notif_important);
                 ((TextView) findViewById(R.id.notPlant)).setText("Might not be a plant");

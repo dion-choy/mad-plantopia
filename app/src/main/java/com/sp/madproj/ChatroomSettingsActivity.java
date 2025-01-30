@@ -97,6 +97,7 @@ public class ChatroomSettingsActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 membersRef.child(selectedUserKey.getText().toString()).removeValue();
+                confirmRemove.performClick();
             }
         });
 
@@ -416,7 +417,7 @@ public class ChatroomSettingsActivity extends AppCompatActivity {
                         Log.d("result", imageUri.toString());
 
                         if (!curImgKey.equals(Storage.pfpStorage + "default.png")) {
-                            Storage.deleteObjSup(ChatroomSettingsActivity.this, Storage.chatroomIconStorage + curImgKey);
+                            Storage.deleteObjSupa(ChatroomSettingsActivity.this, Storage.chatroomIconStorage + curImgKey);
                         }
 
                         curImgKey = Storage.uploadImgSupa(ChatroomSettingsActivity.this, imageUri, Storage.chatroomIconStorage);

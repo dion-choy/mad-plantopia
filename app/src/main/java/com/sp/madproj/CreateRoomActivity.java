@@ -4,7 +4,6 @@ import android.app.Activity;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
-import android.provider.ContactsContract;
 import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
@@ -14,32 +13,20 @@ import androidx.activity.result.ActivityResult;
 import androidx.activity.result.ActivityResultCallback;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
-import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.splashscreen.SplashScreen;
 
-import com.android.volley.AuthFailureError;
 import com.android.volley.NoConnectionError;
-import com.android.volley.Request;
-import com.android.volley.RequestQueue;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
-import com.android.volley.toolbox.StringRequest;
-import com.android.volley.toolbox.Volley;
-import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnSuccessListener;
-import com.google.android.gms.tasks.Task;
 import com.google.android.material.textfield.TextInputEditText;
-import com.google.firebase.Timestamp;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DatabaseReference;
 import com.squareup.picasso.Callback;
 import com.squareup.picasso.Picasso;
 
-import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 public class CreateRoomActivity extends AppCompatActivity {
@@ -115,7 +102,7 @@ public class CreateRoomActivity extends AppCompatActivity {
         super.onDestroy();
 
         if (!success) {
-            Storage.deleteObjSup(CreateRoomActivity.this, Storage.chatroomIconStorage + curImgKey);
+            Storage.deleteObjSupa(CreateRoomActivity.this, Storage.chatroomIconStorage + curImgKey);
         }
     }
 
@@ -132,7 +119,7 @@ public class CreateRoomActivity extends AppCompatActivity {
                 curImgKey = Storage.uploadImgSupa(CreateRoomActivity.this, imageUri, Storage.chatroomIconStorage);
 
                 if (!curImgKey.equals(Storage.pfpStorage + "default.png")) {
-                    Storage.deleteObjSup(CreateRoomActivity.this, Storage.chatroomIconStorage + curImgKey);
+                    Storage.deleteObjSupa(CreateRoomActivity.this, Storage.chatroomIconStorage + curImgKey);
                 }
 
                 Picasso.get()

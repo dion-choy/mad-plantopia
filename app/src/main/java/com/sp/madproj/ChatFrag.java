@@ -339,10 +339,12 @@ public class ChatFrag extends Fragment {
     }
 
     private void destroyFragment() {
-        getParentFragmentManager()
-                .beginTransaction()
-                .remove(ChatFrag.this)
-                .commit();
+        if (isAdded()) {
+            getParentFragmentManager()
+                    .beginTransaction()
+                    .remove(ChatFrag.this)
+                    .commit();
+        }
     }
 
     private View.OnTouchListener swipeAway = new View.OnTouchListener() {
