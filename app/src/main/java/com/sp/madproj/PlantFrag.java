@@ -7,6 +7,7 @@ import com.sp.madproj.CanvasView.Sprite;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.util.Log;
@@ -40,6 +41,8 @@ public class PlantFrag extends Fragment {
     private FloatingActionButton addPersonBtn;
     private TextView shade;
 
+    PlantHelper plantHelper;
+
     public PlantFrag() {
         // Required empty public constructor
     }
@@ -47,6 +50,7 @@ public class PlantFrag extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        plantHelper = new PlantHelper(getContext());
     }
 
     @Override
@@ -110,34 +114,42 @@ public class PlantFrag extends Fragment {
         canvasHolder.removeAllViews();
         canvas = new CanvasView(getActivity(), R.drawable.greenhouse);
         canvasHolder.addView(canvas);
-
-        canvas.addOnLayoutChangeListener(new View.OnLayoutChangeListener() {
-            @Override
-            public void onLayoutChange(View view, int i, int i1, int i2, int i3, int i4, int i5, int i6, int i7) {
-                Context context = getContext();
-                Bitmap pot = getBitmapFromVectorDrawable(getActivity(), R.drawable.pot);
-
-                potSprite3 = canvas.new Sprite(CanvasView.DP, pot, 104f, 406f, pxFromDp(61, context)/pot.getWidth(), false);
-                Sprite potSprite2 = canvas.new Sprite(CanvasView.DP, pot, 55f, 402f, pxFromDp(72, context)/pot.getWidth(), false);
-                Sprite potSprite1 = canvas.new Sprite(CanvasView.DP, pot, -5.73f, 399f, 1, false);
-
-                Sprite potSprite4 = canvas.new Sprite(CanvasView.DP, pot, 246f, 406f, pxFromDp(61, context)/pot.getWidth());
-                Sprite potSprite5 = canvas.new Sprite(CanvasView.DP, pot, 285.28f, 402f, pxFromDp(72, context)/pot.getWidth());
-                Sprite potSprite6 = canvas.new Sprite(CanvasView.DP, pot, 335.09f, 399f, 1);
-
-                canvas.add(potSprite3);
-                canvas.add(potSprite2);
-                canvas.add(potSprite1);
-                canvas.add(potSprite4);
-                canvas.add(potSprite5);
-                canvas.add(potSprite6);
-                canvas.invalidate();
-            }
-        });
         return view;
     }
-    Sprite potSprite3 = null;
     CanvasView canvas = null;
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        Context context = getContext();
+        Cursor allPlants = plantHelper.getAll();
+        allPlants.moveToFirst();
+        for (int i = 0; i < allPlants.getCount(); i++) {
+            allPlants.moveToPosition(i);
+            Log.d("Plants", plantHelper.getName(allPlants));
+        }
+        
+        if (context == null) {
+            return;
+        }
+        Bitmap pot = getBitmapFromVectorDrawable(getActivity(), R.drawable.pot);
+
+        Sprite potSprite3 = canvas.new Sprite(CanvasView.DP, pot, 104f, 406f, pxFromDp(61, context)/pot.getWidth(), false);
+        Sprite potSprite2 = canvas.new Sprite(CanvasView.DP, pot, 55f, 402f, pxFromDp(72, context)/pot.getWidth(), false);
+        Sprite potSprite1 = canvas.new Sprite(CanvasView.DP, pot, -5.73f, 399f, 1, false);
+
+        Sprite potSprite4 = canvas.new Sprite(CanvasView.DP, pot, 246f, 406f, pxFromDp(61, context)/pot.getWidth());
+        Sprite potSprite5 = canvas.new Sprite(CanvasView.DP, pot, 285.28f, 402f, pxFromDp(72, context)/pot.getWidth());
+        Sprite potSprite6 = canvas.new Sprite(CanvasView.DP, pot, 335.09f, 399f, 1);
+
+        canvas.add(potSprite3);
+        canvas.add(potSprite2);
+        canvas.add(potSprite1);
+        canvas.add(potSprite4);
+        canvas.add(potSprite5);
+        canvas.add(potSprite6);
+        canvas.invalidate();
+    }
 
     private final ActivityResultLauncher<Intent> addPlantRes = registerForActivityResult(
             new ActivityResultContracts.StartActivityForResult(),
@@ -148,10 +160,12 @@ public class PlantFrag extends Fragment {
                     && result.getData() != null) {
                 String plantName = result.getData().getStringExtra("name");
                 String accessToken = result.getData().getStringExtra("accessToken");
+                String species = result.getData().getStringExtra("species");
                 String icon = result.getData().getStringExtra("icon");
 //                Toast.makeText(getActivity().getApplicationContext(), imageUri.toString(), Toast.LENGTH_SHORT).show();
                 Log.d("result", plantName);
                 Log.d("result", accessToken);
+                Log.d("result", species);
                 Log.d("result", icon);
             }
         }

@@ -50,6 +50,7 @@ public class AddPlantActivity extends AppCompatActivity {
     TextInputEditText nameInput;
     AutoCompleteTextView speciesInput;
     String selectAccessToken = "";
+    String species = "";
 
     ImageView flowerTick;
     ImageView uprightTick;
@@ -108,6 +109,7 @@ public class AddPlantActivity extends AppCompatActivity {
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
                 selectAccessToken = queries.get(i);
+                species = speciesInput.getText().toString();
             }
         });
 
@@ -125,7 +127,7 @@ public class AddPlantActivity extends AppCompatActivity {
                     error = true;
                 }
 
-                if (selectAccessToken.isEmpty()) {
+                if (selectAccessToken.isEmpty() || species.isEmpty()) {
                     speciesInput.setError("Please pick an item from the dropdown list!");
                     error = true;
                 }
@@ -152,6 +154,7 @@ public class AddPlantActivity extends AppCompatActivity {
                         new Intent()
                                 .putExtra("name", nameInput.getText().toString())
                                 .putExtra("accessToken", selectAccessToken)
+                                .putExtra("species", species)
                                 .putExtra("icon", selectedIcon)
                 );
                 finish();

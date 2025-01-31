@@ -16,7 +16,9 @@ import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class CanvasView extends View {
     public static final int DP = 0;
@@ -178,7 +180,14 @@ public class CanvasView extends View {
         private RectF position;
         private float scale;
 
+        public Map<String, String> attrs = new HashMap<>();
+
         public Sprite(int units, Bitmap bm, float left, float top, float scale) {
+            // Clickable by default
+            this(units, bm, left, top, scale, true);
+        }
+
+        public Sprite(int units, Bitmap bm, float left, float top, float scale, boolean clickable) {
             this.bm = bm;
             this.scale = scale;
             if (units == CanvasView.DP) {
@@ -187,13 +196,10 @@ public class CanvasView extends View {
             }
             position = new RectF(left, top, left + bm.getWidth(), top + bm.getHeight());
 
-            clickableSprites.add(this);
-        }
-
-        public Sprite(int units, Bitmap bm, float left, float top, float scale, boolean clickable) {
-            this(units, bm, left, top, scale);
-            if (clickable) {
+            if (!clickable) {
                 clickableSprites.remove(this);
+            } else {
+                clickableSprites.add(this);
             }
         }
 
@@ -208,7 +214,7 @@ public class CanvasView extends View {
         }
 
         private boolean contains(float x, float y) {
-            return position.contains(x/scale, (y+ scrollY)/scale);
+            return position.contains(x/bgScale, (y+scrollY)/bgScale);
         }
 
         private void click() {

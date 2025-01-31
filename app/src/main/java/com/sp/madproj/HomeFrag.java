@@ -75,6 +75,14 @@ public class HomeFrag extends Fragment {
 
         weatherImg = view.findViewById(R.id.weatherImage);
 
+        // Load past data
+        sharedPref = getActivity().getApplicationContext().getSharedPreferences("mySettings", MODE_PRIVATE);
+        fillScreenText(
+                sharedPref.getInt("temperature", 0),
+                sharedPref.getInt("humidity", 0),
+                sharedPref.getString("weatherIcon", "01d")
+        );
+
         notifsAdapter = new NotifsAdapter(model);
 
         notifs = view.findViewById(R.id.notifsList);
@@ -92,19 +100,10 @@ public class HomeFrag extends Fragment {
                 ((MainActivity) getActivity()).updateLocation();
                 getWeather();
                 loadNotifs();
-                model.add("1bruh");
                 notifs.setAdapter(notifsAdapter);
                 refreshHome.setRefreshing(false);
             }
         });
-
-        // Load past data
-        sharedPref = getActivity().getApplicationContext().getSharedPreferences("mySettings", MODE_PRIVATE);
-        fillScreenText(
-                sharedPref.getInt("temperature", 0),
-                sharedPref.getInt("humidity", 0),
-                sharedPref.getString("weatherIcon", "01d")
-        );
 
         GPSTracker gpsTracker = ((MainActivity) getActivity()).gpsTracker;
         if (gpsTracker != null && gpsTracker.canGetLocation) {
@@ -142,6 +141,9 @@ public class HomeFrag extends Fragment {
         @Override
         public void onBindViewHolder(@NonNull NotifsHolder holder, final int position) {
             final String notif = notifs.get(position);
+            if (notif.isEmpty()) {
+                return;
+            }
             holder.notifText.setText(notif.substring(1));
             switch (notif.substring(0,1)) {
                 case "1":
@@ -246,7 +248,25 @@ public class HomeFrag extends Fragment {
 
     private void loadNotifs() {
         model.clear();
-        model.add("1Test1");
+
+        int temp = sharedPref.getInt("temperature", 0);
+        int humidity = sharedPref.getInt("humidity", 0);
+        if (temp > 26) {
+            model.add("1Today's hot! Your plants might be more thirsty");
+        } else if (temp < 10) {
+            model.add("1Today's very cold... Consider moving outdoor plants indoors and water less");
+        } else if (temp < 18) {
+            model.add("1Today's cold... Keep your plants damp but not wet!");
+        } else {
+            model.add("1Today's average. Continue with your normal routine!");
+        }
+
+        if (humidity > 75) {
+            model.add("1The humidity is high! You might want to water less");
+        } else if (humidity < 50) {
+            model.add("1The humidity is low! Your plants might require more water");
+        }
+
         model.add("2Test2");
         model.add("3Test3");
     }
@@ -269,6 +289,7 @@ public class HomeFrag extends Fragment {
                             Math.round(response.getJSONObject("main").getLong("humidity")),
                             response.getJSONArray("weather").getJSONObject(0).getString("icon")
                     );
+                    loadNotifs();
 
                     Log.d("Weather Request", "Success: " + response.toString());
                 } catch (JSONException e) {
