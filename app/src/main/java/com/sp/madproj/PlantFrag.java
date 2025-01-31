@@ -28,6 +28,10 @@ import androidx.fragment.app.Fragment;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
 public class PlantFrag extends Fragment {
     private static final int MAX_SIZE = 11;
 
@@ -43,8 +47,16 @@ public class PlantFrag extends Fragment {
     private FloatingActionButton addPersonBtn;
     private TextView shade;
 
-    PlantHelper plantHelper;
+    private PlantHelper plantHelper;
 
+    private CanvasView canvas = null;
+
+    private Bitmap pot;
+    private Bitmap flower;
+    private Bitmap upright;
+    private Bitmap vine;
+    private Bitmap cactus;
+    private List<Sprite> pots = null;
     public PlantFrag() {
         // Required empty public constructor
     }
@@ -52,7 +64,23 @@ public class PlantFrag extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        plantHelper = new PlantHelper(getContext());
+        Context context = getContext();
+        plantHelper = new PlantHelper(context);
+
+        pot = getBitmapFromVectorDrawable(getActivity(), R.drawable.pot);
+        flower = getBitmapFromVectorDrawable(getActivity(), R.drawable.plant_flower);
+        upright = getBitmapFromVectorDrawable(getActivity(), R.drawable.plant_upright);
+        vine = getBitmapFromVectorDrawable(getActivity(), R.drawable.plant_vine);
+        cactus = getBitmapFromVectorDrawable(getActivity(), R.drawable.plant_cactus);
+
+        pots = Arrays.asList(
+                new Sprite(context, CanvasView.DP, pot, 104f, 406f, pxFromDp(61, context)/pot.getWidth(), pxFromDp(61, context)/pot.getWidth(), false),
+                new Sprite(context, CanvasView.DP, pot, 246f, 406f, pxFromDp(61, context)/pot.getWidth(), pxFromDp(61, context)/pot.getWidth(), false),
+                new Sprite(context, CanvasView.DP, pot, 55f, 402f, pxFromDp(72, context)/pot.getWidth(), pxFromDp(72, context)/pot.getWidth(), false),
+                new Sprite(context, CanvasView.DP, pot, 285.28f, 402f, pxFromDp(72, context)/pot.getWidth(), pxFromDp(72, context)/pot.getWidth(), false),
+                new Sprite(context, CanvasView.DP, pot, 335.09f, 399f, 1, 1, false),
+                new Sprite(context, CanvasView.DP, pot, -5.73f, 399f, 1, 1, false)
+        );
     }
 
     @Override
@@ -118,38 +146,98 @@ public class PlantFrag extends Fragment {
         canvasHolder.addView(canvas);
         return view;
     }
-    CanvasView canvas = null;
+
+    private final float[][] positions = {
+            {106, 365, -0.8f},
+            {242, 363, 0.8f},
+            {56, 355, -0.95f},
+            {281, 352, 0.95f},
+            {340, 345, 1},
+            {-1, 346, -1},
+            {152, 591, -0.8f},
+            {72, 607, -0.95f},
+            {280, 612, 0.95f},
+            {343, 661, 1},
+            {3, 656, -1},
+    };
+
+    public float[] uprightCoords(float left, float top, float scale) {
+        return new float[]{left+5, top-35, (float) (scale)};
+    }
+    public float[] flowerCoords(float left, float top, float scale) {
+        return new float[]{left+21, top-4, (float) (scale*0.7)};
+    }
+    public float[] cactusCoords(float left, float top, float scale) {
+        return new float[]{left, top, scale};
+    }
+    public float[] vineCoords(float left, float top, float scale) {
+        return new float[]{left-7, top+10, scale};
+    }
 
     @Override
     public void onResume() {
         super.onResume();
         Context context = getContext();
-        Cursor allPlants = plantHelper.getAll();
-        allPlants.moveToFirst();
-        for (int i = 0; i < allPlants.getCount(); i++) {
-            allPlants.moveToPosition(i);
-            Log.d("Plants", plantHelper.getName(allPlants));
-        }
-        
         if (context == null) {
             return;
         }
-        Bitmap pot = getBitmapFromVectorDrawable(getActivity(), R.drawable.pot);
 
-        Sprite potSprite3 = new Sprite(context, CanvasView.DP, pot, 104f, 406f, pxFromDp(61, context)/pot.getWidth(), false);
-        Sprite potSprite2 = new Sprite(context, CanvasView.DP, pot, 55f, 402f, pxFromDp(72, context)/pot.getWidth(), false);
-        Sprite potSprite1 = new Sprite(context, CanvasView.DP, pot, -5.73f, 399f, 1, false);
+        Cursor allPlants = plantHelper.getAll();
+        allPlants.moveToFirst();
 
-        Sprite potSprite4 = new Sprite(context, CanvasView.DP, pot, 246f, 406f, pxFromDp(61, context)/pot.getWidth());
-        Sprite potSprite5 = new Sprite(context, CanvasView.DP, pot, 285.28f, 402f, pxFromDp(72, context)/pot.getWidth());
-        Sprite potSprite6 = new Sprite(context, CanvasView.DP, pot, 335.09f, 399f, 1);
+        float[] pos = {0, 0, 0};
+        for (int i = 0; i < allPlants.getCount(); i++) {
+            allPlants.moveToPosition(i);
+            Log.d("Plants", plantHelper.getName(allPlants));
+            Log.d("Plants", ""+plantHelper.getPosition(allPlants));
+            int position = plantHelper.getPosition(allPlants);
+            Bitmap plant = null;
+            switch (plantHelper.getIcon(allPlants)) {
+                case "cactus":
+                    plant = cactus;
+                    pos = cactusCoords(
+                            positions[position][0],
+                            positions[position][1],
+                            positions[position][2]
+                    );
+                    break;
+                case "upright":
+                    plant = upright;
+                    pos = uprightCoords(
+                            positions[position][0],
+                            positions[position][1],
+                            positions[position][2]
+                    );
+                    break;
+                case "flower":
+                    plant = flower;
+                    pos = flowerCoords(
+                            positions[position][0],
+                            positions[position][1],
+                            positions[position][2]
+                    );
+                    break;
+                case "vine":
+                    plant = vine;
+                    pos = vineCoords(
+                            positions[position][0],
+                            positions[position][1],
+                            positions[position][2]
+                    );
+                    break;
+            }
 
-        canvas.add(potSprite3);
-        canvas.add(potSprite2);
-        canvas.add(potSprite1);
-        canvas.add(potSprite4);
-        canvas.add(potSprite5);
-        canvas.add(potSprite6);
+            Sprite sprite = new Sprite(context, CanvasView.DP, plant, pos[0], pos[1], pos[2], Math.abs(pos[2]));
+            canvas.add(sprite);
+            if (position < 6) {
+                canvas.add(pots.get(position));
+            }
+            if (plantHelper.getIcon(allPlants).equals("vine")) {
+                canvas.remove(sprite); //move sprite to top layer
+                canvas.add(sprite);
+            }
+        }
+
         canvas.invalidate();
     }
 
@@ -180,7 +268,7 @@ public class PlantFrag extends Fragment {
                 Log.d("result species", species);
                 Log.d("result icon", icon);
                 Log.d("result position", ""+position);
-//                plantHelper.insert(position, accessToken, icon, plantName, species);
+                plantHelper.insert(position, accessToken, icon, plantName, species);
             }
         }
     });

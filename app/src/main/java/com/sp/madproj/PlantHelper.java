@@ -31,7 +31,7 @@ public class PlantHelper extends SQLiteOpenHelper {
 
     public Cursor getAll() {
         return (getReadableDatabase().rawQuery(
-                "SELECT * FROM plant_table;", null));
+                "SELECT * FROM plant_table ORDER BY position;", null));
     }
 
     public Cursor getIdentificationById(String id) {

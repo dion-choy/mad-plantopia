@@ -13,6 +13,7 @@ import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.ProgressBar;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -49,6 +50,7 @@ public class AddPlantActivity extends AppCompatActivity {
 
     TextInputEditText nameInput;
     AutoCompleteTextView speciesInput;
+    ProgressBar loadingDropdown;
     String selectAccessToken = "";
     String species = "";
 
@@ -89,6 +91,7 @@ public class AddPlantActivity extends AppCompatActivity {
         selectCactus.setOnClickListener(plantSelection);
 
         nameInput = findViewById(R.id.nameInput);
+        loadingDropdown = findViewById(R.id.loadingDropdown);
 
         adapter = new ArrayAdapter<>(this, R.layout.row_autocomplete_dropdown, model);
         speciesInput = findViewById(R.id.speciesInput);
@@ -164,6 +167,7 @@ public class AddPlantActivity extends AppCompatActivity {
 
     String prevQuery = "";
     void getAutoComplete(String query) {
+        loadingDropdown.setVisibility(View.VISIBLE);
         RequestQueue queue = Volley.newRequestQueue(this);
 
         String plantApi = "https://plant.id/api/v3/kb/plants/name_search?q=" + query;
@@ -172,6 +176,7 @@ public class AddPlantActivity extends AppCompatActivity {
             @Override
             public void onResponse(JSONObject response) {
                 queueFilled = false;
+                loadingDropdown.setVisibility(View.GONE);
                 adapter.clear();
                 try {
                     JSONArray matches = response.getJSONArray("entities");

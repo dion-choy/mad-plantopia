@@ -156,7 +156,7 @@ public class CamActivity extends AppCompatActivity {
         contentValues.put(MediaStore.MediaColumns.MIME_TYPE, "image/jpeg");
 
         if (Build.VERSION.SDK_INT > Build.VERSION_CODES.P) {
-            contentValues.put(MediaStore.Images.Media.RELATIVE_PATH, "Pictures/CameraX-Image");
+            contentValues.put(MediaStore.Images.Media.RELATIVE_PATH, "Pictures/Plantopia");
         }
 
         ImageCapture.OutputFileOptions outputOptions = new ImageCapture.OutputFileOptions

@@ -66,8 +66,6 @@ dependencies {
 
     implementation libs.picasso
 
-    implementation libs.android.gif.drawable
-
     implementation libs.camera.core
     implementation libs.camera.camera2
     implementation libs.androidx.camera.lifecycle

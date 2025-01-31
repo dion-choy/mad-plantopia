@@ -13,19 +13,22 @@ import java.util.Map;
 public class Sprite {
     private Bitmap bm;
     private RectF position;
-    private float scale;
+    private float scaleX;
+    private float scaleY;
     private boolean clickable;
 
     public Map<String, String> attrs = new HashMap<>();
 
-    public Sprite(Context context, int units, Bitmap bm, float left, float top, float scale) {
+
+    public Sprite(Context context, int units, Bitmap bm, float left, float top, float scaleX, float scaleY) {
         // Clickable by default
-        this(context, units, bm, left, top, scale, true);
+        this(context, units, bm, left, top, scaleX, scaleY, true);
     }
 
-    public Sprite(Context context, int units, Bitmap bm, float left, float top, float scale, boolean clickable) {
+    public Sprite(Context context, int units, Bitmap bm, float left, float top, float scaleX, float scaleY, boolean clickable) {
         this.bm = bm;
-        this.scale = scale;
+        this.scaleX = scaleX;
+        this.scaleY = scaleY;
         if (units == CanvasView.DP) {
             left = CanvasView.pxFromDp(left, context);
             top = CanvasView.pxFromDp(top, context);
@@ -37,7 +40,13 @@ public class Sprite {
     public void drawOn(Canvas canvas, CanvasView canvasView) {
         canvas.save();
         canvas.scale(canvasView.getBgScale(), canvasView.getBgScale());
-        canvas.scale(scale, scale, position.left, position.top);
+        canvas.scale(scaleX, scaleY, position.left, position.top);
+        if (scaleX < 0) {
+            canvas.translate(-bm.getWidth(), 0);
+        }
+        if (scaleY < 0) {
+            canvas.translate(0, -bm.getHeight());
+        }
 
         canvas.drawBitmap(bm, position.left, position.top, null);
 

@@ -40,24 +40,48 @@
 
         </com.google.android.material.textfield.TextInputLayout>
 
-        <com.google.android.material.textfield.TextInputLayout
-            style="?attr/textInputFilledStyle"
+        <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="Enter plant species"
-            app:boxBackgroundColor="?attr/colorSurfaceContainer"
-            app:helperTextTextColor="?android:attr/textColor">
+            android:layout_height="wrap_content">
 
-            <AutoCompleteTextView
-                android:id="@+id/speciesInput"
-                style="@style/Widget.Material3.AutoCompleteTextView.FilledBox"
+            <com.google.android.material.textfield.TextInputLayout
+                style="?attr/textInputFilledStyle"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:layout_weight="1"
-                android:breakStrategy="simple"
-                app:dropDownBackgroundTint="@color/nav_bar_focus"
-                app:simpleItemSelectedColor="@color/light_text_em" />
-        </com.google.android.material.textfield.TextInputLayout>
+                android:layout_height="wrap_content"
+                android:hint="Enter plant species"
+                app:boxBackgroundColor="?attr/colorSurfaceContainer"
+                app:helperTextTextColor="?android:attr/textColor"
+                app:layout_constraintTop_toTopOf="parent">
+
+                <AutoCompleteTextView
+                    android:id="@+id/speciesInput"
+                    style="@style/Widget.Material3.AutoCompleteTextView.FilledBox"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:breakStrategy="simple"
+                    android:clickable="false"
+                    app:dropDownBackgroundTint="@color/nav_bar_focus"
+                    app:simpleItemSelectedColor="@color/light_text_em" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <ProgressBar
+                android:id="@+id/loadingDropdown"
+                style="?android:attr/progressBarStyle"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="20dp"
+                android:indeterminateTint="?android:attr/statusBarColor"
+                android:maxWidth="20dp"
+                android:maxHeight="20dp"
+                android:minWidth="20dp"
+                android:minHeight="20dp"
+                android:visibility="gone"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
 
         <HorizontalScrollView
             android:id="@+id/selectPlantIcon"
