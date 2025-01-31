@@ -258,6 +258,7 @@ public class FeedSettingsActivity extends AppCompatActivity {
 
     private void deleteFromFirebase() {
         String username = currentUser.getDisplayName();
+        Uri pfpUrl = currentUser.getPhotoUrl();
         currentUser.delete().addOnCompleteListener(new OnCompleteListener<Void>() {
             @Override
             public void onComplete(@NonNull Task<Void> task) {
@@ -266,6 +267,15 @@ public class FeedSettingsActivity extends AppCompatActivity {
                         @Override
                         public void run() {
                             deleteFromAstra(username);
+                        }
+                    }).start();
+
+                    new Thread(new Runnable() {
+                        @Override
+                        public void run() {
+                            if (!pfpUrl.equals(Storage.pfpStorage + "default.png")) {
+                                Storage.deleteObjSupa(FeedSettingsActivity.this, pfpUrl.toString());
+                            }
                         }
                     }).start();
 

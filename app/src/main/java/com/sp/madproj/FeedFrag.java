@@ -1,6 +1,5 @@
 package com.sp.madproj;
 
-import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
@@ -17,10 +16,6 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import androidx.activity.result.ActivityResult;
-import androidx.activity.result.ActivityResultCallback;
-import androidx.activity.result.ActivityResultLauncher;
-import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.fragment.app.Fragment;
@@ -28,14 +23,9 @@ import androidx.recyclerview.widget.DefaultItemAnimator;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.android.volley.AuthFailureError;
 import com.android.volley.NoConnectionError;
-import com.android.volley.Request;
-import com.android.volley.RequestQueue;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
-import com.android.volley.toolbox.StringRequest;
-import com.android.volley.toolbox.Volley;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
@@ -52,17 +42,13 @@ import com.squareup.picasso.Picasso;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.nio.charset.StandardCharsets;
 import java.time.OffsetDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 public class FeedFrag extends Fragment {
-    private Animation fromBottomFabAnim;
-    private Animation toBottomFabAnim;
     private Animation rotateClockWiseFabAnim;
     private Animation rotateAntiClockWiseFabAnim;
     private Animation fadeOutBg;
@@ -79,7 +65,7 @@ public class FeedFrag extends Fragment {
 
 
     private RecyclerView chatRooms;
-    private List<Chatroom> model = new ArrayList<Chatroom>();
+    private List<Chatroom> model = new ArrayList<>();
     private ChatRoomAdapter chatRoomAdapter;
 
     private EditText codeInput;
@@ -165,7 +151,7 @@ public class FeedFrag extends Fragment {
         chatInfo.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
-                Chatroom chatroom = (Chatroom) snapshot.getValue(Chatroom.class)
+                Chatroom chatroom = snapshot.getValue(Chatroom.class)
                         .setKey(child.getKey());
                 if (!model.contains(chatroom)) {
                     model.add(chatroom);
@@ -186,14 +172,12 @@ public class FeedFrag extends Fragment {
         // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_feed, container, false);
 
-        fromBottomFabAnim = AnimationUtils.loadAnimation(getContext(), R.anim.from_bottom_fab);
-        toBottomFabAnim = AnimationUtils.loadAnimation(getContext(), R.anim.to_bottom_fab);
         rotateClockWiseFabAnim = AnimationUtils.loadAnimation(getContext(), R.anim.rotate_clock_wise);
         rotateAntiClockWiseFabAnim = AnimationUtils.loadAnimation(getContext(), R.anim.rotate_anti_clock_wise);
         fadeOutBg = AnimationUtils.loadAnimation(getContext(), R.anim.fadeout_bg);
         fadeInBg = AnimationUtils.loadAnimation(getContext(), R.anim.fadein_bg);
 
-        ((ImageButton) view.findViewById(R.id.settingsBtn)).setOnClickListener(new View.OnClickListener() {
+        (view.findViewById(R.id.settingsBtn)).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 Intent intent = new Intent(getActivity(), FeedSettingsActivity.class);
@@ -364,7 +348,7 @@ public class FeedFrag extends Fragment {
     }
 
     private class ChatRoomAdapter extends RecyclerView.Adapter<ChatRoomAdapter.ChatRoomHolder> {
-        private List<Chatroom> chatrooms = null;
+        private final List<Chatroom> chatrooms;
         public ChatRoomAdapter(List<Chatroom> chatrooms) {
             this.chatrooms = chatrooms;
         }
@@ -420,8 +404,8 @@ public class FeedFrag extends Fragment {
         }
 
         class ChatRoomHolder extends RecyclerView.ViewHolder{
-            private TextView chatName;
-            private ImageView chatIcon;
+            private final TextView chatName;
+            private final ImageView chatIcon;
             public ChatRoomHolder(View view) {
                 super(view);
                 this.chatName = view.findViewById(R.id.chatName);
@@ -452,8 +436,10 @@ public class FeedFrag extends Fragment {
         addServerContainer.setClickable(false);
         codeInput.setText("");
 
-        InputMethodManager imm = (InputMethodManager)getActivity().getSystemService(Context.INPUT_METHOD_SERVICE);
-        imm.hideSoftInputFromWindow(getView().getWindowToken(), 0);
+        if (getView() != null && getActivity() != null) {
+            InputMethodManager imm = (InputMethodManager) getActivity().getSystemService(Context.INPUT_METHOD_SERVICE);
+            imm.hideSoftInputFromWindow(getView().getWindowToken(), 0);
+        }
 
         addServer.setImageResource(R.drawable.icon_add);
     }

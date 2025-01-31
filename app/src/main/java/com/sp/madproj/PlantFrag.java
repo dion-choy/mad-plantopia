@@ -72,9 +72,6 @@ public class PlantFrag extends Fragment {
                         } else if (openMenu.getContentDescription().equals("Close options")) {
                             closeOptions();
                         }
-
-                        canvas.remove(potSprite3);
-                        canvas.invalidate();
                     }
                 }
         );

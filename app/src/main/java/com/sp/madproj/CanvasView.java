@@ -157,6 +157,10 @@ public class CanvasView extends View {
         allSprites.add(sprite);
     }
 
+    public boolean contains(Sprite sprite) {
+        return allSprites.contains(sprite);
+    }
+
     private void clickAt(float x, float y) {
         Log.d("Sprite", clickableSprites.toString());
         for (Sprite sprite: clickableSprites) {
