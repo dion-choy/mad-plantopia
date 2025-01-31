@@ -2,7 +2,7 @@ package com.sp.madproj;
 
 import static com.sp.madproj.CanvasView.getBitmapFromVectorDrawable;
 import static com.sp.madproj.CanvasView.pxFromDp;
-import com.sp.madproj.CanvasView.Sprite;
+import com.sp.madproj.Sprite;
 
 import android.app.Activity;
 import android.content.Context;
@@ -29,6 +29,8 @@ import androidx.fragment.app.Fragment;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 public class PlantFrag extends Fragment {
+    private static final int MAX_SIZE = 11;
+
     private Animation fromBottomFabAnim;
     private Animation toBottomFabAnim;
     private Animation rotateClockWiseFabAnim;
@@ -134,13 +136,13 @@ public class PlantFrag extends Fragment {
         }
         Bitmap pot = getBitmapFromVectorDrawable(getActivity(), R.drawable.pot);
 
-        Sprite potSprite3 = canvas.new Sprite(CanvasView.DP, pot, 104f, 406f, pxFromDp(61, context)/pot.getWidth(), false);
-        Sprite potSprite2 = canvas.new Sprite(CanvasView.DP, pot, 55f, 402f, pxFromDp(72, context)/pot.getWidth(), false);
-        Sprite potSprite1 = canvas.new Sprite(CanvasView.DP, pot, -5.73f, 399f, 1, false);
+        Sprite potSprite3 = new Sprite(context, CanvasView.DP, pot, 104f, 406f, pxFromDp(61, context)/pot.getWidth(), false);
+        Sprite potSprite2 = new Sprite(context, CanvasView.DP, pot, 55f, 402f, pxFromDp(72, context)/pot.getWidth(), false);
+        Sprite potSprite1 = new Sprite(context, CanvasView.DP, pot, -5.73f, 399f, 1, false);
 
-        Sprite potSprite4 = canvas.new Sprite(CanvasView.DP, pot, 246f, 406f, pxFromDp(61, context)/pot.getWidth());
-        Sprite potSprite5 = canvas.new Sprite(CanvasView.DP, pot, 285.28f, 402f, pxFromDp(72, context)/pot.getWidth());
-        Sprite potSprite6 = canvas.new Sprite(CanvasView.DP, pot, 335.09f, 399f, 1);
+        Sprite potSprite4 = new Sprite(context, CanvasView.DP, pot, 246f, 406f, pxFromDp(61, context)/pot.getWidth());
+        Sprite potSprite5 = new Sprite(context, CanvasView.DP, pot, 285.28f, 402f, pxFromDp(72, context)/pot.getWidth());
+        Sprite potSprite6 = new Sprite(context, CanvasView.DP, pot, 335.09f, 399f, 1);
 
         canvas.add(potSprite3);
         canvas.add(potSprite2);
@@ -163,10 +165,22 @@ public class PlantFrag extends Fragment {
                 String species = result.getData().getStringExtra("species");
                 String icon = result.getData().getStringExtra("icon");
 //                Toast.makeText(getActivity().getApplicationContext(), imageUri.toString(), Toast.LENGTH_SHORT).show();
-                Log.d("result", plantName);
-                Log.d("result", accessToken);
-                Log.d("result", species);
-                Log.d("result", icon);
+                if (plantHelper.getAll().getCount() >= MAX_SIZE) {
+                    Toast.makeText(getActivity().getApplicationContext(), "Greenhouse full", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+
+                int position;
+                do {
+                    position = (int) (Math.random() * MAX_SIZE);
+                } while (plantHelper.getFilledPos(position).getCount() > 0);
+
+                Log.d("result name", plantName);
+                Log.d("result accessToken", accessToken);
+                Log.d("result species", species);
+                Log.d("result icon", icon);
+                Log.d("result position", ""+position);
+//                plantHelper.insert(position, accessToken, icon, plantName, species);
             }
         }
     });

@@ -139,7 +139,7 @@ public class CanvasView extends View {
 
         //Draw sprites
         for (Sprite sprite: allSprites) {
-            sprite.draw();
+            sprite.drawOn(bufferCanvas, this);
         }
 
         //Draw from buffer scroll pos
@@ -152,22 +152,31 @@ public class CanvasView extends View {
     }
 
     public boolean remove(Sprite sprite) {
+        clickableSprites.remove(sprite);
         return allSprites.remove(sprite);
     }
 
     public void add(Sprite sprite) {
         allSprites.add(sprite);
+
+        if (sprite.isClickable()) {
+            clickableSprites.add(sprite);
+        }
     }
 
     public boolean contains(Sprite sprite) {
         return allSprites.contains(sprite);
     }
 
+    public float getBgScale() {
+        return bgScale;
+    }
+
     private void clickAt(float x, float y) {
         Log.d("Sprite", clickableSprites.toString());
         for (Sprite sprite: clickableSprites) {
-            if (sprite.contains(x, y)) {
-                sprite.click();
+            if (sprite.contains(x/bgScale, (y+scrollY)/bgScale)) {
+                sprite.click(context);
                 break;
             }
         }
@@ -175,55 +184,4 @@ public class CanvasView extends View {
 
     private final List<Sprite> allSprites = new ArrayList<>();
     private final List<Sprite> clickableSprites = new ArrayList<>();
-    public class Sprite {
-        private Bitmap bm;
-        private RectF position;
-        private float scale;
-
-        public Map<String, String> attrs = new HashMap<>();
-
-        public Sprite(int units, Bitmap bm, float left, float top, float scale) {
-            // Clickable by default
-            this(units, bm, left, top, scale, true);
-        }
-
-        public Sprite(int units, Bitmap bm, float left, float top, float scale, boolean clickable) {
-            this.bm = bm;
-            this.scale = scale;
-            if (units == CanvasView.DP) {
-                left = pxFromDp(left, context);
-                top = pxFromDp(top, context);
-            }
-            position = new RectF(left, top, left + bm.getWidth(), top + bm.getHeight());
-
-            if (!clickable) {
-                clickableSprites.remove(this);
-            } else {
-                clickableSprites.add(this);
-            }
-        }
-
-        private void draw() {
-            bufferCanvas.save();
-            bufferCanvas.scale(CanvasView.this.bgScale, CanvasView.this.bgScale);
-            bufferCanvas.scale(scale, scale, position.left, position.top);
-
-            bufferCanvas.drawBitmap(bm, position.left, position.top, null);
-
-            bufferCanvas.restore();
-        }
-
-        private boolean contains(float x, float y) {
-            return position.contains(x/bgScale, (y+scrollY)/bgScale);
-        }
-
-        private void click() {
-            Log.d("Sprite", "Clicked");
-            Toast.makeText(getContext(), "Clicked", Toast.LENGTH_SHORT).show();
-        }
-
-        public Bitmap getBitmap() {
-            return this.bm;
-        }
-    }
 }

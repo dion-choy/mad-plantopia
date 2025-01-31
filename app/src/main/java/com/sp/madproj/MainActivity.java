@@ -1,15 +1,12 @@
 package com.sp.madproj;
 
-import android.content.Context;
 import android.content.SharedPreferences;
 import android.graphics.drawable.AnimatedVectorDrawable;
-import android.media.MediaPlayer;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
 import android.view.MenuItem;
-import android.view.MotionEvent;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.Toast;
@@ -63,12 +60,6 @@ public class MainActivity extends AppCompatActivity {
 
     public double getLongitude() {
         return longitude;
-    }
-
-
-    private static Context context;
-    public static Context getContext() {
-        return context;
     }
 
     @Override
@@ -130,8 +121,6 @@ public class MainActivity extends AppCompatActivity {
             splashScreenImg.setVisibility(View.GONE);
         }
         // SPLASH SCREEN CODE END
-
-        context = getContext();
 
         navBar = findViewById(R.id.bottomNav);
         navBar.setOnItemSelectedListener(switchPage);
