@@ -139,7 +139,7 @@ public class CanvasView extends View {
 
         //Draw sprites
         for (Sprite sprite: allSprites) {
-            sprite.drawOn(bufferCanvas, this);
+            sprite.drawOn(this);
         }
 
         //Draw from buffer scroll pos
@@ -149,6 +149,10 @@ public class CanvasView extends View {
     @Override
     public boolean performClick() {
         return super.performClick();
+    }
+
+    public Canvas getCanvas() {
+        return this.bufferCanvas;
     }
 
     public boolean remove(Sprite sprite) {
@@ -176,7 +180,7 @@ public class CanvasView extends View {
         Log.d("Sprite", clickableSprites.toString());
         for (Sprite sprite: clickableSprites) {
             if (sprite.contains(x/bgScale, (y+scrollY)/bgScale)) {
-                sprite.click(context);
+                sprite.click();
                 break;
             }
         }

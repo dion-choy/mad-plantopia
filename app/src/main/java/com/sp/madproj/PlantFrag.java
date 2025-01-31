@@ -228,6 +228,10 @@ public class PlantFrag extends Fragment {
             }
 
             Sprite sprite = new Sprite(context, CanvasView.DP, plant, pos[0], pos[1], pos[2], Math.abs(pos[2]));
+            sprite.setOnClickListener(() -> {
+                Toast.makeText(context, "Clicked", Toast.LENGTH_SHORT).show();
+            });
+
             canvas.add(sprite);
             if (position < 6) {
                 canvas.add(pots.get(position));

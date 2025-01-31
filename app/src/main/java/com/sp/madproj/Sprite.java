@@ -5,6 +5,7 @@ import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.RectF;
 import android.util.Log;
+import android.view.View;
 import android.widget.Toast;
 
 import java.util.HashMap;
@@ -16,6 +17,7 @@ public class Sprite {
     private float scaleX;
     private float scaleY;
     private boolean clickable;
+    private Runnable clickListener;
 
     public Map<String, String> attrs = new HashMap<>();
 
@@ -37,7 +39,8 @@ public class Sprite {
         this.clickable = clickable;
     }
 
-    public void drawOn(Canvas canvas, CanvasView canvasView) {
+    public void drawOn(CanvasView canvasView) {
+        Canvas canvas = canvasView.getCanvas();
         canvas.save();
         canvas.scale(canvasView.getBgScale(), canvasView.getBgScale());
         canvas.scale(scaleX, scaleY, position.left, position.top);
@@ -61,12 +64,12 @@ public class Sprite {
         return clickable;
     }
 
-    public void click(Context context) {
-        Log.d("Sprite", "Clicked");
-        Toast.makeText(context, "Clicked", Toast.LENGTH_SHORT).show();
+    public void click() {
+        Log.d("Sprite", this + "Clicked");
+        clickListener.run();
     }
 
-    public Bitmap getBitmap() {
-        return this.bm;
+    public void setOnClickListener(Runnable clickListener) {
+        this.clickListener = clickListener;
     }
 }
