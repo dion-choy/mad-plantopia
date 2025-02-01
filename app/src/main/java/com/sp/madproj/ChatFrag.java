@@ -2,12 +2,9 @@ package com.sp.madproj;
 
 import android.app.Activity;
 import android.content.ClipData;
-import android.content.Context;
 import android.content.Intent;
-import android.content.res.ColorStateList;
 import android.graphics.Bitmap;
 import android.graphics.Matrix;
-import android.media.ExifInterface;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -17,7 +14,6 @@ import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.DisplayMetrics;
 import android.util.Log;
-import android.view.DragEvent;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
@@ -38,7 +34,7 @@ import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.cardview.widget.CardView;
 import androidx.constraintlayout.widget.ConstraintLayout;
-import androidx.constraintlayout.widget.Constraints;
+import androidx.exifinterface.media.ExifInterface;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.DefaultItemAnimator;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -82,14 +78,13 @@ public class ChatFrag extends Fragment {
     private ActivityResultLauncher<Intent> getImage;
 
     private RecyclerView chatMessages;
-    private List<Message> model = new ArrayList<Message>();
+    private final List<Message> model = new ArrayList<>();
     private ChatAdapter chatAdapter;
 
-    private RecyclerView imagePreviews;
-    private List<Uri> imagePreviewModel = new ArrayList<>();
+    private final List<Uri> imagePreviewModel = new ArrayList<>();
     private ImagePreviewAdapter imagePreviewAdapter;
 
-    private FirebaseAuth auth = FirebaseAuth.getInstance();
+    private final FirebaseAuth auth = FirebaseAuth.getInstance();
     private DatabaseReference messages;
 
     private String username = "";
@@ -129,12 +124,7 @@ public class ChatFrag extends Fragment {
         email = auth.getCurrentUser().getEmail();
         pfp = auth.getCurrentUser().getPhotoUrl();
 
-        view.findViewById(R.id.backBtn).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                destroyFragment();
-            }
-        });
+        view.findViewById(R.id.backBtn).setOnClickListener(view1 -> destroyFragment());
 
         ImageView groupIcon = view.findViewById(R.id.groupIcon);
         Picasso.get()
@@ -187,15 +177,10 @@ public class ChatFrag extends Fragment {
                 .addValueEventListener(new ValueEventListener() {
                     @Override
                     public void onDataChange(@NonNull DataSnapshot snapshot) {
-                        GenericTypeIndicator<HashMap<String, String>> t = new GenericTypeIndicator<HashMap<String, String>>() {};
+                        GenericTypeIndicator<HashMap<String, String>> t = new GenericTypeIndicator<>() {};
                         HashMap<String, String> info = snapshot.getValue(t);
                         if (!info.containsValue(email)) {
-                            new Handler().postDelayed(new Runnable() {
-                                @Override
-                                public void run() {
-                                    destroyFragment();
-                                }
-                            }, 150);
+                            new Handler().postDelayed(() -> destroyFragment(), 150);
                         }
                     }
 
@@ -249,7 +234,7 @@ public class ChatFrag extends Fragment {
         sendMsgBtn.setOnClickListener(sendMessage);
 
         imagePreviewAdapter = new ImagePreviewAdapter(imagePreviewModel);
-        imagePreviews = view.findViewById(R.id.sendImagesList);
+        RecyclerView imagePreviews = view.findViewById(R.id.sendImagesList);
         imagePreviews.setLayoutManager(new LinearLayoutManager(getContext(), LinearLayoutManager.HORIZONTAL, false));
         imagePreviews.setItemAnimator(new DefaultItemAnimator());
         imagePreviews.setAdapter(imagePreviewAdapter);
@@ -277,11 +262,11 @@ public class ChatFrag extends Fragment {
                                 if (Build.VERSION.SDK_INT < 29 && result.getData().getData() != null) {
                                     imagePreviewModel.add(result.getData().getData());
                                 } else {
-                                    Toast.makeText(getActivity().getApplicationContext(), "Error", Toast.LENGTH_SHORT).show();
+                                    Toast.makeText(getActivity(), "Error", Toast.LENGTH_SHORT).show();
                                     return;
                                 }
                             } else if (data.getItemCount() > 10) {
-                                Toast.makeText(getActivity().getApplicationContext(), "Too many images (Limit: 10)", Toast.LENGTH_SHORT).show();
+                                Toast.makeText(getActivity(), "Too many images (Limit: 10)", Toast.LENGTH_SHORT).show();
                                 return;
                             } else {
                                 for (int i = 0; i < data.getItemCount(); i++) {
@@ -314,7 +299,7 @@ public class ChatFrag extends Fragment {
                 }
 
                 message.imageKeys = imageKeyList;
-                Log.d("IMAGE STORAGE API", "onClick: " + imageKeyList.toString());
+                Log.d("IMAGE STORAGE API", "onClick: " + imageKeyList);
 
                 imagePreviewModel.clear();
                 imagePreviewAdapter.notifyDataSetChanged();
@@ -347,7 +332,7 @@ public class ChatFrag extends Fragment {
         }
     }
 
-    private View.OnTouchListener swipeAway = new View.OnTouchListener() {
+    private final View.OnTouchListener swipeAway = new View.OnTouchListener() {
         private boolean moving = false;
         private float offsetX, initY;
 
@@ -362,12 +347,7 @@ public class ChatFrag extends Fragment {
                                 .start();
 
                         Handler handler = new Handler();
-                        handler.postDelayed(new Runnable() {
-                                                @Override
-                                                public void run() {
-                                                    destroyFragment();
-                                                }
-                                            }, 200);
+                        handler.postDelayed(() -> destroyFragment(), 200);
                     } else {
                         root.animate()
                                 .x(0)
@@ -414,7 +394,7 @@ public class ChatFrag extends Fragment {
     };
 
     private class ImagePreviewAdapter extends RecyclerView.Adapter<ImagePreviewAdapter.ImagePreviewHolder> {
-        private List<Uri> imageUris = null;
+        private final List<Uri> imageUris;
         public ImagePreviewAdapter(List<Uri> messages) {
             this.imageUris = messages;
         }
@@ -446,7 +426,7 @@ public class ChatFrag extends Fragment {
                     break;
             }
 
-            Bitmap bitmap = null;
+            Bitmap bitmap;
             try {
                 bitmap = MediaStore.Images.Media.getBitmap(getActivity().getContentResolver(), uri);
             } catch (IOException e) {
@@ -456,16 +436,13 @@ public class ChatFrag extends Fragment {
             bitmap = Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true);
             holder.image.setImageBitmap(bitmap);
 
-            holder.itemView.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View view) {
-                    imagePreviewModel.remove(uri);
-                    imagePreviewAdapter.notifyDataSetChanged();
+            holder.itemView.setOnClickListener(view -> {
+                imagePreviewModel.remove(uri);
+                imagePreviewAdapter.notifyDataSetChanged();
 
-                    if (imagePreviewModel.isEmpty()) {
-                        sendMsgBtn.startAnimation(disableSend);
-                        sendMsgBtn.setEnabled(false);
-                    }
+                if (imagePreviewModel.isEmpty()) {
+                    sendMsgBtn.startAnimation(disableSend);
+                    sendMsgBtn.setEnabled(false);
                 }
             });
         }
@@ -485,7 +462,7 @@ public class ChatFrag extends Fragment {
     }
 
     private class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ChatHolder> {
-        private List<Message> messages = null;
+        private List<Message> messages;
         public ChatAdapter(List<Message> messages) {
             this.messages = messages;
         }
@@ -505,7 +482,7 @@ public class ChatFrag extends Fragment {
             }
 
             Message message = messages.get(position);
-            if (message.messageTxt.equals("")) {
+            if (message.messageTxt.isEmpty()) {
                 holder.chatMessage.setVisibility(View.GONE);
             } else {
                 holder.chatMessage.setVisibility(View.VISIBLE);
@@ -553,7 +530,7 @@ public class ChatFrag extends Fragment {
             }
 
             Log.d("Images", message.imageKeys.toString());
-            if (message.imageKeys == null || message.imageKeys.size() == 0) {
+            if (message.imageKeys == null || message.imageKeys.isEmpty()) {
                 holder.imageContainer.setVisibility(View.GONE);
             } else {
                 holder.imageContainer.setVisibility(View.VISIBLE);
@@ -616,13 +593,10 @@ public class ChatFrag extends Fragment {
                 Toast.makeText(getActivity().getApplicationContext(), "message clicked", Toast.LENGTH_SHORT).show();
             });
 
-            holder.imageContainer.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View view) {
-                    Intent intent = new Intent(getContext(), ExpandImages.class);
-                    intent.putStringArrayListExtra("images", (ArrayList<String>) message.imageKeys);
-                    startActivity(intent);
-                }
+            holder.imageContainer.setOnClickListener(view -> {
+                Intent intent = new Intent(getContext(), ExpandImages.class);
+                intent.putStringArrayListExtra("images", (ArrayList<String>) message.imageKeys);
+                startActivity(intent);
             });
         }
 
@@ -632,16 +606,16 @@ public class ChatFrag extends Fragment {
         }
 
         class ChatHolder extends RecyclerView.ViewHolder{
-            private TextView chatMessage;
-            private TextView username;
-            private ImageView pfpIcon;
+            private final TextView chatMessage;
+            private final TextView username;
+            private final ImageView pfpIcon;
 
-            private CardView imageContainer;
-            private TextView extraImages;
-            private ImageView imageTopLeft;
-            private ImageView imageTopRight;
-            private ImageView imageBottomLeft;
-            private ImageView imageBottomRight;
+            private final CardView imageContainer;
+            private final TextView extraImages;
+            private final ImageView imageTopLeft;
+            private final ImageView imageTopRight;
+            private final ImageView imageBottomLeft;
+            private final ImageView imageBottomRight;
             public ChatHolder(View view) {
                 super(view);
                 this.chatMessage = view.findViewById(R.id.chatMessage);
@@ -658,7 +632,7 @@ public class ChatFrag extends Fragment {
         }
     }
 
-    private Map<String, Map<String, String>> users = new HashMap<String, Map<String, String>>();
+    private final Map<String, Map<String, String>> users = new HashMap<>();
 
     private void getUsers() {
         Database.queryAstra(getActivity(),
@@ -673,7 +647,7 @@ public class ChatFrag extends Fragment {
                             JSONArray data = responseObj.getJSONArray("data");
                             for (int i = 0; i < data.length(); i++) {
                                 JSONObject row = data.getJSONObject(i);
-                                Map<String, String> usernamePfp = new HashMap<String, String>();
+                                Map<String, String> usernamePfp = new HashMap<>();
                                 usernamePfp.put("username", row.getString("username"));
                                 usernamePfp.put("pfp", row.getString("pfp"));
                                 users.put(row.getString("email"), usernamePfp);

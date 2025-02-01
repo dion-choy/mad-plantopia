@@ -11,7 +11,6 @@ import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
-import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -58,14 +57,11 @@ public class FeedFrag extends Fragment {
     private ConstraintLayout addServerContainer;
 
 
-    private FirebaseAuth auth = FirebaseAuth.getInstance();
+    private final FirebaseAuth auth = FirebaseAuth.getInstance();
     private FirebaseUser currentUser;
-    private String username = "";
-    private String email = "";
 
 
-    private RecyclerView chatRooms;
-    private List<Chatroom> model = new ArrayList<>();
+    private final List<Chatroom> model = new ArrayList<>();
     private ChatRoomAdapter chatRoomAdapter;
 
     private EditText codeInput;
@@ -107,8 +103,8 @@ public class FeedFrag extends Fragment {
                     .commit();
         } else {
             currentUser.reload();
-            username = currentUser.getDisplayName();
-            email = currentUser.getEmail();
+            String username = currentUser.getDisplayName();
+            String email = currentUser.getEmail();
 
             Log.d("USER NAME: ", username);
             Log.d("USER EMAIL: ", email);
@@ -124,7 +120,7 @@ public class FeedFrag extends Fragment {
             chatMembers.addListenerForSingleValueEvent(new ValueEventListener() {
                 @Override
                 public void onDataChange(@NonNull DataSnapshot snapshot) {
-                    GenericTypeIndicator<HashMap<String, String>> t = new GenericTypeIndicator<HashMap<String, String>>() {};
+                    GenericTypeIndicator<HashMap<String, String>> t = new GenericTypeIndicator<>() {};
                     HashMap<String, String> members = snapshot.getValue(t);
                     if (members != null) {
                         if (currentUser != null && members.containsValue(currentUser.getEmail())) {
@@ -177,65 +173,48 @@ public class FeedFrag extends Fragment {
         fadeOutBg = AnimationUtils.loadAnimation(getContext(), R.anim.fadeout_bg);
         fadeInBg = AnimationUtils.loadAnimation(getContext(), R.anim.fadein_bg);
 
-        (view.findViewById(R.id.settingsBtn)).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Intent intent = new Intent(getActivity(), FeedSettingsActivity.class);
-                startActivity(intent);
-            }
+        (view.findViewById(R.id.settingsBtn)).setOnClickListener(view1 -> {
+            Intent intent = new Intent(getActivity(), FeedSettingsActivity.class);
+            startActivity(intent);
         });
 
         chatRoomAdapter = new ChatRoomAdapter(model);
 
-        chatRooms = view.findViewById(R.id.chatRooms);
+        RecyclerView chatRooms = view.findViewById(R.id.chatRooms);
         chatRooms.setLayoutManager(new LinearLayoutManager(getContext()));
         chatRooms.setItemAnimator(new DefaultItemAnimator());
         chatRooms.setAdapter(chatRoomAdapter);
 
         addServer = view.findViewById(R.id.addRoom);
         addServer.setOnClickListener(
-                new View.OnClickListener() {
-                    @Override
-                    public void onClick(View view) {
-                        if (addServer.getContentDescription().equals("Open options")) {
-                            openOptions();
-                        } else if (addServer.getContentDescription().equals("Close options")) {
-                            closeOptions();
-                        }
+                view1 -> {
+                    if (addServer.getContentDescription().equals("Open options")) {
+                        openOptions();
+                    } else if (addServer.getContentDescription().equals("Close options")) {
+                        closeOptions();
                     }
                 }
         );
 
         addServerContainer = view.findViewById(R.id.add_room_container);
-        addServerContainer.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                closeOptions();
-            }
-        });
+        addServerContainer.setOnClickListener(view1 -> closeOptions());
 
         codeInput = view.findViewById(R.id.codeInput);
 
-        view.findViewById(R.id.joinBtn).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                if (codeInput.getText().length() != 6) {
-                    codeInput.setError("Code must be 6 digits");
-                    return;
-                }
-
-                String inputCode = codeInput.getText().toString();
-                codeInput.setText("");
-                getCode(inputCode);
+        view.findViewById(R.id.joinBtn).setOnClickListener(view1 -> {
+            if (codeInput.getText().length() != 6) {
+                codeInput.setError("Code must be 6 digits");
+                return;
             }
+
+            String inputCode = codeInput.getText().toString();
+            codeInput.setText("");
+            getCode(inputCode);
         });
 
-        view.findViewById(R.id.createRoom).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Intent intent = new Intent(getActivity(), CreateRoomActivity.class);
-                getActivity().startActivity(intent);
-            }
+        view.findViewById(R.id.createRoom).setOnClickListener(view1 -> {
+            Intent intent = new Intent(getActivity(), CreateRoomActivity.class);
+            getActivity().startActivity(intent);
         });
         return view;
     }
@@ -300,7 +279,7 @@ public class FeedFrag extends Fragment {
                     return;
                 }
 
-                GenericTypeIndicator<HashMap<String, String>> t = new GenericTypeIndicator<HashMap<String, String>>() {};
+                GenericTypeIndicator<HashMap<String, String>> t = new GenericTypeIndicator<>() {};
                 HashMap<String, String> members = task.getResult().getValue(t);
 
                 if (members != null && members.containsValue(currentUser.getEmail())) {

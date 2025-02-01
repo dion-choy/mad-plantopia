@@ -17,16 +17,12 @@ import androidx.viewpager2.widget.ViewPager2;
 
 import com.squareup.picasso.Picasso;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class ExpandImages extends AppCompatActivity {
     private Animation fadeOutBg;
     private Animation fadeInBg;
 
-    private ViewPager2 expandedImage;
-    private ImageAdapter adapter;
-    private List<String> modelUris = new ArrayList<>();
     private LinearLayout backBtnContainer;
 
     @Override
@@ -39,29 +35,25 @@ public class ExpandImages extends AppCompatActivity {
         fadeOutBg = AnimationUtils.loadAnimation(this, R.anim.fadeout_bg);
         fadeInBg = AnimationUtils.loadAnimation(this, R.anim.fadein_bg);
 
-        modelUris = getIntent().getStringArrayListExtra("images");
-        Log.d("IMAGES", modelUris.toString());
-
-        if (modelUris.isEmpty()) {
+        List<String> modelUris = getIntent().getStringArrayListExtra("images");
+        if (modelUris == null || modelUris.isEmpty()) {
             finish();
+            return;
         }
 
-        adapter = new ImageAdapter(modelUris);
+        Log.d("IMAGES", modelUris.toString());
 
-        expandedImage = findViewById(R.id.expandedImage);
+        ImageAdapter adapter = new ImageAdapter(modelUris);
+
+        ViewPager2 expandedImage = findViewById(R.id.expandedImage);
         expandedImage.setAdapter(adapter);
 
         backBtnContainer = findViewById(R.id.backBtnContainer);
-        findViewById(R.id.backBtn).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                finish();
-            }
-        });
+        findViewById(R.id.backBtn).setOnClickListener(view -> finish());
     }
 
     class ImageAdapter extends RecyclerView.Adapter<ImageAdapter.ImageHolder> {
-        private List<String> imageUriList = null;
+        private final List<String> imageUriList;
         public ImageAdapter(List<String> imageUriList) {
             this.imageUriList = imageUriList;
         }
@@ -80,16 +72,13 @@ public class ExpandImages extends AppCompatActivity {
                     .placeholder(R.drawable.gallery)
                     .into(holder.expandedImage);
 
-            holder.itemView.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View view) {
-                    if (backBtnContainer.getVisibility() == View.VISIBLE) {
-                        backBtnContainer.startAnimation(fadeOutBg);
-                        backBtnContainer.setVisibility(View.GONE);
-                    } else {
-                        backBtnContainer.startAnimation(fadeInBg);
-                        backBtnContainer.setVisibility(View.VISIBLE);
-                    }
+            holder.itemView.setOnClickListener(view -> {
+                if (backBtnContainer.getVisibility() == View.VISIBLE) {
+                    backBtnContainer.startAnimation(fadeOutBg);
+                    backBtnContainer.setVisibility(View.GONE);
+                } else {
+                    backBtnContainer.startAnimation(fadeInBg);
+                    backBtnContainer.setVisibility(View.VISIBLE);
                 }
             });
         }

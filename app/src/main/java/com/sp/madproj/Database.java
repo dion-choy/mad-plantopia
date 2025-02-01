@@ -1,29 +1,19 @@
 package com.sp.madproj;
 
 import android.content.Context;
-import android.telecom.Call;
-import android.util.Log;
-import android.widget.Toast;
 
 import com.android.volley.AuthFailureError;
-import com.android.volley.NoConnectionError;
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.Response;
-import com.android.volley.VolleyError;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
 import com.google.firebase.database.FirebaseDatabase;
 
-import org.json.JSONException;
-import org.json.JSONObject;
 
 import java.nio.charset.StandardCharsets;
-import java.time.OffsetDateTime;
-import java.time.temporal.ChronoUnit;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.Callable;
 
 public class Database {
     // AstrDB
@@ -62,7 +52,7 @@ public class Database {
     private static FirebaseDatabase database;
     private static final String databaseUrl = "https://plantopia-backend-ecce9-default-rtdb.asia-southeast1.firebasedatabase.app";
     private Database() {
-        this.database = FirebaseDatabase.getInstance(databaseUrl);
+        database = FirebaseDatabase.getInstance(databaseUrl);
 
         database.setPersistenceEnabled(true);
     }

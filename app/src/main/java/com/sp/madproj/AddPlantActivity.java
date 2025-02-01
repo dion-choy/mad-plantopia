@@ -8,7 +8,6 @@ import android.util.Log;
 import android.view.View;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
-import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
 import android.widget.ImageButton;
@@ -108,60 +107,54 @@ public class AddPlantActivity extends AppCompatActivity {
             @Override
             public void afterTextChanged(Editable editable) {}
         });
-        speciesInput.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
-                selectAccessToken = queries.get(i);
-                species = speciesInput.getText().toString();
-            }
+        speciesInput.setOnItemClickListener((adapterView, view, position, id) -> {
+            selectAccessToken = queries.get(position);
+            species = speciesInput.getText().toString();
         });
 
-        findViewById(R.id.returnBtn).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                boolean error = false;
-                if (nameInput.getText().toString().isEmpty()) {
-                    nameInput.setError("Enter a name!");
-                    error = true;
-                }
-
-                if (speciesInput.getText().toString().isEmpty()) {
-                    speciesInput.setError("Enter the species!");
-                    error = true;
-                }
-
-                if (selectAccessToken.isEmpty() || species.isEmpty()) {
-                    speciesInput.setError("Please pick an item from the dropdown list!");
-                    error = true;
-                }
-
-                String selectedIcon = "";
-                if (flowerTick.getVisibility() == View.VISIBLE) {
-                    selectedIcon = "flower";
-                } else if (uprightTick.getVisibility() == View.VISIBLE) {
-                    selectedIcon = "upright";
-                } else if (vineTick.getVisibility() == View.VISIBLE) {
-                    selectedIcon = "vine";
-                } else if (cactusTick.getVisibility() == View.VISIBLE) {
-                    selectedIcon = "cactus";
-                } else {
-                    error = true;
-                }
-
-                if (error) {
-                    return;
-                }
-
-                Log.d("Output", nameInput.getText().toString() + ", " + selectAccessToken + ", " + selectedIcon);
-                setResult(1,
-                        new Intent()
-                                .putExtra("name", nameInput.getText().toString())
-                                .putExtra("accessToken", selectAccessToken)
-                                .putExtra("species", species)
-                                .putExtra("icon", selectedIcon)
-                );
-                finish();
+        findViewById(R.id.returnBtn).setOnClickListener(view -> {
+            boolean error = false;
+            if (nameInput.getText() != null && nameInput.getText().toString().isEmpty()) {
+                nameInput.setError("Enter a name!");
+                error = true;
             }
+
+            if (speciesInput.getText().toString().isEmpty()) {
+                speciesInput.setError("Enter the species!");
+                error = true;
+            }
+
+            if (selectAccessToken.isEmpty() || species.isEmpty()) {
+                speciesInput.setError("Please pick an item from the dropdown list!");
+                error = true;
+            }
+
+            String selectedIcon = "";
+            if (flowerTick.getVisibility() == View.VISIBLE) {
+                selectedIcon = "flower";
+            } else if (uprightTick.getVisibility() == View.VISIBLE) {
+                selectedIcon = "upright";
+            } else if (vineTick.getVisibility() == View.VISIBLE) {
+                selectedIcon = "vine";
+            } else if (cactusTick.getVisibility() == View.VISIBLE) {
+                selectedIcon = "cactus";
+            } else {
+                error = true;
+            }
+
+            if (error) {
+                return;
+            }
+
+            Log.d("Output", nameInput.getText().toString() + ", " + selectAccessToken + ", " + selectedIcon);
+            setResult(1,
+                    new Intent()
+                            .putExtra("name", nameInput.getText().toString())
+                            .putExtra("accessToken", selectAccessToken)
+                            .putExtra("species", species)
+                            .putExtra("icon", selectedIcon)
+            );
+            finish();
         });
     }
 

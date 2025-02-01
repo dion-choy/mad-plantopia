@@ -70,7 +70,6 @@ public class IdentifyFrag extends Fragment {
     private ProgressBar loadingIcon;
 
 
-    private RecyclerView identifs;
     private Cursor model;
     private IdentifAdapter idAdapter;
     private IdentificationHelper idHelper;
@@ -78,7 +77,7 @@ public class IdentifyFrag extends Fragment {
     private static String imageKey = "";
     private UploadThread uploadThread = null;
     private class UploadThread extends Thread {
-        private Uri imageUri;
+        private final Uri imageUri;
         UploadThread(Uri imageUri) {
             this.imageUri = imageUri;
         }
@@ -106,7 +105,7 @@ public class IdentifyFrag extends Fragment {
         // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_identify, container, false);
 
-        identifs = view.findViewById(R.id.identifList);
+        RecyclerView identifs = view.findViewById(R.id.identifList);
         identifs.setHasFixedSize(true);
         identifs.setLayoutManager(new LinearLayoutManager(getContext()));
         identifs.setItemAnimator(new DefaultItemAnimator());
@@ -123,47 +122,31 @@ public class IdentifyFrag extends Fragment {
 
         idPlant = view.findViewById(R.id.idPlant);
         idPlant.setOnClickListener(
-                new View.OnClickListener() {
-                    @Override
-                    public void onClick(View view) {
-                        if (idPlant.getContentDescription().equals("Open options")) {
-                            openOptions();
-                        } else if (idPlant.getContentDescription().equals("Close options")) {
-                            closeOptions();
-                        }
+                view1 -> {
+                    if (idPlant.getContentDescription().equals("Open options")) {
+                        openOptions();
+                    } else if (idPlant.getContentDescription().equals("Close options")) {
+                        closeOptions();
                     }
                 }
         );
 
         openCamBtn = view.findViewById(R.id.openCam);
         openCamBtn.setOnClickListener(
-                new View.OnClickListener() {
-                    @Override
-                    public void onClick(View view) {
-                        getImage.launch(new Intent(getActivity(), CamActivity.class));
-                    }
-                }
+                view1 -> getImage.launch(new Intent(getActivity(), CamActivity.class))
         );
 
         openGalleryBtn = view.findViewById(R.id.openMenu);
         openGalleryBtn.setOnClickListener(
-                new View.OnClickListener() {
-                    @Override
-                    public void onClick(View view) {
-                        Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
-                        intent.setType("image/*");
-                        getImage.launch(intent);
-                    }
+                view1 -> {
+                    Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
+                    intent.setType("image/*");
+                    getImage.launch(intent);
                 }
         );
 
         shade = view.findViewById(R.id.shade);
-        shade.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                closeOptions();
-            }
-        });
+        shade.setOnClickListener(view2 -> closeOptions());
 
         getImage = registerForActivityResult(
                 new ActivityResultContracts.StartActivityForResult(),
@@ -225,7 +208,7 @@ public class IdentifyFrag extends Fragment {
     }
 
     public class IdentifAdapter extends RecyclerView.Adapter<IdentifAdapter.IdentifHolder> {
-        private IdentificationHelper helper;
+        private final IdentificationHelper helper;
         private Cursor cursor;
 
         IdentifAdapter(Context context, Cursor cursor) {
@@ -266,20 +249,17 @@ public class IdentifyFrag extends Fragment {
                     .placeholder(R.drawable.plant_flower)
                     .into(holder.image);
 
-            holder.itemView.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View view) {
-                    if (!cursor.moveToPosition(holder.getAdapterPosition())) {
-                        return;
-                    }
-
-                    Intent intent = new Intent(getActivity(), IdResultActivity.class);
-                    intent.putExtra("response", helper.getJsonReply(cursor));
-                    intent.putExtra("purpose", "check");
-                    intent.putExtra("savedImg", helper.getImage(cursor));
-                    intent.putExtra("recordId", helper.getID(cursor));
-                    startActivity(intent);
+            holder.itemView.setOnClickListener(view -> {
+                if (!cursor.moveToPosition(holder.getAdapterPosition())) {
+                    return;
                 }
+
+                Intent intent = new Intent(getActivity(), IdResultActivity.class);
+                intent.putExtra("response", helper.getJsonReply(cursor));
+                intent.putExtra("purpose", "check");
+                intent.putExtra("savedImg", helper.getImage(cursor));
+                intent.putExtra("recordId", helper.getID(cursor));
+                startActivity(intent);
             });
         }
 
@@ -354,9 +334,9 @@ public class IdentifyFrag extends Fragment {
                 loadingIcon.setVisibility(View.GONE);
 
                 if (error.getClass() == NoConnectionError.class) {
-                    Toast.makeText(getActivity().getApplicationContext(), "Please connect to internet", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getActivity(), "Please connect to internet", Toast.LENGTH_SHORT).show();
                 } else if (error.networkResponse != null && error.networkResponse.statusCode == 429) {
-                    Toast.makeText(getActivity().getApplicationContext(), "Out of credits", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getActivity(), "Out of credits", Toast.LENGTH_SHORT).show();
                 }
 
                 if (error.networkResponse != null) {

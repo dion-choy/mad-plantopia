@@ -11,7 +11,6 @@ import android.provider.MediaStore;
 import android.util.Log;
 import android.util.Size;
 import android.view.MotionEvent;
-import android.view.View;
 import android.widget.ImageButton;
 import android.widget.Toast;
 
@@ -23,12 +22,13 @@ import androidx.camera.core.ImageCapture;
 import androidx.camera.core.ImageCaptureException;
 import androidx.camera.core.ImageProxy;
 import androidx.camera.core.Preview;
+import androidx.camera.core.resolutionselector.ResolutionSelector;
+import androidx.camera.core.resolutionselector.ResolutionStrategy;
 import androidx.camera.lifecycle.ProcessCameraProvider;
 import androidx.camera.view.PreviewView;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.core.splashscreen.SplashScreen;
-import androidx.lifecycle.LifecycleOwner;
 
 import com.google.common.util.concurrent.ListenableFuture;
 
@@ -57,16 +57,13 @@ public class CamActivity extends AppCompatActivity {
         previewView = findViewById(R.id.previewView);
         cameraProviderFuture = ProcessCameraProvider.getInstance(this);
         if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
-            cameraProviderFuture.addListener(new Runnable() {
-                @Override
-                public void run() {
-                    try {
-                        ProcessCameraProvider cameraProvider = cameraProviderFuture.get();
-                        cameraProvider.unbindAll();
-                        bindImageAnalysis(cameraProvider);
-                    } catch (ExecutionException | InterruptedException e) {
-                        Log.d("error", "Could not open camera: " + e.getMessage());
-                    }
+            cameraProviderFuture.addListener(() -> {
+                try {
+                    ProcessCameraProvider cameraProvider = cameraProviderFuture.get();
+                    cameraProvider.unbindAll();
+                    bindImageAnalysis(cameraProvider);
+                } catch (ExecutionException | InterruptedException e) {
+                    Log.d("error", "Could not open camera: " + e.getMessage());
                 }
             }, ActivityCompat.getMainExecutor(this));
 
@@ -84,32 +81,26 @@ public class CamActivity extends AppCompatActivity {
 
         takePicBtn = findViewById(R.id.takePicBtn);
         takePicBtn.setOnTouchListener(
-                new View.OnTouchListener() {
-                    @Override
-                    public boolean onTouch(View view, MotionEvent motionEvent) {
-                        if (motionEvent.getAction() == motionEvent.ACTION_DOWN) {
-                            takePicBtn.setAlpha(0.5f);
-                        } else if (motionEvent.getAction() == motionEvent.ACTION_UP) {
-                            takePicBtn.setAlpha(1f);
-                        }
-                        return false;
+                (view, motionEvent) -> {
+                    if (motionEvent.getAction() == MotionEvent.ACTION_DOWN) {
+                        takePicBtn.setAlpha(0.5f);
+                    } else if (motionEvent.getAction() == MotionEvent.ACTION_UP) {
+                        takePicBtn.setAlpha(1f);
                     }
+                    return false;
                 }
         );
 
         takePicBtn.setOnClickListener(
-                new View.OnClickListener() {
-                    @Override
-                    public void onClick(View view) {
-                        try {
-                            ProcessCameraProvider cameraProvider = cameraProviderFuture.get();
-                            cameraProvider.unbindAll();
-                            cameraProvider.bindToLifecycle(CamActivity.this, CameraSelector.DEFAULT_BACK_CAMERA, imageCapture);
-                        } catch (ExecutionException | InterruptedException e) {
-                            Log.d("error", "Could not open camera: " + e.getMessage());
-                        }
-                        takePhoto();
+                view -> {
+                    try {
+                        ProcessCameraProvider cameraProvider = cameraProviderFuture.get();
+                        cameraProvider.unbindAll();
+                        cameraProvider.bindToLifecycle(CamActivity.this, CameraSelector.DEFAULT_BACK_CAMERA, imageCapture);
+                    } catch (ExecutionException | InterruptedException e) {
+                        Log.d("error", "Could not open camera: " + e.getMessage());
                     }
+                    takePhoto();
                 }
         );
     }
@@ -119,16 +110,13 @@ public class CamActivity extends AppCompatActivity {
         super.onResume();
 
         if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
-            cameraProviderFuture.addListener(new Runnable() {
-                @Override
-                public void run() {
-                    try {
-                        ProcessCameraProvider cameraProvider = cameraProviderFuture.get();
-                        cameraProvider.unbindAll();
-                        bindImageAnalysis(cameraProvider);
-                    } catch (ExecutionException | InterruptedException e) {
-                        Log.d("error", "Could not open camera: " + e.getMessage());
-                    }
+            cameraProviderFuture.addListener(() -> {
+                try {
+                    ProcessCameraProvider cameraProvider = cameraProviderFuture.get();
+                    cameraProvider.unbindAll();
+                    bindImageAnalysis(cameraProvider);
+                } catch (ExecutionException | InterruptedException e) {
+                    Log.d("error", "Could not open camera: " + e.getMessage());
                 }
             }, ActivityCompat.getMainExecutor(this));
 
@@ -168,13 +156,13 @@ public class CamActivity extends AppCompatActivity {
                 ContextCompat.getMainExecutor(this),
                 new ImageCapture.OnImageSavedCallback() {
                     @Override
-                    public void onError(ImageCaptureException exc) {
+                    public void onError(@NonNull ImageCaptureException exc) {
                         String msg = "Photo capture failed: " + exc.getMessage();
                         Log.d("error", msg);
                     }
 
                     @Override
-                    public void onImageSaved(ImageCapture.OutputFileResults output) {
+                    public void onImageSaved(@NonNull ImageCapture.OutputFileResults output) {
                         setResult(IMAGE_URI, new Intent().setData(output.getSavedUri()));
                         finish();
                     }
@@ -184,19 +172,16 @@ public class CamActivity extends AppCompatActivity {
     }
 
     private void bindImageAnalysis(@NonNull ProcessCameraProvider cameraProvider) {
-        ImageAnalysis imageAnalysis =
-                new ImageAnalysis.Builder().setTargetResolution(new Size(1280, 720))
-                        .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST).build();
-        imageAnalysis.setAnalyzer(ActivityCompat.getMainExecutor(this), new ImageAnalysis.Analyzer() {
-            @Override
-            public void analyze(@NonNull ImageProxy image) {
-                image.close();
-            }
-        });
+        ImageAnalysis imageAnalysis = new ImageAnalysis.Builder().setResolutionSelector(
+                new ResolutionSelector.Builder().setResolutionStrategy(
+                        new ResolutionStrategy(new Size(1280, 720), ResolutionStrategy.FALLBACK_RULE_NONE)).build()
+                )
+                .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST).build();
+        imageAnalysis.setAnalyzer(ActivityCompat.getMainExecutor(this), ImageProxy::close);
         Preview preview = new Preview.Builder().build();
         CameraSelector cameraSelector = new CameraSelector.Builder()
                 .requireLensFacing(CameraSelector.LENS_FACING_BACK).build();
         preview.setSurfaceProvider(previewView.getSurfaceProvider());
-        cameraProvider.bindToLifecycle((LifecycleOwner) this, cameraSelector, imageAnalysis, preview);
+        cameraProvider.bindToLifecycle(this, cameraSelector, imageAnalysis, preview);
     }
 }
