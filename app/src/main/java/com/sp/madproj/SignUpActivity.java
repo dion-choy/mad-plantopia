@@ -21,6 +21,8 @@ import com.google.firebase.auth.UserProfileChangeRequest;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.util.Objects;
+
 public class SignUpActivity extends AppCompatActivity {
 
     private final FirebaseAuth auth = FirebaseAuth.getInstance();
@@ -67,14 +69,18 @@ public class SignUpActivity extends AppCompatActivity {
     View.OnClickListener signUpUser = new View.OnClickListener() {
         @Override
         public void onClick(View view) {
-            if (username.getText().toString().isEmpty()) {
+            if (username.getText() == null) {
+                return;
+            }
+            String usernameStr = username.getText().toString();
+            if (usernameStr.isEmpty()) {
                 usernameContainer.setError("Enter your username");
-            } else if (username.getText().toString().contains(" ")) {
+            } else if (usernameStr.contains(" ")) {
                 usernameContainer.setError("Username cannot contain space");
             } else {
                 if (usernameContainer.isErrorEnabled() &&
-                        (usernameContainer.getError().equals("Enter your username") ||
-                                usernameContainer.getError().equals("Username cannot contain space"))
+                        (Objects.equals(usernameContainer.getError(), "Enter your username") ||
+                                Objects.equals(usernameContainer.getError(), "Username cannot contain space"))
                 ) {
                     usernameContainer.setErrorEnabled(false);
                 }
@@ -85,24 +91,33 @@ public class SignUpActivity extends AppCompatActivity {
         }
     };
 
-    private void continuteValidation(boolean error) {
-        if (email.getText().toString().isEmpty()) {
+    private void continuteValidation(boolean error, String username) {
+        if (email.getText() == null) {
+            return;
+        }
+        String emailStr = email.getText().toString();
+        if (emailStr.isEmpty()) {
             emailContainer.setError("Enter your email");
             error = true;
         } else {
-            if (emailContainer.isErrorEnabled() && emailContainer.getError().equals("Enter your email")) {
+            if (emailContainer.isErrorEnabled() && Objects.equals(emailContainer.getError(), "Enter your email")) {
                 emailContainer.setErrorEnabled(false);
             }
         }
 
-        if (password.getText().toString().length() < 6){
+        if (password.getText() == null || confirmPassword.getText() == null) {
+            return;
+        }
+        String passwordStr = password.getText().toString();
+        String confirmPasswordStr = confirmPassword.getText().toString();
+        if (passwordStr.length() < 6){
             passwordContainer.setError("Password must be more than 6 characters");
             error = true;
         } else {
             passwordContainer.setErrorEnabled(false);
         }
 
-        if (!password.getText().toString().equals(confirmPassword.getText().toString())) {
+        if (!passwordStr.equals(confirmPasswordStr)) {
             passwordContainer.setError("Password must be the same");
             confirmPasswordContainer.setError("Password must be the same");
             Log.d("ERROR", password.getText().toString() + confirmPassword.getText().toString());
@@ -119,14 +134,14 @@ public class SignUpActivity extends AppCompatActivity {
         auth.createUserWithEmailAndPassword(email.getText().toString(), password.getText().toString())
                 .addOnCompleteListener(SignUpActivity.this, task -> {
                     if (task.isSuccessful()) {
-                        addUsername(username.getText().toString(), email.getText().toString());
+                        addUsername(username, email.getText().toString());
                         // Sign in success, update UI with the signed-in user's information
                         Log.d("SIGN UP", "createUserWithEmail:success");
                         FirebaseUser user = auth.getCurrentUser();
 
                         if (user != null) {
                             UserProfileChangeRequest profileUpdates = new UserProfileChangeRequest.Builder()
-                                    .setDisplayName(username.getText().toString())
+                                    .setDisplayName(username)
                                     .setPhotoUri(Uri.parse(Storage.pfpStorage + "default.png"))
                                     .build();
 
@@ -146,11 +161,9 @@ public class SignUpActivity extends AppCompatActivity {
                         if (task.getException().getClass().equals(FirebaseNetworkException.class)) {
                             Toast.makeText(getApplicationContext(), "Please connect to internet",
                                     Toast.LENGTH_SHORT).show();
-                        } else if (task.getException().getMessage()
-                                .equals("The email address is badly formatted.")) {
+                        } else if (Objects.equals(task.getException().getMessage(), "The email address is badly formatted.")) {
                             emailContainer.setError("Please enter a proper email");
-                        } else if(task.getException().getMessage()
-                                .equals("The email address is already in use by another account.")) {
+                        } else if(Objects.equals(task.getException().getMessage(), "The email address is already in use by another account.")) {
                             emailContainer.setError("Email is in use already");
                         } else {
                             Toast.makeText(getApplicationContext(), "Authentication failed.",
@@ -183,12 +196,12 @@ public class SignUpActivity extends AppCompatActivity {
                         JSONObject responseObj = new JSONObject(response);
                         if (responseObj.getInt("count") > 0) {
                             usernameContainer.setError("Username in use already");
-                            continuteValidation(true);
+                            continuteValidation(true, username);
                         } else {
-                            if (usernameContainer.isErrorEnabled() && usernameContainer.getError().equals("Username in use already")) {
+                            if (usernameContainer.isErrorEnabled() && Objects.equals(usernameContainer.getError(), "Username in use already")) {
                                 usernameContainer.setErrorEnabled(false);
                             }
-                            continuteValidation(false);
+                            continuteValidation(false, username);
                         }
                     } catch (JSONException e) {
                         throw new RuntimeException(e);

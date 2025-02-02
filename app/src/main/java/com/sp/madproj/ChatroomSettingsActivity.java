@@ -28,8 +28,6 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.android.volley.NoConnectionError;
-import com.android.volley.Response;
-import com.android.volley.VolleyError;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -78,26 +76,15 @@ public class ChatroomSettingsActivity extends AppCompatActivity {
 
         selectedUserKey = findViewById(R.id.selectedEmail);
         confirmRemove = findViewById(R.id.confirmRemove);
-        confirmRemove.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Log.d("FADE OUT CLICK", "now");
-                confirmRemove.startAnimation(fadeOutBg);
-                confirmRemove.setVisibility(View.GONE);
-                new Handler().postDelayed(new Runnable() {
-                    @Override
-                    public void run() {
-                        confirmRemove.clearAnimation();
-                    }
-                }, 300);
-            }
+        confirmRemove.setOnClickListener(view -> {
+            Log.d("FADE OUT CLICK", "now");
+            confirmRemove.startAnimation(fadeOutBg);
+            confirmRemove.setVisibility(View.GONE);
+            new Handler().postDelayed(() -> confirmRemove.clearAnimation(), 300);
         });
-        findViewById(R.id.removeBtn).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                membersRef.child(selectedUserKey.getText().toString()).removeValue();
-                confirmRemove.performClick();
-            }
+        findViewById(R.id.removeBtn).setOnClickListener(view -> {
+            membersRef.child(selectedUserKey.getText().toString()).removeValue();
+            confirmRemove.performClick();
         });
 
         membersAdapter = new MembersAdapter(membersModel);
@@ -110,12 +97,7 @@ public class ChatroomSettingsActivity extends AppCompatActivity {
         
         getUsers();
 
-        findViewById(R.id.backBtn).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                finish();
-            }
-        });
+        findViewById(R.id.backBtn).setOnClickListener(view -> finish());
 
         roomKey = getIntent().getStringExtra("roomKey");
         if (roomKey == null) {
@@ -129,15 +111,16 @@ public class ChatroomSettingsActivity extends AppCompatActivity {
         chatInfo.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
-                Log.d("REALTIME", "onChildAdded: " + snapshot.toString());
+                Log.d("REALTIME", "onChildAdded: " + snapshot);
 
-                GenericTypeIndicator<HashMap<String, String>> t = new GenericTypeIndicator<HashMap<String, String>>() {};
+                GenericTypeIndicator<HashMap<String, String>> t = new GenericTypeIndicator<>() {
+                };
                 HashMap<String, String> info = snapshot.getValue(t);
                 if (info == null) {
                     return;
                 }
 
-                Log.d("REALTIME", "onChildAdded: " + info.toString());
+                Log.d("REALTIME", "onChildAdded: " + info);
                 ((TextView) findViewById(R.id.groupName)).setText(info.get("name"));
 
                 groupIcon = findViewById(R.id.groupIcon);
@@ -166,8 +149,9 @@ public class ChatroomSettingsActivity extends AppCompatActivity {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 membersModel.clear();
-                Log.d("REALTIME", "onChildAdded: " + snapshot.toString());
-                GenericTypeIndicator<HashMap<String, String>> t = new GenericTypeIndicator<HashMap<String, String>>() {};
+                Log.d("REALTIME", "onChildAdded: " + snapshot);
+                GenericTypeIndicator<HashMap<String, String>> t = new GenericTypeIndicator<>() {
+                };
                 members = snapshot.getValue(t);
                 Log.d("GET USERS", "Call updateModel()");
                 updateModel();
@@ -179,21 +163,13 @@ public class ChatroomSettingsActivity extends AppCompatActivity {
             }
         });
 
-        findViewById(R.id.changePfp).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
-                intent.setType("image/*");
-                getImage.launch(intent);
-            }
+        findViewById(R.id.changePfp).setOnClickListener(view -> {
+            Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
+            intent.setType("image/*");
+            getImage.launch(intent);
         });
 
-        findViewById(R.id.inviteMembers).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                getCode(roomKey);
-            }
-        });
+        findViewById(R.id.inviteMembers).setOnClickListener(view -> getCode(roomKey));
     }
 
     private class MembersAdapter extends RecyclerView.Adapter<MembersAdapter.MembersHolder>{
@@ -243,13 +219,10 @@ public class ChatroomSettingsActivity extends AppCompatActivity {
             }
 
             final String finalUserKey = userKey;
-            holder.removeMember.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View view) {
-                    confirmRemove.startAnimation(fadeInBg);
-                    confirmRemove.setVisibility(View.VISIBLE);
-                    selectedUserKey.setText(finalUserKey);
-                }
+            holder.removeMember.setOnClickListener(view -> {
+                confirmRemove.startAnimation(fadeInBg);
+                confirmRemove.setVisibility(View.VISIBLE);
+                selectedUserKey.setText(finalUserKey);
             });
         }
 
@@ -259,9 +232,9 @@ public class ChatroomSettingsActivity extends AppCompatActivity {
         }
 
         class MembersHolder extends RecyclerView.ViewHolder{
-            private TextView name;
-            private ImageView pfpIcon;
-            private ImageButton removeMember;
+            private final TextView name;
+            private final ImageView pfpIcon;
+            private final ImageButton removeMember;
             public MembersHolder(View view) {
                 super(view);
                 name = view.findViewById(R.id.username);
@@ -277,7 +250,7 @@ public class ChatroomSettingsActivity extends AppCompatActivity {
             return;
         }
 
-        Log.d("GET USERS", members + ", " + allUsers.toString());
+        Log.d("GET USERS", members + ", " + allUsers);
         boolean thisIn = false;
         for (int i = 0; i < allUsers.length(); i++) {
             try {
@@ -300,58 +273,46 @@ public class ChatroomSettingsActivity extends AppCompatActivity {
     private void getUsers() {
         Database.queryAstra(this,
                 "SELECT * FROM plantopia.user_info",
-                new Response.Listener<String>() {
-                    @Override
-                    public void onResponse(String response) {
-                        Log.d("GET USERS", response);
+                response -> {
+                    Log.d("GET USERS", response);
 
-                        try {
-                            JSONObject responseObj = new JSONObject(response);
-                            allUsers = responseObj.getJSONArray("data");
-                            updateModel();
-                        } catch (JSONException e) {
-                            throw new RuntimeException(e);
-                        }
+                    try {
+                        JSONObject responseObj = new JSONObject(response);
+                        allUsers = responseObj.getJSONArray("data");
+                        updateModel();
+                    } catch (JSONException e) {
+                        throw new RuntimeException(e);
                     }
                 },
-                new Response.ErrorListener() {
-                    @Override
-                    public void onErrorResponse(VolleyError error) {
-                        Log.e("GET USERS ERROR", error.toString());
-                        if (error.getClass() == NoConnectionError.class) {
-                            Toast.makeText(getApplicationContext(), "Please connect to internet", Toast.LENGTH_SHORT).show();
-                        }
+                error -> {
+                    Log.e("GET USERS ERROR", error.toString());
+                    if (error.getClass() == NoConnectionError.class) {
+                        Toast.makeText(getApplicationContext(), "Please connect to internet", Toast.LENGTH_SHORT).show();
                     }
                 }
         );
     }
 
     private void generateAndDisplayCode() {
-        String code = "";
+        StringBuilder code = new StringBuilder();
         for (int i = 0; i < 6; i++) {
-            code += String.valueOf((int) Math.floor(Math.random()*10));
+            code.append((int) Math.floor(Math.random() * 10));
         }
 
-        updateCodeDb(roomKey, code);
+        updateCodeDb(roomKey, code.toString());
     }
 
     private void updateCodeDb(String id, String code) {
         Database.queryAstra(this,
                 "UPDATE plantopia.rooms SET code='" + code + "', generated_time=toTimestamp(now()) WHERE id = '" + id + "';",
-                new Response.Listener<String>() {
-                    @Override
-                    public void onResponse(String response) {
-                        Log.d("ROOMS", code);
-                        Toast.makeText(ChatroomSettingsActivity.this, "Code: " + code, Toast.LENGTH_LONG).show();
-                    }
+                response -> {
+                    Log.d("ROOMS", code);
+                    Toast.makeText(ChatroomSettingsActivity.this, "Code: " + code, Toast.LENGTH_LONG).show();
                 },
-                new Response.ErrorListener() {
-                    @Override
-                    public void onErrorResponse(VolleyError error) {
-                        Log.e("UPDATE CODE ERROR", error.toString());
-                        if (error.getClass() == NoConnectionError.class) {
-                            Toast.makeText(getApplicationContext(), "Please connect to internet", Toast.LENGTH_SHORT).show();
-                        }
+                error -> {
+                    Log.e("UPDATE CODE ERROR", error.toString());
+                    if (error.getClass() == NoConnectionError.class) {
+                        Toast.makeText(getApplicationContext(), "Please connect to internet", Toast.LENGTH_SHORT).show();
                     }
                 }
         );
@@ -360,46 +321,40 @@ public class ChatroomSettingsActivity extends AppCompatActivity {
     private void getCode(String id) {
         Database.queryAstra(this,
                 "SELECT * FROM plantopia.rooms WHERE id = '" + id + "';",
-                new Response.Listener<String>() {
-                    @Override
-                    public void onResponse(String response) {
-                        Log.d("ROOMS", response);
-                        try {
-                            JSONObject responseObj = new JSONObject(response);
-                            Log.d("ROOMS", responseObj.toString());
-                            if (responseObj.getJSONArray("data").getJSONObject(0).isNull("generated_time")) {
-                                generateAndDisplayCode();
-                                return;
-                            }
-
-                            OffsetDateTime generatedTime = OffsetDateTime.parse(responseObj.getJSONArray("data").getJSONObject(0).getString("generated_time"));
-                            OffsetDateTime nowTime = OffsetDateTime.now();
-                            long time = ChronoUnit.HOURS.between(generatedTime, nowTime);
-                            if (time > 1) {
-                                generateAndDisplayCode();
-                                return;
-                            }
-
-                            if (responseObj.getJSONArray("data").length() != 1) {
-                                getCode(id);
-                            } else {
-                                String roomCode = responseObj.getJSONArray("data").getJSONObject(0).getString("code");
-                                Log.d("ROOMS", roomCode);
-                                Toast.makeText(ChatroomSettingsActivity.this, "Code: " + roomCode, Toast.LENGTH_LONG).show();
-                            }
-
-                        } catch (JSONException e) {
-                            throw new RuntimeException(e);
+                response -> {
+                    Log.d("ROOMS", response);
+                    try {
+                        JSONObject responseObj = new JSONObject(response);
+                        Log.d("ROOMS", responseObj.toString());
+                        if (responseObj.getJSONArray("data").getJSONObject(0).isNull("generated_time")) {
+                            generateAndDisplayCode();
+                            return;
                         }
+
+                        OffsetDateTime generatedTime = OffsetDateTime.parse(responseObj.getJSONArray("data").getJSONObject(0).getString("generated_time"));
+                        OffsetDateTime nowTime = OffsetDateTime.now();
+                        long time = ChronoUnit.HOURS.between(generatedTime, nowTime);
+                        if (time > 1) {
+                            generateAndDisplayCode();
+                            return;
+                        }
+
+                        if (responseObj.getJSONArray("data").length() != 1) {
+                            getCode(id);
+                        } else {
+                            String roomCode = responseObj.getJSONArray("data").getJSONObject(0).getString("code");
+                            Log.d("ROOMS", roomCode);
+                            Toast.makeText(ChatroomSettingsActivity.this, "Code: " + roomCode, Toast.LENGTH_LONG).show();
+                        }
+
+                    } catch (JSONException e) {
+                        throw new RuntimeException(e);
                     }
                 },
-                new Response.ErrorListener() {
-                    @Override
-                    public void onErrorResponse(VolleyError error) {
-                        Log.e("GET CODE ERROR", error.toString());
-                        if (error.getClass() == NoConnectionError.class) {
-                            Toast.makeText(getApplicationContext(), "Please connect to internet", Toast.LENGTH_SHORT).show();
-                        }
+                error -> {
+                    Log.e("GET CODE ERROR", error.toString());
+                    if (error.getClass() == NoConnectionError.class) {
+                        Toast.makeText(getApplicationContext(), "Please connect to internet", Toast.LENGTH_SHORT).show();
                     }
                 });
     }
@@ -407,7 +362,7 @@ public class ChatroomSettingsActivity extends AppCompatActivity {
 
     private final ActivityResultLauncher<Intent> getImage = registerForActivityResult(
             new ActivityResultContracts.StartActivityForResult(),
-            new ActivityResultCallback<ActivityResult>() {
+            new ActivityResultCallback<>() {
                 @Override
                 public void onActivityResult(ActivityResult result) {
                     if (result.getResultCode() == Activity.RESULT_OK || result.getResultCode() == CamActivity.IMAGE_URI
@@ -437,7 +392,8 @@ public class ChatroomSettingsActivity extends AppCompatActivity {
                                     }
 
                                     @Override
-                                    public void onError(Exception e) {}
+                                    public void onError(Exception e) {
+                                    }
                                 });
                     }
                 }

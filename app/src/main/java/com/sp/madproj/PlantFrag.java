@@ -35,18 +35,14 @@ import androidx.recyclerview.widget.DefaultItemAnimator;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.android.volley.AuthFailureError;
 import com.android.volley.NoConnectionError;
 import com.android.volley.RequestQueue;
-import com.android.volley.Response;
-import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.Volley;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.squareup.picasso.Callback;
 import com.squareup.picasso.Picasso;
 
-import org.json.JSONObject;
 
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -284,43 +280,39 @@ public class PlantFrag extends Fragment {
         }
     });
 
-    public void getDetail(String accessToken, String plantName, String icon, String species, int position) {
+    private void getDetail(String accessToken, String plantName, String icon, String species, int position) {
 
         String plantApi = "https://plant.id/api/v3/kb/plants/" + accessToken +
                 "?details=common_names,url,description,gbif_id,inaturalist_id,image,synonyms,watering,propagation_methods,best_light_condition,best_soil_type,best_watering&language=en";
 
         RequestQueue queue = Volley.newRequestQueue(getActivity());
 
-        JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(plantApi, new Response.Listener<JSONObject>() {
+        JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(plantApi,
+                response -> {
+                    loadingIcon.setVisibility(View.GONE);
+
+                    plantHelper.insert(position, response.toString(), icon, plantName, species);
+                    loadPlants();
+                },
+                error -> {
+                    Log.d("Plant API Error", "Response Error: " + error.toString());
+                    loadingIcon.setVisibility(View.GONE);
+
+                    if (error.getClass() == NoConnectionError.class) {
+                        Toast.makeText(getActivity(), "Please connect to internet", Toast.LENGTH_SHORT).show();
+                    } else if (error.networkResponse != null && error.networkResponse.statusCode == 429) {
+                        Toast.makeText(getActivity(), "Out of credits", Toast.LENGTH_SHORT).show();
+                    }
+
+                    if (error.networkResponse != null) {
+                        String bodyStr = new String(error.networkResponse.data, StandardCharsets.UTF_8);
+                        Log.d("Plant API Error", bodyStr);
+                    }
+
+    //                Log.d("Plant API Error", "Response Error: " + error.networkResponse.statusCode);
+                }) {
             @Override
-            public void onResponse(JSONObject response) {
-                loadingIcon.setVisibility(View.GONE);
-
-                plantHelper.insert(position, response.toString(), icon, plantName, species);
-                loadPlants();
-            }
-        }, new Response.ErrorListener() {
-            @Override
-            public void onErrorResponse(VolleyError error) {
-                Log.d("Plant API Error", "Response Error: " + error.toString());
-                loadingIcon.setVisibility(View.GONE);
-
-                if (error.getClass() == NoConnectionError.class) {
-                    Toast.makeText(getActivity(), "Please connect to internet", Toast.LENGTH_SHORT).show();
-                } else if (error.networkResponse != null && error.networkResponse.statusCode == 429) {
-                    Toast.makeText(getActivity(), "Out of credits", Toast.LENGTH_SHORT).show();
-                }
-
-                if (error.networkResponse != null) {
-                    String bodyStr = new String(error.networkResponse.data, StandardCharsets.UTF_8);
-                    Log.d("Plant API Error", bodyStr);
-                }
-
-//                Log.d("Plant API Error", "Response Error: " + error.networkResponse.statusCode);
-            }
-        }) {
-            @Override
-            public Map<String, String> getHeaders() throws AuthFailureError {
+            public Map<String, String> getHeaders() {
                 Map<String, String> params = new HashMap<>();
                 params.put("Content-Type", "application/json");
                 params.put("Api-Key", BuildConfig.PLANT_KEY);

@@ -7,8 +7,6 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 
-import androidx.activity.result.ActivityResult;
-import androidx.activity.result.ActivityResultCallback;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
@@ -29,12 +27,9 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.android.volley.AuthFailureError;
 import com.android.volley.NoConnectionError;
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
-import com.android.volley.Response;
-import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.Volley;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
@@ -158,21 +153,19 @@ public class IdentifyFrag extends Fragment {
 
         getImage = registerForActivityResult(
                 new ActivityResultContracts.StartActivityForResult(),
-                new ActivityResultCallback<ActivityResult>() {
-                    @Override
-                    public void onActivityResult(ActivityResult result) {
-                        if (result.getResultCode() == Activity.RESULT_OK || result.getResultCode() == CamActivity.IMAGE_URI
-                        && result.getData() != null) {
-                            Uri imageUri = result.getData().getData();
+                result -> {
+                    if (result.getResultCode() == Activity.RESULT_OK || result.getResultCode() == CamActivity.IMAGE_URI
+                    && result.getData() != null) {
+                        Uri imageUri = result.getData().getData();
 //                            Toast.makeText(getActivity().getApplicationContext(), imageUri.toString(), Toast.LENGTH_SHORT).show();
-                            Log.d("result", imageUri.toString());
+                        Log.d("result", imageUri.toString());
 
-                            uploadThread = new UploadThread(imageUri);
-                            uploadThread.start();
+                        uploadThread = new UploadThread(imageUri);
+                        uploadThread.start();
 
-                            loadingIcon.setVisibility(View.VISIBLE);
+                        loadingIcon.setVisibility(View.VISIBLE);
 
-                            // TEST CODE
+                        // TEST CODE
 //                            try {
 //                                uploadThread.join();
 //                            } catch (InterruptedException e) {
@@ -188,9 +181,8 @@ public class IdentifyFrag extends Fragment {
 //                            startActivity(intent);
 //                            loadingIcon.setVisibility(View.GONE);
 
-                            getPlantIdAPI(imageUri);
+                        getPlantIdAPI(imageUri);
 
-                        }
                     }
                 });
 
@@ -318,51 +310,46 @@ public class IdentifyFrag extends Fragment {
 
         RequestQueue queue = Volley.newRequestQueue(getActivity());
 
-        JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(Request.Method.POST, plantApi, body, new Response.Listener<JSONObject>() {
-            @Override
-            public void onResponse(JSONObject response) {
-                try {
-                    uploadThread.join();
-                } catch (InterruptedException e) {
-                    throw new RuntimeException(e);
-                }
-                Intent intent = new Intent(getActivity(), IdResultActivity.class);
-                intent.putExtra("response", response.toString());
-                intent.putExtra("inputUriStr", imageUri.toString());
-                intent.putExtra("savedImg", imageKey);
-                intent.putExtra("purpose", "identify");
-                startActivity(intent);
+        JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(Request.Method.POST, plantApi, body,
+                response -> {
+                    try {
+                        uploadThread.join();
+                    } catch (InterruptedException e) {
+                        throw new RuntimeException(e);
+                    }
+                    Intent intent = new Intent(getActivity(), IdResultActivity.class);
+                    intent.putExtra("response", response.toString());
+                    intent.putExtra("inputUriStr", imageUri.toString());
+                    intent.putExtra("savedImg", imageKey);
+                    intent.putExtra("purpose", "identify");
+                    startActivity(intent);
 
-                loadingIcon.setVisibility(View.GONE);
-            }
-        }, new Response.ErrorListener() {
-            @Override
-            public void onErrorResponse(VolleyError error) {
-                Log.d("Plant API Error", "Response Error: " + error.toString());
-                loadingIcon.setVisibility(View.GONE);
+                    loadingIcon.setVisibility(View.GONE);
+                }, error -> {
+                    Log.d("Plant API Error", "Response Error: " + error.toString());
+                    loadingIcon.setVisibility(View.GONE);
 
-                if (error.getClass() == NoConnectionError.class) {
-                    Toast.makeText(getActivity(), "Please connect to internet", Toast.LENGTH_SHORT).show();
-                } else if (error.networkResponse != null && error.networkResponse.statusCode == 429) {
-                    Toast.makeText(getActivity(), "Out of credits", Toast.LENGTH_SHORT).show();
-                }
+                    if (error.getClass() == NoConnectionError.class) {
+                        Toast.makeText(getActivity(), "Please connect to internet", Toast.LENGTH_SHORT).show();
+                    } else if (error.networkResponse != null && error.networkResponse.statusCode == 429) {
+                        Toast.makeText(getActivity(), "Out of credits", Toast.LENGTH_SHORT).show();
+                    }
 
-                if (error.networkResponse != null) {
-                    String bodyStr = new String(error.networkResponse.data, StandardCharsets.UTF_8);
-                    Log.d("Plant API Error", bodyStr);
-                }
+                    if (error.networkResponse != null) {
+                        String bodyStr = new String(error.networkResponse.data, StandardCharsets.UTF_8);
+                        Log.d("Plant API Error", bodyStr);
+                    }
 
-//                Log.d("Plant API Error", "Response Error: " + error.networkResponse.statusCode);
-            }
-        }) {
-            @Override
-            public Map<String, String> getHeaders() throws AuthFailureError {
-                Map<String, String> params = new HashMap<>();
-                params.put("Content-Type", "application/json");
-                params.put("Api-Key", BuildConfig.PLANT_KEY);
-                return params;
-            }
-        };
+        //                Log.d("Plant API Error", "Response Error: " + error.networkResponse.statusCode);
+                }) {
+                    @Override
+                    public Map<String, String> getHeaders() {
+                        Map<String, String> params = new HashMap<>();
+                        params.put("Content-Type", "application/json");
+                        params.put("Api-Key", BuildConfig.PLANT_KEY);
+                        return params;
+                    }
+                };
 
         queue.add(jsonObjectRequest);
     }

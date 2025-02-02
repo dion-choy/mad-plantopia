@@ -38,14 +38,14 @@ public class LogInActivity extends AppCompatActivity {
         logIn = findViewById(R.id.logIn);
         logIn.setOnClickListener(view -> {
             boolean error = false;
-            if (email.getText().toString().isEmpty()) {
+            if (email.getText() == null || email.getText().toString().isEmpty()) {
                 emailContainer.setError("Enter your email");
                 error = true;
             } else {
                 emailContainer.setErrorEnabled(false);
             }
 
-            if (password.getText().toString().isEmpty()){
+            if (password.getText() == null || password.getText().toString().isEmpty()){
                 passwordContainer.setError("Enter your password");
                 error = true;
             } else {
