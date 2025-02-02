@@ -228,9 +228,9 @@ public class ChatroomSettingsActivity extends AppCompatActivity {
 
 
             String userKey = "";
-            String email = users.get(holder.getAdapterPosition()).email;
+            String uid = users.get(holder.getAdapterPosition()).uid;
             for (Map.Entry<String, String> entry : members.entrySet()) {
-                if (email.equals(entry.getValue())) {
+                if (uid.equals(entry.getValue())) {
                     userKey = entry.getKey();
                     break;
                 }
@@ -283,11 +283,11 @@ public class ChatroomSettingsActivity extends AppCompatActivity {
         for (int i = 0; i < allUsers.length(); i++) {
             try {
                 JSONObject row = allUsers.getJSONObject(i);
-                if (members.containsValue(row.getString("email"))) {
-                    if (row.getString("email").equals(FirebaseAuth.getInstance().getCurrentUser().getEmail())) {
+                if (members.containsValue(row.getString("uid"))) {
+                    if (row.getString("uid").equals(FirebaseAuth.getInstance().getCurrentUser().getUid())) {
                         thisIn = true;
                     }
-                    membersModel.add(new User(row.getString("username"), row.getString("email"), row.getString("pfp")));
+                    membersModel.add(new User(row.getString("username"), row.getString("uid"), row.getString("pfp")));
                 }
             } catch (JSONException e) {
                 throw new RuntimeException(e);

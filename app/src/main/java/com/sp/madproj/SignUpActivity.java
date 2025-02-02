@@ -191,8 +191,8 @@ public class SignUpActivity extends AppCompatActivity {
 
     private void addUsername(String username, String email) {
         Database.queryAstra(this,
-                "INSERT INTO plantopia.user_info (username, email, pfp) VALUES('" + username +
-                        "', '" + email + "', '" + Storage.pfpStorage + "default.png');",
+                "INSERT INTO plantopia.user_info (username, email, pfp, uid) VALUES('" + username +
+                        "', '" + email + "', '" + Storage.pfpStorage + "default.png', '" + FirebaseAuth.getInstance().getCurrentUser().getUid() + "');",
                 new Response.Listener<String>() {
                     @Override
                     public void onResponse(String response) {

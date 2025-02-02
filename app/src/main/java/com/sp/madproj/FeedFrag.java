@@ -123,7 +123,7 @@ public class FeedFrag extends Fragment {
                     GenericTypeIndicator<HashMap<String, String>> t = new GenericTypeIndicator<>() {};
                     HashMap<String, String> members = snapshot.getValue(t);
                     if (members != null) {
-                        if (currentUser != null && members.containsValue(currentUser.getEmail())) {
+                        if (currentUser != null && members.containsValue(currentUser.getUid())) {
                             Log.d("REALTIME", "added: " + snapshot);
                             addChatroomToModel(child);
                         }
@@ -282,7 +282,7 @@ public class FeedFrag extends Fragment {
                 GenericTypeIndicator<HashMap<String, String>> t = new GenericTypeIndicator<>() {};
                 HashMap<String, String> members = task.getResult().getValue(t);
 
-                if (members != null && members.containsValue(currentUser.getEmail())) {
+                if (members != null && members.containsValue(currentUser.getUid())) {
                     Toast.makeText(getActivity(), "Already a member", Toast.LENGTH_SHORT).show();
                     return;
                 }
@@ -290,12 +290,13 @@ public class FeedFrag extends Fragment {
                 String newMemberKey = chatMembers.push().getKey();
 
                 chatMembers.child(newMemberKey)
-                        .setValue(currentUser.getEmail())
+                        .setValue(currentUser.getUid())
                         .addOnCompleteListener(new OnCompleteListener<Void>() {
                             @Override
                             public void onComplete(@NonNull Task<Void> task) {
                                 if (task.isSuccessful()) {
                                     Log.d("REALTIME DB ADD", "onComplete: Member added successfully!");
+                                    Toast.makeText(getActivity(), "Successfully added!", Toast.LENGTH_LONG).show();
                                 }
                             }
                         });

@@ -11,7 +11,7 @@ import java.util.List;
 @IgnoreExtraProperties
 public class Message {
     public String username;
-    public String email;
+    public String uid;
     public String pfp;
     public String messageTxt;
     public TimestampLoader timestamp;
@@ -22,9 +22,9 @@ public class Message {
         imageKeys = new ArrayList<>();
     }
 
-    public Message(String username, String email, Uri pfp, String messageTxt, Timestamp timestamp) {
+    public Message(String username, String uid, Uri pfp, String messageTxt, Timestamp timestamp) {
         this.username = username;
-        this.email = email;
+        this.uid = uid;
         this.pfp = pfp.toString();
         this.messageTxt = messageTxt;
         this.timestamp = new TimestampLoader(timestamp);

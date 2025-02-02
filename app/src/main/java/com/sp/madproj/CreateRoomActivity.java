@@ -67,7 +67,7 @@ public class CreateRoomActivity extends AppCompatActivity {
                 childUpdate.put("/" + pushKey + "/members/" + pushKey + "/",
                         FirebaseAuth.getInstance()
                                 .getCurrentUser()
-                                .getEmail()
+                                .getUid()
                         );
 
                 rooms.updateChildren(childUpdate)

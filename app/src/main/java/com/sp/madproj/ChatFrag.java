@@ -88,7 +88,7 @@ public class ChatFrag extends Fragment {
     private DatabaseReference messages;
 
     private String username = "";
-    private String email = "";
+    private String uid = "";
     private Uri pfp = null;
 
     public ChatFrag() {
@@ -121,7 +121,7 @@ public class ChatFrag extends Fragment {
         enableSend = AnimationUtils.loadAnimation(getContext(), R.anim.enable_send);
 
         username = auth.getCurrentUser().getDisplayName();
-        email = auth.getCurrentUser().getEmail();
+        uid = auth.getCurrentUser().getUid();
         pfp = auth.getCurrentUser().getPhotoUrl();
 
         view.findViewById(R.id.backBtn).setOnClickListener(view1 -> destroyFragment());
@@ -179,7 +179,7 @@ public class ChatFrag extends Fragment {
                     public void onDataChange(@NonNull DataSnapshot snapshot) {
                         GenericTypeIndicator<HashMap<String, String>> t = new GenericTypeIndicator<>() {};
                         HashMap<String, String> info = snapshot.getValue(t);
-                        if (!info.containsValue(email)) {
+                        if (!info.containsValue(uid)) {
                             new Handler().postDelayed(() -> destroyFragment(), 150);
                         }
                     }
@@ -291,7 +291,7 @@ public class ChatFrag extends Fragment {
         public void onClick(View view) {
             String pushKey = messages.push().getKey();
             Log.d("Firebase realtime db", pushKey);
-            Message message = new Message(username, email, pfp, inputMsg.getText().toString().trim(), Timestamp.now());
+            Message message = new Message(username, uid, pfp, inputMsg.getText().toString().trim(), Timestamp.now());
             if (!imagePreviewModel.isEmpty()) {
                 List<String> imageKeyList = new ArrayList<>();
                 for (int i = 0; i < imagePreviewModel.size(); i++) {
@@ -490,10 +490,10 @@ public class ChatFrag extends Fragment {
             }
 
             if (!message.username.equals(prevUsername)) {
-                if (!users.isEmpty() && users.get(message.email) != null){
+                if (!users.isEmpty() && users.get(message.uid) != null){
                     Log.d("GET USERS", users.toString());
                     Picasso.get()
-                            .load(users.get(message.email).get("pfp"))
+                            .load(users.get(message.uid).get("pfp"))
                             .placeholder(R.mipmap.default_pfp_foreground)
                             .into(holder.pfpIcon, new Callback() {
                                 @Override
@@ -505,7 +505,7 @@ public class ChatFrag extends Fragment {
                                 public void onError(Exception e) {}
                             });
 
-                    holder.username.setText(users.get(message.email).get("username"));
+                    holder.username.setText(users.get(message.uid).get("username"));
                 } else {
                     holder.username.setText(message.username);
                     Picasso.get()
@@ -650,7 +650,7 @@ public class ChatFrag extends Fragment {
                                 Map<String, String> usernamePfp = new HashMap<>();
                                 usernamePfp.put("username", row.getString("username"));
                                 usernamePfp.put("pfp", row.getString("pfp"));
-                                users.put(row.getString("email"), usernamePfp);
+                                users.put(row.getString("uid"), usernamePfp);
                             }
 
                             Log.d("GET USERS", users.toString());
