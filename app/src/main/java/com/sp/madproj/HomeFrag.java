@@ -30,13 +30,10 @@ import android.widget.Toast;
 
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
-import com.android.volley.Response;
-import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.Volley;
 
 import org.json.JSONException;
-import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -52,7 +49,7 @@ public class HomeFrag extends Fragment {
     private SwipeRefreshLayout refreshHome;
 
     private RecyclerView notifs;
-    private List<String> model = new ArrayList<>();
+    private final List<String> model = new ArrayList<>();
     private NotifsAdapter notifsAdapter;
 
 
@@ -94,15 +91,12 @@ public class HomeFrag extends Fragment {
 
         // Set refresh
         refreshHome =  view.findViewById(R.id.refreshHome);
-        refreshHome.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
-            @Override
-            public void onRefresh() {
-                ((MainActivity) getActivity()).updateLocation();
-                getWeather();
-                loadNotifs();
-                notifs.setAdapter(notifsAdapter);
-                refreshHome.setRefreshing(false);
-            }
+        refreshHome.setOnRefreshListener(() -> {
+            ((MainActivity) getActivity()).updateLocation();
+            getWeather();
+            loadNotifs();
+            notifs.setAdapter(notifsAdapter);
+            refreshHome.setRefreshing(false);
         });
 
         GPSTracker gpsTracker = ((MainActivity) getActivity()).gpsTracker;
@@ -125,7 +119,7 @@ public class HomeFrag extends Fragment {
     }
 
     private class NotifsAdapter extends RecyclerView.Adapter<NotifsAdapter.NotifsHolder>{
-        private List<String> notifs;
+        private final List<String> notifs;
 
         NotifsAdapter(List<String> notifs) {
             this.notifs = notifs;
@@ -168,8 +162,8 @@ public class HomeFrag extends Fragment {
         }
 
         class NotifsHolder extends RecyclerView.ViewHolder {
-            private TextView notifText;
-            private ImageView notifType;
+            private final TextView notifText;
+            private final ImageView notifType;
 
             public NotifsHolder(View itemView) {
                 super(itemView);
@@ -280,28 +274,21 @@ public class HomeFrag extends Fragment {
         RequestQueue queue = Volley.newRequestQueue(getActivity());
 
         JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(
-                Request.Method.GET, weatherUrl, null, new Response.Listener<JSONObject>() {
-            @Override
-            public void onResponse(JSONObject response) {
-                try {
-                    fillScreenText(
-                            Math.round(response.getJSONObject("main").getLong("temp")),
-                            Math.round(response.getJSONObject("main").getLong("humidity")),
-                            response.getJSONArray("weather").getJSONObject(0).getString("icon")
-                    );
-                    loadNotifs();
+                Request.Method.GET, weatherUrl, null, response -> {
+                    try {
+                        fillScreenText(
+                                Math.round(response.getJSONObject("main").getLong("temp")),
+                                Math.round(response.getJSONObject("main").getLong("humidity")),
+                                response.getJSONArray("weather").getJSONObject(0).getString("icon")
+                        );
+                        loadNotifs();
 
-                    Log.d("Weather Request", "Success: " + response.toString());
-                } catch (JSONException e) {
-                    Log.d("Weather Error", "Malformed Response: " + e);
-                }
-            }
-        }, new Response.ErrorListener() {
-            @Override
-            public void onErrorResponse(VolleyError error) {
-                Log.d("Weather Error", "Response Error: " + error.toString());
-            }
-        });
+                        Log.d("Weather Request", "Success: " + response);
+                    } catch (JSONException e) {
+                        Log.d("Weather Error", "Malformed Response: " + e);
+                    }
+                },
+                error -> Log.d("Weather Error", "Response Error: " + error.toString()));
 
         queue.add(jsonObjectRequest);
     }

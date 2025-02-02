@@ -18,19 +18,15 @@ import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.splashscreen.SplashScreen;
 
-import com.android.volley.AuthFailureError;
 import com.android.volley.NoConnectionError;
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
-import com.android.volley.Response;
-import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.Volley;
 import com.google.android.material.textfield.TextInputEditText;
 
 import org.json.JSONArray;
 import org.json.JSONException;
-import org.json.JSONObject;
 
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -146,7 +142,7 @@ public class AddPlantActivity extends AppCompatActivity {
                 return;
             }
 
-            Log.d("Output", nameInput.getText().toString() + ", " + selectAccessToken + ", " + selectedIcon);
+            Log.d("Output", nameInput.getText() + ", " + selectAccessToken + ", " + selectedIcon);
             setResult(1,
                     new Intent()
                             .putExtra("name", nameInput.getText().toString())
@@ -165,55 +161,50 @@ public class AddPlantActivity extends AppCompatActivity {
 
         String plantApi = "https://plant.id/api/v3/kb/plants/name_search?q=" + query;
 
-        JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(Request.Method.GET, plantApi, null, new Response.Listener<JSONObject>() {
-            @Override
-            public void onResponse(JSONObject response) {
-                queueFilled = false;
-                loadingDropdown.setVisibility(View.GONE);
-                adapter.clear();
-                try {
-                    JSONArray matches = response.getJSONArray("entities");
-                    for (int i = 0; i < matches.length(); i++) {
-                        adapter.add(matches.getJSONObject(i).getString("matched_in"));
-                        queries.add(matches.getJSONObject(i).getString("access_token"));
-                    }
-                    adapter.notifyDataSetChanged();
+        JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(Request.Method.GET, plantApi, null, response -> {
+            queueFilled = false;
+            loadingDropdown.setVisibility(View.GONE);
+            adapter.clear();
+            queries.clear();
+            try {
+                JSONArray matches = response.getJSONArray("entities");
+                for (int i = 0; i < matches.length(); i++) {
+                    adapter.add(matches.getJSONObject(i).getString("matched_in"));
+                    queries.add(matches.getJSONObject(i).getString("access_token"));
+                }
+                adapter.notifyDataSetChanged();
 
-                    if (!query.equals(prevQuery)) {
-                        int selectionStart = speciesInput.getSelectionStart();
-                        int selectionEnd = speciesInput.getSelectionEnd();
-                        speciesInput.setText(speciesInput.getText());
-                        speciesInput.setSelection(selectionStart, selectionEnd);
-                    }
-                    prevQuery = query;
+                if (!query.equals(prevQuery)) {
+                    int selectionStart = speciesInput.getSelectionStart();
+                    int selectionEnd = speciesInput.getSelectionEnd();
+                    speciesInput.setText(speciesInput.getText());
+                    speciesInput.setSelection(selectionStart, selectionEnd);
+                }
+                prevQuery = query;
 //                    Toast.makeText(getApplicationContext(), "Response", Toast.LENGTH_SHORT).show();
-                    Log.d("Plant API Success", matches.getJSONObject(0).getString("entity_name"));
-                } catch (JSONException e) {
-                    Log.e("Plant API Error", "Malformed Response: " + e);
-                }
+                Log.d("Plant API Success", matches.getJSONObject(0).getString("entity_name"));
+            } catch (JSONException e) {
+                Log.e("Plant API Error", "Malformed Response: " + e);
             }
-        }, new Response.ErrorListener() {
-            @Override
-            public void onErrorResponse(VolleyError error) {
-                Log.d("Plant API Error", "Response Error: " + error.toString());
-                queueFilled = false;
+        }, error -> {
+            Log.d("Plant API Error", "Response Error: " + error.toString());
+            queueFilled = false;
 
-                if (error.getClass() == NoConnectionError.class) {
-                    Toast.makeText(getApplicationContext(), "Please connect to internet", Toast.LENGTH_SHORT).show();
-                } else if (error.networkResponse != null && error.networkResponse.statusCode == 429) {
-                    Toast.makeText(getApplicationContext(), "Out of credits", Toast.LENGTH_SHORT).show();
-                }
+            if (error.getClass() == NoConnectionError.class) {
+                Toast.makeText(getApplicationContext(), "Please connect to internet", Toast.LENGTH_SHORT).show();
+            } else if (error.networkResponse != null && error.networkResponse.statusCode == 429) {
+                Toast.makeText(getApplicationContext(), "Out of credits", Toast.LENGTH_SHORT).show();
+            }
 
-                if (error.networkResponse != null) {
-                    String bodyStr = new String(error.networkResponse.data, StandardCharsets.UTF_8);
-                    Log.d("Plant API Error", bodyStr);
-                }
+            if (error.networkResponse != null) {
+                String bodyStr = new String(error.networkResponse.data, StandardCharsets.UTF_8);
+                Log.d("Plant API Error", bodyStr);
+            }
 
 //                Log.d("Plant API Error", "Response Error: " + error.networkResponse.statusCode);
-            }
         }) {
             @Override
-            public Map<String, String> getHeaders() throws AuthFailureError {
+            public Map<String, String> getHeaders() {
                 Map<String, String> params = new HashMap<>();
                 params.put("Content-Type", "application/json");
                 params.put("Api-Key", BuildConfig.PLANT_KEY);

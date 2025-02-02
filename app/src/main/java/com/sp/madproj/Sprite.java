@@ -5,8 +5,6 @@ import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.RectF;
 import android.util.Log;
-import android.view.View;
-import android.widget.Toast;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -62,6 +60,10 @@ public class Sprite {
     
     public boolean isClickable() {
         return clickable;
+    }
+
+    public void setClickable(boolean clickable) {
+        this.clickable = clickable;
     }
 
     public void click() {

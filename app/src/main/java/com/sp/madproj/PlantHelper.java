@@ -19,7 +19,7 @@ public class PlantHelper extends SQLiteOpenHelper {
         db.execSQL("CREATE TABLE plant_table (" +
                 "_id INTEGER PRIMARY KEY AUTOINCREMENT," +
                 "position INTEGER," +
-                "accessToken TEXT," +
+                "detail TEXT," +
                 "icon TEXT," +
                 "name TEXT," +
                 "species TEXT);");
@@ -46,11 +46,11 @@ public class PlantHelper extends SQLiteOpenHelper {
                         "WHERE position = ?", new String[]{String.valueOf(position)}));
     }
 
-    public void insert(int position, String accessToken, String icon, String name, String species) {
+    public void insert(int position, String detail, String icon, String name, String species) {
         ContentValues cv = new ContentValues();
 
         cv.put("position", position);
-        cv.put("accessToken", accessToken);
+        cv.put("detail", detail);
         cv.put("icon", icon);
         cv.put("name", name);
         cv.put("species", species);
@@ -73,7 +73,7 @@ public class PlantHelper extends SQLiteOpenHelper {
         return c.getInt(1);
     }
 
-    public String getAccessToken(Cursor c) {
+    public String getDetail(Cursor c) {
         return c.getString(2);
     }
 

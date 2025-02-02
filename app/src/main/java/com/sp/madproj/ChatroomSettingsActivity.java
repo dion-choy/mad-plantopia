@@ -55,8 +55,7 @@ public class ChatroomSettingsActivity extends AppCompatActivity {
     private String roomKey = null;
     private ImageView groupIcon;
 
-    private RecyclerView membersList;
-    private List<User> membersModel = new ArrayList<>();
+    private final List<User> membersModel = new ArrayList<>();
     private MembersAdapter membersAdapter;
 
     private TextView selectedUserKey;
@@ -103,7 +102,7 @@ public class ChatroomSettingsActivity extends AppCompatActivity {
 
         membersAdapter = new MembersAdapter(membersModel);
 
-        membersList = findViewById(R.id.membersList);
+        RecyclerView membersList = findViewById(R.id.membersList);
         membersList.setHasFixedSize(true);
         membersList.setLayoutManager(new LinearLayoutManager(this));
         membersList.setItemAnimator(new DefaultItemAnimator());

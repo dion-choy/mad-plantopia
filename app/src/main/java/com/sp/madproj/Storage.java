@@ -3,19 +3,16 @@ package com.sp.madproj;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Matrix;
-import android.media.ExifInterface;
 import android.net.Uri;
 import android.provider.MediaStore;
 import android.util.Log;
 import android.widget.Toast;
 
-import com.android.volley.AuthFailureError;
-import com.android.volley.NetworkResponse;
+import androidx.exifinterface.media.ExifInterface;
+
 import com.android.volley.NoConnectionError;
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
-import com.android.volley.Response;
-import com.android.volley.VolleyError;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
 
@@ -40,25 +37,18 @@ public class Storage {
         RequestQueue queue = Volley.newRequestQueue(context);
 
         StringRequest request = new StringRequest(Request.Method.DELETE, storagePath,
-                new Response.Listener<String>() {
-                    @Override
-                    public void onResponse(String response) {
-                        Log.d("Storage API", "onResponse: " + response);
-                    }
-                }, new Response.ErrorListener() {
-            @Override
-            public void onErrorResponse(VolleyError error) {
-                Log.e("Storage API Error", "Response Error: " + error.toString());
-                Log.e("Storage API Error", "Response Error: " + error.getMessage());
+                response -> Log.d("Storage API", "onResponse: " + response),
+                error -> {
+                    Log.e("Storage API Error", "Response Error: " + error.toString());
+                    Log.e("Storage API Error", "Response Error: " + error.getMessage());
 
-                if (error.getClass() == NoConnectionError.class) {
-                    Toast.makeText(context.getApplicationContext(), "Please connect to internet", Toast.LENGTH_SHORT).show();
-                }
-            }
-        }) {
+                    if (error.getClass() == NoConnectionError.class) {
+                        Toast.makeText(context.getApplicationContext(), "Please connect to internet", Toast.LENGTH_SHORT).show();
+                    }
+                }) {
             @Override
-            public Map<String, String> getHeaders() throws AuthFailureError {
-                Map<String, String> header = new HashMap<String, String>();
+            public Map<String, String> getHeaders() {
+                Map<String, String> header = new HashMap<>();
                 header.put("Authorization", "Bearer " + BuildConfig.SUPA_KEY);
                 return header;
             }
@@ -84,7 +74,7 @@ public class Storage {
                 break;
         }
 
-        Bitmap bitmap = null;
+        Bitmap bitmap;
         try {
             bitmap = MediaStore.Images.Media.getBitmap(context.getContentResolver(), uri);
         } catch (IOException e) {
@@ -101,7 +91,7 @@ public class Storage {
 
         RequestQueue queue = Volley.newRequestQueue(context);
 
-        Map<String, String> header = new HashMap<String, String>();
+        Map<String, String> header = new HashMap<>();
         header.put("Authorization", "Bearer " + BuildConfig.SUPA_KEY);
 
         String rng = String.valueOf((int) Math.floor(Math.random()*Integer.MAX_VALUE));
@@ -109,25 +99,20 @@ public class Storage {
 
         MultipartRequest request = new MultipartRequest(Request.Method.POST,
                 apiUrl, header,
-                new Response.Listener<NetworkResponse>() {
-                    @Override
-                    public void onResponse(NetworkResponse response) {
-                        if (response != null) {
-                            String responseData = new String(response.data, StandardCharsets.UTF_8);
-                            Log.d("Storage API", "onResponse: " + responseData);
-                        }
+                response -> {
+                    if (response != null) {
+                        String responseData = new String(response.data, StandardCharsets.UTF_8);
+                        Log.d("Storage API", "onResponse: " + responseData);
                     }
-                }, new Response.ErrorListener() {
-            @Override
-            public void onErrorResponse(VolleyError error) {
-                Log.e("Storage API Error", "Response Error: " + error.toString());
-                Log.e("Storage API Error", "Response Error: " + error.getMessage());
+                },
+                error -> {
+                    Log.e("Storage API Error", "Response Error: " + error.toString());
+                    Log.e("Storage API Error", "Response Error: " + error.getMessage());
 
-                if (error.getClass() == NoConnectionError.class) {
-                    Toast.makeText(context.getApplicationContext(), "Please connect to internet", Toast.LENGTH_SHORT).show();
-                }
-            }
-        });
+                    if (error.getClass() == NoConnectionError.class) {
+                        Toast.makeText(context.getApplicationContext(), "Please connect to internet", Toast.LENGTH_SHORT).show();
+                    }
+                });
 
         request.addPart(new MultipartRequest.FilePart("", "image/jpg", null, inputData));
 
@@ -138,7 +123,7 @@ public class Storage {
     }
 
     public static int getBitmapOriention(Context context, Uri uri){
-        ExifInterface exif = null;
+        ExifInterface exif;
         int orientation = 0;
         try {
             InputStream input = context.getContentResolver().openInputStream(uri);

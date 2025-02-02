@@ -8,13 +8,18 @@ import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
 import android.graphics.Bitmap;
+import android.net.Uri;
 import android.os.Bundle;
+import android.os.Handler;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
+import android.widget.ImageButton;
+import android.widget.ImageView;
+import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -23,12 +28,32 @@ import androidx.activity.result.ActivityResult;
 import androidx.activity.result.ActivityResultCallback;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.annotation.NonNull;
+import androidx.cardview.widget.CardView;
 import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.DefaultItemAnimator;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
+import com.android.volley.AuthFailureError;
+import com.android.volley.NoConnectionError;
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.JsonObjectRequest;
+import com.android.volley.toolbox.Volley;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.squareup.picasso.Callback;
+import com.squareup.picasso.Picasso;
 
+import org.json.JSONObject;
+
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class PlantFrag extends Fragment {
     private static final int MAX_SIZE = 11;
@@ -44,6 +69,11 @@ public class PlantFrag extends Fragment {
     private FloatingActionButton addPlantBtn;
     private FloatingActionButton addPersonBtn;
     private TextView shade;
+    private CardView addPersonContainer;
+    private ProgressBar loadingIcon;
+
+    private CaretakersAdapter caretakersAdapter;
+    private final List<User> caretakersModel = new ArrayList<>();
 
     private PlantHelper plantHelper;
 
@@ -63,6 +93,13 @@ public class PlantFrag extends Fragment {
         super.onCreate(savedInstanceState);
         Context context = getContext();
         plantHelper = new PlantHelper(context);
+
+        fromBottomFabAnim = AnimationUtils.loadAnimation(getContext(), R.anim.from_bottom_fab);
+        toBottomFabAnim = AnimationUtils.loadAnimation(getContext(), R.anim.to_bottom_fab);
+        rotateClockWiseFabAnim = AnimationUtils.loadAnimation(getContext(), R.anim.rotate_clock_wise);
+        rotateAntiClockWiseFabAnim = AnimationUtils.loadAnimation(getContext(), R.anim.rotate_anti_clock_wise);
+        fadeOutBg = AnimationUtils.loadAnimation(getContext(), R.anim.fadeout_bg);
+        fadeInBg = AnimationUtils.loadAnimation(getContext(), R.anim.fadein_bg);
 
         Bitmap pot = getBitmapFromVectorDrawable(getActivity(), R.drawable.pot);
         flower = getBitmapFromVectorDrawable(getActivity(), R.drawable.plant_flower);
@@ -86,12 +123,14 @@ public class PlantFrag extends Fragment {
         // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_plant, container, false);
 
-        fromBottomFabAnim = AnimationUtils.loadAnimation(getContext(), R.anim.from_bottom_fab);
-        toBottomFabAnim = AnimationUtils.loadAnimation(getContext(), R.anim.to_bottom_fab);
-        rotateClockWiseFabAnim = AnimationUtils.loadAnimation(getContext(), R.anim.rotate_clock_wise);
-        rotateAntiClockWiseFabAnim = AnimationUtils.loadAnimation(getContext(), R.anim.rotate_anti_clock_wise);
-        fadeOutBg = AnimationUtils.loadAnimation(getContext(), R.anim.fadeout_bg);
-        fadeInBg = AnimationUtils.loadAnimation(getContext(), R.anim.fadein_bg);
+        caretakersAdapter = new CaretakersAdapter(caretakersModel);
+
+        RecyclerView caretakersList = view.findViewById(R.id.caretakerList);
+        caretakersList.setLayoutManager(new LinearLayoutManager(getActivity()));
+        caretakersList.setItemAnimator(new DefaultItemAnimator());
+        caretakersList.setAdapter(caretakersAdapter);
+
+        loadingIcon = view.findViewById(R.id.loadingIcon);
 
         openMenu = view.findViewById(R.id.openMenu);
         openMenu.setOnClickListener(
@@ -104,22 +143,42 @@ public class PlantFrag extends Fragment {
                 }
         );
 
+        addPersonContainer = view.findViewById(R.id.addPersonContainer);
+
         addPlantBtn = view.findViewById(R.id.addPlant);
         addPlantBtn.setOnClickListener(
                 view1 -> {
+                    if (view1.getVisibility() == View.GONE) {
+                        return;
+                    }
                     if (plantHelper.getAll().getCount() >= MAX_SIZE) {
                         Toast.makeText(getActivity(), "Greenhouse full", Toast.LENGTH_SHORT).show();
                         return;
                     }
                     Intent intent = new Intent(getActivity(), AddPlantActivity.class);
                     addPlantRes.launch(intent);
-                    Toast.makeText(getActivity(), "add plant", Toast.LENGTH_SHORT).show();
                 }
         );
 
         addPersonBtn = view.findViewById(R.id.addPerson);
         addPersonBtn.setOnClickListener(
-                view2 -> Toast.makeText(getActivity(), "add person", Toast.LENGTH_SHORT).show()
+                view1 -> {
+                    if (view1.getVisibility() == View.GONE) {
+                        return;
+                    }
+                    addPersonContainer.setVisibility(View.VISIBLE);
+                    addPersonContainer.startAnimation(
+                            AnimationUtils.loadAnimation(getContext(), R.anim.fadein_bg)
+                    );
+
+
+                    addPersonBtn.startAnimation(toBottomFabAnim);
+                    addPlantBtn.startAnimation(toBottomFabAnim);
+
+                    addPlantBtn.setVisibility(View.GONE);
+                    addPersonBtn.setVisibility(View.GONE);
+                    openMenu.setImageResource(R.drawable.icon_done);
+                }
         );
 
         shade = view.findViewById(R.id.shade);
@@ -130,6 +189,187 @@ public class PlantFrag extends Fragment {
         canvas = new CanvasView(getActivity(), R.drawable.greenhouse);
         canvasHolder.addView(canvas);
         return view;
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        loadPlants();
+    }
+
+    private class CaretakersAdapter extends RecyclerView.Adapter<CaretakersAdapter.MembersHolder>{
+        List<User> users;
+        public CaretakersAdapter(List<User> users) {
+            this.users = users;
+        }
+
+        @NonNull
+        @Override
+        public CaretakersAdapter.MembersHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+            View view = getLayoutInflater().inflate(R.layout.row_add_del_user, parent, false);
+            return new CaretakersAdapter.MembersHolder(view);
+        }
+
+        @Override
+        public void onBindViewHolder(@NonNull CaretakersAdapter.MembersHolder holder, int position) {
+            holder.name.setText(users.get(position).username);
+            Picasso.get()
+                    .load(Uri.parse(users.get(position).pfp))
+                    .placeholder(R.mipmap.default_pfp_foreground)
+                    .into(holder.pfpIcon, new Callback() {
+                        @Override
+                        public void onSuccess() {
+                            holder.pfpIcon.setImageTintList(null);
+                        }
+
+                        @Override
+                        public void onError(Exception e) {}
+                    });
+
+
+//            String userKey = "";
+//            String uid = users.get(holder.getAdapterPosition()).uid;
+//            for (Map.Entry<String, String> entry : members.entrySet()) {
+//                if (uid.equals(entry.getValue())) {
+//                    userKey = entry.getKey();
+//                    break;
+//                }
+//            }
+
+            holder.removeMember.setOnClickListener(view -> {
+                Toast.makeText(getActivity(), "Click", Toast.LENGTH_SHORT).show();
+            });
+        }
+
+        @Override
+        public int getItemCount() {
+            return users.size();
+        }
+
+        class MembersHolder extends RecyclerView.ViewHolder {
+            private final TextView name;
+            private final ImageView pfpIcon;
+            private final ImageButton removeMember;
+            public MembersHolder(View view) {
+                super(view);
+                name = view.findViewById(R.id.username);
+                pfpIcon = view.findViewById(R.id.pfpIcon);
+                removeMember = view.findViewById(R.id.removeMember);
+            }
+        }
+    }
+
+    private final ActivityResultLauncher<Intent> addPlantRes = registerForActivityResult(
+            new ActivityResultContracts.StartActivityForResult(),
+            new ActivityResultCallback<>() {
+        @Override
+        public void onActivityResult(ActivityResult result) {
+            if (result.getResultCode() == Activity.RESULT_OK || result.getResultCode() == 1
+                    && result.getData() != null) {
+                loadingIcon.setVisibility(View.VISIBLE);
+
+                String plantName = result.getData().getStringExtra("name");
+                String accessToken = result.getData().getStringExtra("accessToken");
+                String species = result.getData().getStringExtra("species");
+                String icon = result.getData().getStringExtra("icon");
+                Log.d("Result access token", accessToken);
+
+                int position;
+                do {
+                    position = (int) (Math.random() * MAX_SIZE);
+                } while (plantHelper.getFilledPos(position).getCount() > 0);
+
+                getDetail(accessToken, plantName, icon, species, position);
+            }
+        }
+    });
+
+    public void getDetail(String accessToken, String plantName, String icon, String species, int position) {
+
+        String plantApi = "https://plant.id/api/v3/kb/plants/" + accessToken +
+                "?details=common_names,url,description,gbif_id,inaturalist_id,image,synonyms,watering,propagation_methods,best_light_condition,best_soil_type,best_watering&language=en";
+
+        RequestQueue queue = Volley.newRequestQueue(getActivity());
+
+        JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(plantApi, new Response.Listener<JSONObject>() {
+            @Override
+            public void onResponse(JSONObject response) {
+                loadingIcon.setVisibility(View.GONE);
+
+                plantHelper.insert(position, response.toString(), icon, plantName, species);
+                loadPlants();
+            }
+        }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                Log.d("Plant API Error", "Response Error: " + error.toString());
+                loadingIcon.setVisibility(View.GONE);
+
+                if (error.getClass() == NoConnectionError.class) {
+                    Toast.makeText(getActivity(), "Please connect to internet", Toast.LENGTH_SHORT).show();
+                } else if (error.networkResponse != null && error.networkResponse.statusCode == 429) {
+                    Toast.makeText(getActivity(), "Out of credits", Toast.LENGTH_SHORT).show();
+                }
+
+                if (error.networkResponse != null) {
+                    String bodyStr = new String(error.networkResponse.data, StandardCharsets.UTF_8);
+                    Log.d("Plant API Error", bodyStr);
+                }
+
+//                Log.d("Plant API Error", "Response Error: " + error.networkResponse.statusCode);
+            }
+        }) {
+            @Override
+            public Map<String, String> getHeaders() throws AuthFailureError {
+                Map<String, String> params = new HashMap<>();
+                params.put("Content-Type", "application/json");
+                params.put("Api-Key", BuildConfig.PLANT_KEY);
+                return params;
+            }
+        };
+
+        queue.add(jsonObjectRequest);
+    }
+
+    private void openOptions() {
+        addPlantBtn.setVisibility(View.VISIBLE);
+        addPersonBtn.setVisibility(View.VISIBLE);
+        shade.setVisibility(View.VISIBLE);
+        openMenu.setContentDescription("Close options");
+
+        shade.startAnimation(fadeInBg);
+        openMenu.startAnimation(rotateClockWiseFabAnim);
+        addPersonBtn.startAnimation(fromBottomFabAnim);
+        addPlantBtn.startAnimation(fromBottomFabAnim);
+
+        shade.setClickable(true);
+
+        openMenu.setImageResource(R.drawable.cancel);
+    }
+
+    public void closeOptions() {
+        Log.d("Visibility", addPersonContainer.getVisibility()+"");
+        addPersonContainer.setVisibility(View.GONE);
+        addPersonContainer.startAnimation(fadeOutBg);
+        new Handler().postDelayed(() -> addPersonContainer.clearAnimation(), 300);
+
+        addPlantBtn.setVisibility(View.GONE);
+        addPlantBtn.startAnimation(toBottomFabAnim);
+        new Handler().postDelayed(() -> addPlantBtn.clearAnimation(), 300);
+
+        addPersonBtn.setVisibility(View.GONE);
+        addPersonBtn.startAnimation(toBottomFabAnim);
+        new Handler().postDelayed(() -> addPersonBtn.clearAnimation(), 300);
+
+        shade.setVisibility(View.GONE);
+        openMenu.setContentDescription("Open options");
+
+        shade.startAnimation(fadeOutBg);
+        openMenu.startAnimation(rotateAntiClockWiseFabAnim);
+
+        shade.setClickable(false);
+
+        openMenu.setImageResource(R.drawable.icon_add);
     }
 
     private final float[][] positions = {
@@ -146,22 +386,20 @@ public class PlantFrag extends Fragment {
             {3, 656, -1},
     };
 
-    public float[] uprightCoords(float[] pos) {
+    private float[] uprightCoords(float[] pos) {
         return new float[]{pos[0]+5, pos[1]-35, pos[2]};
     }
-    public float[] flowerCoords(float[] pos) {
+    private float[] flowerCoords(float[] pos) {
         return new float[]{pos[0]+21, pos[1]-4, (float) (pos[2]*0.7)};
     }
-    public float[] cactusCoords(float[] pos) {
+    private float[] cactusCoords(float[] pos) {
         return new float[]{pos[0], pos[1], pos[2]};
     }
-    public float[] vineCoords(float[] pos) {
+    private float[] vineCoords(float[] pos) {
         return new float[]{pos[0]-7, pos[1]+10, pos[2]};
     }
 
-    @Override
-    public void onResume() {
-        super.onResume();
+    private void loadPlants() {
         Context context = getContext();
         if (context == null) {
             return;
@@ -175,7 +413,7 @@ public class PlantFrag extends Fragment {
             allPlants.moveToPosition(i);
             Log.d("Plants", plantHelper.getName(allPlants));
             Log.d("Plants", ""+plantHelper.getPosition(allPlants));
-            Log.d("Plants", plantHelper.getAccessToken(allPlants));
+            Log.d("Plants", plantHelper.getDetail(allPlants));
             int position = plantHelper.getPosition(allPlants);
             Bitmap plant = null;
             String icon = plantHelper.getIcon(allPlants);
@@ -221,65 +459,5 @@ public class PlantFrag extends Fragment {
         }
 
         canvas.invalidate();
-    }
-
-    private final ActivityResultLauncher<Intent> addPlantRes = registerForActivityResult(
-            new ActivityResultContracts.StartActivityForResult(),
-            new ActivityResultCallback<>() {
-        @Override
-        public void onActivityResult(ActivityResult result) {
-            if (result.getResultCode() == Activity.RESULT_OK || result.getResultCode() == 1
-                    && result.getData() != null) {
-                String plantName = result.getData().getStringExtra("name");
-                String accessToken = result.getData().getStringExtra("accessToken");
-                String species = result.getData().getStringExtra("species");
-                String icon = result.getData().getStringExtra("icon");
-//                Toast.makeText(getActivity().getApplicationContext(), imageUri.toString(), Toast.LENGTH_SHORT).show();
-
-                int position;
-                do {
-                    position = (int) (Math.random() * MAX_SIZE);
-                } while (plantHelper.getFilledPos(position).getCount() > 0);
-
-                Log.d("result name", plantName);
-                Log.d("result accessToken", accessToken);
-                Log.d("result species", species);
-                Log.d("result icon", icon);
-                Log.d("result position", ""+position);
-                plantHelper.insert(position, accessToken, icon, plantName, species);
-            }
-        }
-    });
-
-    public void openOptions() {
-        addPlantBtn.setVisibility(View.VISIBLE);
-        addPersonBtn.setVisibility(View.VISIBLE);
-        shade.setVisibility(View.VISIBLE);
-        openMenu.setContentDescription("Close options");
-
-        shade.startAnimation(fadeInBg);
-        openMenu.startAnimation(rotateClockWiseFabAnim);
-        addPersonBtn.startAnimation(fromBottomFabAnim);
-        addPlantBtn.startAnimation(fromBottomFabAnim);
-
-        shade.setClickable(true);
-
-        openMenu.setImageResource(R.drawable.cancel);
-    }
-
-    public void closeOptions() {
-        addPlantBtn.setVisibility(View.GONE);
-        addPersonBtn.setVisibility(View.GONE);
-        shade.setVisibility(View.GONE);
-        openMenu.setContentDescription("Open options");
-
-        shade.startAnimation(fadeOutBg);
-        openMenu.startAnimation(rotateAntiClockWiseFabAnim);
-        addPersonBtn.startAnimation(toBottomFabAnim);
-        addPlantBtn.startAnimation(toBottomFabAnim);
-
-        shade.setClickable(false);
-
-        openMenu.setImageResource(R.drawable.icon_add);
     }
 }

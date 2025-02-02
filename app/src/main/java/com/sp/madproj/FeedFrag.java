@@ -403,7 +403,7 @@ public class FeedFrag extends Fragment {
 
         addServerContainer.setClickable(true);
 
-        addServer.setImageResource(R.drawable.cancel);
+        addServer.setImageResource(R.drawable.icon_done);
     }
 
     public void closeOptions() {

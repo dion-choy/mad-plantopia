@@ -7,34 +7,19 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
 
-import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.splashscreen.SplashScreen;
 
-import com.android.volley.AuthFailureError;
 import com.android.volley.NoConnectionError;
-import com.android.volley.Request;
-import com.android.volley.RequestQueue;
-import com.android.volley.Response;
-import com.android.volley.VolleyError;
-import com.android.volley.toolbox.StringRequest;
-import com.android.volley.toolbox.Volley;
-import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.Task;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
 import com.google.firebase.FirebaseNetworkException;
-import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.auth.UserProfileChangeRequest;
 
 import org.json.JSONException;
 import org.json.JSONObject;
-
-import java.nio.charset.StandardCharsets;
-import java.util.HashMap;
-import java.util.Map;
 
 public class SignUpActivity extends AppCompatActivity {
 
@@ -68,23 +53,15 @@ public class SignUpActivity extends AppCompatActivity {
         signUp = findViewById(R.id.signUp);
         signUp.setOnClickListener(signUpUser);
 
-        findViewById(R.id.resendEmail).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                FirebaseUser user = auth.getCurrentUser();
+        findViewById(R.id.resendEmail).setOnClickListener(view -> {
+            FirebaseUser user = auth.getCurrentUser();
 
-                if (user != null) {
-                    sendVerificationEmail(user);
-                }
+            if (user != null) {
+                sendVerificationEmail(user);
             }
         });
 
-        findViewById(R.id.backBtn).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                finish();
-            }
-        });
+        findViewById(R.id.backBtn).setOnClickListener(view -> finish());
     }
 
     View.OnClickListener signUpUser = new View.OnClickListener() {
@@ -140,50 +117,44 @@ public class SignUpActivity extends AppCompatActivity {
         }
 
         auth.createUserWithEmailAndPassword(email.getText().toString(), password.getText().toString())
-                .addOnCompleteListener(SignUpActivity.this, new OnCompleteListener<AuthResult>() {
-                    @Override
-                    public void onComplete(@NonNull Task<AuthResult> task) {
-                        if (task.isSuccessful()) {
-                            addUsername(username.getText().toString(), email.getText().toString());
-                            // Sign in success, update UI with the signed-in user's information
-                            Log.d("SIGN UP", "createUserWithEmail:success");
-                            FirebaseUser user = auth.getCurrentUser();
+                .addOnCompleteListener(SignUpActivity.this, task -> {
+                    if (task.isSuccessful()) {
+                        addUsername(username.getText().toString(), email.getText().toString());
+                        // Sign in success, update UI with the signed-in user's information
+                        Log.d("SIGN UP", "createUserWithEmail:success");
+                        FirebaseUser user = auth.getCurrentUser();
 
-                            if (user != null) {
-                                UserProfileChangeRequest profileUpdates = new UserProfileChangeRequest.Builder()
-                                        .setDisplayName(username.getText().toString())
-                                        .setPhotoUri(Uri.parse(Storage.pfpStorage + "default.png"))
-                                        .build();
+                        if (user != null) {
+                            UserProfileChangeRequest profileUpdates = new UserProfileChangeRequest.Builder()
+                                    .setDisplayName(username.getText().toString())
+                                    .setPhotoUri(Uri.parse(Storage.pfpStorage + "default.png"))
+                                    .build();
 
-                                user.updateProfile(profileUpdates)
-                                        .addOnCompleteListener(new OnCompleteListener<Void>() {
-                                            @Override
-                                            public void onComplete(@NonNull Task<Void> task) {
-                                                if (task.isSuccessful()) {
-                                                    Log.d("USER PROFILE", "User profile updated.");
-                                                }
-                                            }
-                                        });
+                            user.updateProfile(profileUpdates)
+                                    .addOnCompleteListener(task1 -> {
+                                        if (task1.isSuccessful()) {
+                                            Log.d("USER PROFILE", "User profile updated.");
+                                        }
+                                    });
 
-                                findViewById(R.id.resendEmail).setVisibility(View.VISIBLE);
-                                sendVerificationEmail(user);
-                            }
+                            findViewById(R.id.resendEmail).setVisibility(View.VISIBLE);
+                            sendVerificationEmail(user);
+                        }
+                    } else {
+                        // If sign in fails, display a message to the user.
+                        Log.w("SIGN UP", "createUserWithEmail:failure", task.getException());
+                        if (task.getException().getClass().equals(FirebaseNetworkException.class)) {
+                            Toast.makeText(getApplicationContext(), "Please connect to internet",
+                                    Toast.LENGTH_SHORT).show();
+                        } else if (task.getException().getMessage()
+                                .equals("The email address is badly formatted.")) {
+                            emailContainer.setError("Please enter a proper email");
+                        } else if(task.getException().getMessage()
+                                .equals("The email address is already in use by another account.")) {
+                            emailContainer.setError("Email is in use already");
                         } else {
-                            // If sign in fails, display a message to the user.
-                            Log.w("SIGN UP", "createUserWithEmail:failure", task.getException());
-                            if (task.getException().getClass().equals(FirebaseNetworkException.class)) {
-                                Toast.makeText(getApplicationContext(), "Please connect to internet",
-                                        Toast.LENGTH_SHORT).show();
-                            } else if (task.getException().getMessage()
-                                    .equals("The email address is badly formatted.")) {
-                                emailContainer.setError("Please enter a proper email");
-                            } else if(task.getException().getMessage()
-                                    .equals("The email address is already in use by another account.")) {
-                                emailContainer.setError("Email is in use already");
-                            } else {
-                                Toast.makeText(getApplicationContext(), "Authentication failed.",
-                                        Toast.LENGTH_SHORT).show();
-                            }
+                            Toast.makeText(getApplicationContext(), "Authentication failed.",
+                                    Toast.LENGTH_SHORT).show();
                         }
                     }
                 });
@@ -193,19 +164,11 @@ public class SignUpActivity extends AppCompatActivity {
         Database.queryAstra(this,
                 "INSERT INTO plantopia.user_info (username, email, pfp, uid) VALUES('" + username +
                         "', '" + email + "', '" + Storage.pfpStorage + "default.png', '" + FirebaseAuth.getInstance().getCurrentUser().getUid() + "');",
-                new Response.Listener<String>() {
-                    @Override
-                    public void onResponse(String response) {
-                        Log.d("USERS", response);
-                    }
-                },
-                new Response.ErrorListener() {
-                    @Override
-                    public void onErrorResponse(VolleyError error) {
-                        Log.e("USERS ERROR", error.toString());
-                        if (error.getClass() == NoConnectionError.class) {
-                            Toast.makeText(getApplicationContext(), "Please connect to internet", Toast.LENGTH_SHORT).show();
-                        }
+                response -> Log.d("USERS", response),
+                error -> {
+                    Log.e("USERS ERROR", error.toString());
+                    if (error.getClass() == NoConnectionError.class) {
+                        Toast.makeText(getApplicationContext(), "Please connect to internet", Toast.LENGTH_SHORT).show();
                     }
                 }
         );
@@ -214,33 +177,27 @@ public class SignUpActivity extends AppCompatActivity {
     private void checkUsernames(String username) {
         Database.queryAstra(this,
                 "SELECT * FROM plantopia.user_info WHERE username = '" + username + "';",
-                new Response.Listener<String>() {
-                    @Override
-                    public void onResponse(String response) {
-                        Log.d("USERS", response);
-                        try {
-                            JSONObject responseObj = new JSONObject(response);
-                            if (responseObj.getInt("count") > 0) {
-                                usernameContainer.setError("Username in use already");
-                                continuteValidation(true);
-                            } else {
-                                if (usernameContainer.isErrorEnabled() && usernameContainer.getError().equals("Username in use already")) {
-                                    usernameContainer.setErrorEnabled(false);
-                                }
-                                continuteValidation(false);
+                response -> {
+                    Log.d("USERS", response);
+                    try {
+                        JSONObject responseObj = new JSONObject(response);
+                        if (responseObj.getInt("count") > 0) {
+                            usernameContainer.setError("Username in use already");
+                            continuteValidation(true);
+                        } else {
+                            if (usernameContainer.isErrorEnabled() && usernameContainer.getError().equals("Username in use already")) {
+                                usernameContainer.setErrorEnabled(false);
                             }
-                        } catch (JSONException e) {
-                            throw new RuntimeException(e);
+                            continuteValidation(false);
                         }
+                    } catch (JSONException e) {
+                        throw new RuntimeException(e);
                     }
                 },
-                new Response.ErrorListener() {
-                    @Override
-                    public void onErrorResponse(VolleyError error) {
-                        Log.e("USERS ERROR", error.toString());
-                        if (error.getClass() == NoConnectionError.class) {
-                            Toast.makeText(getApplicationContext(), "Please connect to internet", Toast.LENGTH_SHORT).show();
-                        }
+                error -> {
+                    Log.e("USERS ERROR", error.toString());
+                    if (error.getClass() == NoConnectionError.class) {
+                        Toast.makeText(getApplicationContext(), "Please connect to internet", Toast.LENGTH_SHORT).show();
                     }
                 }
         );
@@ -248,18 +205,15 @@ public class SignUpActivity extends AppCompatActivity {
 
     private void sendVerificationEmail(FirebaseUser user) {
         user.sendEmailVerification()
-                .addOnCompleteListener(SignUpActivity.this, new OnCompleteListener<Void>() {
-                    @Override
-                    public void onComplete(@NonNull Task<Void> task) {
-                        if (task.isSuccessful()) {
-                            Toast.makeText(getApplicationContext(), "Verification email sent!",
-                                    Toast.LENGTH_SHORT).show();
-                            finish();
-                        } else {
-                            Log.e("SEND EMAIL", task.getException().getMessage());
-                            Toast.makeText(getApplicationContext(), "Error sending verification email",
-                                    Toast.LENGTH_SHORT).show();
-                        }
+                .addOnCompleteListener(SignUpActivity.this, task -> {
+                    if (task.isSuccessful()) {
+                        Toast.makeText(getApplicationContext(), "Verification email sent!",
+                                Toast.LENGTH_SHORT).show();
+                        finish();
+                    } else {
+                        Log.e("SEND EMAIL", task.getException().getMessage());
+                        Toast.makeText(getApplicationContext(), "Error sending verification email",
+                                Toast.LENGTH_SHORT).show();
                     }
                 });
     }

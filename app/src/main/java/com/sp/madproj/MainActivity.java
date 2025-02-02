@@ -24,17 +24,15 @@ import com.google.firebase.database.DatabaseReference;
 import com.squareup.picasso.OkHttp3Downloader;
 import com.squareup.picasso.Picasso;
 
-import java.io.IOException;
 import java.util.Objects;
 
-import okhttp3.Interceptor;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
 
 public class MainActivity extends AppCompatActivity {
     private BottomNavigationView navBar;
-    private FragmentManager fragManager = getSupportFragmentManager();
+    private final FragmentManager fragManager = getSupportFragmentManager();
 
     private HomeFrag homeFrag;
     private PlantFrag plantFrag;
@@ -48,7 +46,7 @@ public class MainActivity extends AppCompatActivity {
 
     private SharedPreferences sharedPref;
 
-    private FirebaseAuth auth = FirebaseAuth.getInstance();
+    private final FirebaseAuth auth = FirebaseAuth.getInstance();
     private FirebaseUser currentUser;
 
     private double latitude = 0.0d;
@@ -105,17 +103,9 @@ public class MainActivity extends AppCompatActivity {
         // SPLASH SCREEN CODE
         ImageView splashScreenImg = findViewById(R.id.splashScreen);
         if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.P) {
-            new Handler().postDelayed(new Runnable() {
-                @Override
-                public void run() {
-                    ((AnimatedVectorDrawable) splashScreenImg.getDrawable()).start();
-                    new Handler().postDelayed(new Runnable() {
-                        @Override
-                        public void run() {
-                            splashScreenImg.setVisibility(View.GONE);
-                        }
-                    }, 1800);
-                }
+            new Handler().postDelayed(() -> {
+                ((AnimatedVectorDrawable) splashScreenImg.getDrawable()).start();
+                new Handler().postDelayed(() -> splashScreenImg.setVisibility(View.GONE), 1800);
             }, 1000);
         } else {
             splashScreenImg.setVisibility(View.GONE);
@@ -192,30 +182,27 @@ public class MainActivity extends AppCompatActivity {
         DatabaseReference.goOffline();
     }
 
-    private OkHttpClient okHttpClient = new OkHttpClient.Builder()
-            .addInterceptor(new Interceptor() {
-                @Override
-                public Response intercept(Chain chain) throws IOException {
-                    Request request = chain.request();
-                    Response response = chain.proceed(request);
-                    int tryCount = 0;
-                    while (!response.isSuccessful() && tryCount < 5) {
-                        tryCount++;
-                        try {
-                            Thread.sleep(2000);
-                        } catch (InterruptedException e) {
-                            e.printStackTrace();
-                        }
-                        response = chain.proceed(request);
-                        Log.i("Picasso Download Image", "Attempt: " + tryCount + ", " + 2*tryCount + "seconds");
+    private final OkHttpClient okHttpClient = new OkHttpClient.Builder()
+            .addInterceptor(chain -> {
+                Request request = chain.request();
+                Response response = chain.proceed(request);
+                int tryCount = 0;
+                while (!response.isSuccessful() && tryCount < 5) {
+                    tryCount++;
+                    try {
+                        Thread.sleep(2000);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
                     }
-                    if (response.isSuccessful()) {
-                        Log.i("Picasso Download Image", "Success: " + request.url());
-                    } else {
-                        Log.e("Picasso Download Image", "Failed: " + request.url());
-                    }
-                    return response;
+                    response = chain.proceed(request);
+                    Log.i("Picasso Download Image", "Attempt: " + tryCount + ", " + 2*tryCount + "seconds");
                 }
+                if (response.isSuccessful()) {
+                    Log.i("Picasso Download Image", "Success: " + request.url());
+                } else {
+                    Log.e("Picasso Download Image", "Failed: " + request.url());
+                }
+                return response;
             })
             .build();
 
@@ -231,8 +218,8 @@ public class MainActivity extends AppCompatActivity {
         } else {
             Toast.makeText(getApplicationContext(), "Please turn on location services", Toast.LENGTH_LONG).show();
 
-            latitude = (double) sharedPref.getFloat("lat", 0);
-            longitude = (double) sharedPref.getFloat("long", 0);
+            latitude = sharedPref.getFloat("lat", 0);
+            longitude = sharedPref.getFloat("long", 0);
         }
     }
 

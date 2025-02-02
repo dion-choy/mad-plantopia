@@ -8,14 +8,13 @@ import androidx.fragment.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
 
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 
 public class LandingPageFrag extends Fragment {
 
-    private FirebaseAuth auth = FirebaseAuth.getInstance();
+    private final FirebaseAuth auth = FirebaseAuth.getInstance();
 
     public LandingPageFrag() {
         // Required empty public constructor
@@ -31,23 +30,17 @@ public class LandingPageFrag extends Fragment {
                              Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_landing_page, container, false);
 
-        ((Button) view.findViewById(R.id.logIn)).setOnClickListener(
-                new View.OnClickListener() {
-                    @Override
-                    public void onClick(View view) {
-                        Intent intent = new Intent(getActivity(), LogInActivity.class);
-                        startActivity(intent);
-                    }
+        view.findViewById(R.id.logIn).setOnClickListener(
+                view1 -> {
+                    Intent intent = new Intent(getActivity(), LogInActivity.class);
+                    startActivity(intent);
                 }
         );
 
-        ((Button) view.findViewById(R.id.signUp)).setOnClickListener(
-                new View.OnClickListener() {
-                    @Override
-                    public void onClick(View view) {
-                        Intent intent = new Intent(getActivity(), SignUpActivity.class);
-                        startActivity(intent);
-                    }
+        view.findViewById(R.id.signUp).setOnClickListener(
+                view1 -> {
+                    Intent intent = new Intent(getActivity(), SignUpActivity.class);
+                    startActivity(intent);
                 }
         );
 

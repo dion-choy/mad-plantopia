@@ -133,12 +133,20 @@ public class IdentifyFrag extends Fragment {
 
         openCamBtn = view.findViewById(R.id.openCam);
         openCamBtn.setOnClickListener(
-                view1 -> getImage.launch(new Intent(getActivity(), CamActivity.class))
+                view1 -> {
+                    if (view1.getVisibility() == View.GONE) {
+                        return;
+                    }
+                    getImage.launch(new Intent(getActivity(), CamActivity.class));
+                }
         );
 
         openGalleryBtn = view.findViewById(R.id.openMenu);
         openGalleryBtn.setOnClickListener(
                 view1 -> {
+                    if (view1.getVisibility() == View.GONE) {
+                        return;
+                    }
                     Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
                     intent.setType("image/*");
                     getImage.launch(intent);

@@ -44,7 +44,7 @@ public class GPSTracker extends Service implements LocationListener, ActivityCom
         if (permissionState1 == PackageManager.PERMISSION_GRANTED &&
             permissionState2 == PackageManager.PERMISSION_GRANTED) {
             locationManager = (LocationManager) mContext.getSystemService(Context.LOCATION_SERVICE);
-            location = locationManager.getLastKnownLocation(locationManager.PASSIVE_PROVIDER);
+            location = locationManager.getLastKnownLocation(LocationManager.PASSIVE_PROVIDER);
 
             if (location != null) {
                 latitude = location.getLatitude();
@@ -97,15 +97,15 @@ public class GPSTracker extends Service implements LocationListener, ActivityCom
     }
 
     @Override
-    public void onLocationChanged(Location location) {
+    public void onLocationChanged(@NonNull Location location) {
         getLocation();
     }
 
     @Override
-    public void onProviderDisabled(String provider) {}
+    public void onProviderDisabled(@NonNull String provider) {}
 
     @Override
-    public void onProviderEnabled(String provider) {}
+    public void onProviderEnabled(@NonNull String provider) {}
 
     @Override
     public void onStatusChanged(String provider, int status, Bundle extras) {}
