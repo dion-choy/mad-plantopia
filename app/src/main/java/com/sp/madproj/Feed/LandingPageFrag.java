@@ -1,4 +1,4 @@
-package com.sp.madproj;
+package com.sp.madproj.Feed;
 
 import android.content.Intent;
 import android.os.Bundle;
@@ -11,6 +11,7 @@ import android.view.ViewGroup;
 
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.sp.madproj.R;
 
 public class LandingPageFrag extends Fragment {
 

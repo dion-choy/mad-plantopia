@@ -1,4 +1,4 @@
-package com.sp.madproj;
+package com.sp.madproj.Feed;
 
 import android.content.Context;
 import android.content.Intent;
@@ -35,6 +35,11 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.GenericTypeIndicator;
 import com.google.firebase.database.ValueEventListener;
+import com.sp.madproj.Chatroom.Chatroom;
+import com.sp.madproj.Main.MainActivity;
+import com.sp.madproj.R;
+import com.sp.madproj.Utils.Database;
+import com.sp.madproj.Utils.Storage;
 import com.squareup.picasso.Callback;
 import com.squareup.picasso.Picasso;
 

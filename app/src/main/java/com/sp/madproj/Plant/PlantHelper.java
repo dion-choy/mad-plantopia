@@ -1,10 +1,12 @@
-package com.sp.madproj;
+package com.sp.madproj.Plant;
 
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+
+import com.sp.madproj.Utils.Storage;
 
 public class PlantHelper extends SQLiteOpenHelper {
     private static final String DATABASE_NAME = "plant.db";
@@ -34,7 +36,7 @@ public class PlantHelper extends SQLiteOpenHelper {
                 "SELECT * FROM plant_table ORDER BY position;", null));
     }
 
-    public Cursor getIdentificationById(String id) {
+    public Cursor getPlantById(String id) {
         return (getReadableDatabase().rawQuery(
                 "SELECT * FROM plant_table " +
                         "WHERE _id = ?", new String[]{id}));

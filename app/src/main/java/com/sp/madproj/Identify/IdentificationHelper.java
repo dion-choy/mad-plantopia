@@ -1,10 +1,12 @@
-package com.sp.madproj;
+package com.sp.madproj.Identify;
 
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+
+import com.sp.madproj.Utils.Storage;
 
 public class IdentificationHelper extends SQLiteOpenHelper {
     private static final String DATABASE_NAME = "identification.db";

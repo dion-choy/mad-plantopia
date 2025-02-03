@@ -1,4 +1,4 @@
-package com.sp.madproj;
+package com.sp.madproj.Chatroom;
 
 import android.os.Bundle;
 import android.util.Log;
@@ -15,6 +15,8 @@ import androidx.core.splashscreen.SplashScreen;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.viewpager2.widget.ViewPager2;
 
+import com.sp.madproj.R;
+import com.sp.madproj.Utils.Storage;
 import com.squareup.picasso.Picasso;
 
 import java.util.List;

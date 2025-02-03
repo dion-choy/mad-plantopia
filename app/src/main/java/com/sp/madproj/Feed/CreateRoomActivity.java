@@ -1,4 +1,4 @@
-package com.sp.madproj;
+package com.sp.madproj.Feed;
 
 import android.app.Activity;
 import android.content.Intent;
@@ -19,6 +19,10 @@ import com.android.volley.NoConnectionError;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DatabaseReference;
+import com.sp.madproj.Chatroom.Chatroom;
+import com.sp.madproj.R;
+import com.sp.madproj.Utils.Database;
+import com.sp.madproj.Utils.Storage;
 import com.squareup.picasso.Callback;
 import com.squareup.picasso.Picasso;
 
@@ -97,8 +101,7 @@ public class CreateRoomActivity extends AppCompatActivity {
             new ActivityResultCallback<>() {
                 @Override
                 public void onActivityResult(ActivityResult result) {
-                    if (result.getResultCode() == Activity.RESULT_OK || result.getResultCode() == CamActivity.IMAGE_URI
-                            && result.getData() != null) {
+                    if (result.getResultCode() == Activity.RESULT_OK && result.getData() != null) {
                         Uri imageUri = result.getData().getData();
                         Log.d("result", imageUri.toString());
 

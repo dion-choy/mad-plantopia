@@ -1,7 +1,7 @@
-package com.sp.madproj;
+package com.sp.madproj.Plant;
 
-import static com.sp.madproj.CanvasView.getBitmapFromVectorDrawable;
-import static com.sp.madproj.CanvasView.pxFromDp;
+import static com.sp.madproj.Plant.CanvasView.getBitmapFromVectorDrawable;
+import static com.sp.madproj.Plant.CanvasView.pxFromDp;
 
 import android.app.Activity;
 import android.content.Context;
@@ -40,6 +40,9 @@ import com.android.volley.RequestQueue;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.Volley;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.sp.madproj.BuildConfig;
+import com.sp.madproj.Classes.User;
+import com.sp.madproj.R;
 import com.squareup.picasso.Callback;
 import com.squareup.picasso.Picasso;
 
@@ -178,7 +181,7 @@ public class PlantFrag extends Fragment {
         );
 
         shade = view.findViewById(R.id.shade);
-        shade.setOnClickListener(view3 -> closeOptions());
+        shade.setOnClickListener(view1 -> closeOptions());
 
         RelativeLayout canvasHolder = view.findViewById(R.id.canvasHolder);
         canvasHolder.removeAllViews();
@@ -191,6 +194,12 @@ public class PlantFrag extends Fragment {
     public void onResume() {
         super.onResume();
         loadPlants();
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        plantHelper.close();
     }
 
     private class CaretakersAdapter extends RecyclerView.Adapter<CaretakersAdapter.MembersHolder>{
@@ -431,9 +440,7 @@ public class PlantFrag extends Fragment {
             Sprite sprite = new Sprite(context, CanvasView.DP, plant, pos[0], pos[1], pos[2], Math.abs(pos[2]));
 
             Intent intent = new Intent(getActivity(), PlantDetailActivity.class);
-            intent.putExtra("name", plantHelper.getName(allPlants));
-            intent.putExtra("icon", icon);
-            intent.putExtra("species", plantHelper.getSpecies(allPlants));
+            intent.putExtra("id", plantHelper.getID(allPlants));
 
             sprite.setOnClickListener(() -> {
                 Toast.makeText(context, "Clicked", Toast.LENGTH_SHORT).show();

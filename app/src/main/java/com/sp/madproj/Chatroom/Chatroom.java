@@ -1,4 +1,4 @@
-package com.sp.madproj;
+package com.sp.madproj.Chatroom;
 
 public class Chatroom {
     public String name;

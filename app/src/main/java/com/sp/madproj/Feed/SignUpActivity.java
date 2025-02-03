@@ -1,4 +1,4 @@
-package com.sp.madproj;
+package com.sp.madproj.Feed;
 
 import android.net.Uri;
 import android.os.Bundle;
@@ -17,6 +17,9 @@ import com.google.firebase.FirebaseNetworkException;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.auth.UserProfileChangeRequest;
+import com.sp.madproj.R;
+import com.sp.madproj.Utils.Database;
+import com.sp.madproj.Utils.Storage;
 
 import org.json.JSONException;
 import org.json.JSONObject;

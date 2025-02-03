@@ -1,4 +1,4 @@
-package com.sp.madproj;
+package com.sp.madproj.Identify;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
@@ -31,6 +31,7 @@ import androidx.core.content.ContextCompat;
 import androidx.core.splashscreen.SplashScreen;
 
 import com.google.common.util.concurrent.ListenableFuture;
+import com.sp.madproj.R;
 
 import java.util.concurrent.ExecutionException;
 

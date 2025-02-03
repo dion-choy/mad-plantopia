@@ -1,4 +1,4 @@
-package com.sp.madproj;
+package com.sp.madproj.Plant;
 
 import android.content.Intent;
 import android.os.Bundle;
@@ -24,6 +24,8 @@ import com.android.volley.RequestQueue;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.Volley;
 import com.google.android.material.textfield.TextInputEditText;
+import com.sp.madproj.BuildConfig;
+import com.sp.madproj.R;
 
 import org.json.JSONArray;
 import org.json.JSONException;

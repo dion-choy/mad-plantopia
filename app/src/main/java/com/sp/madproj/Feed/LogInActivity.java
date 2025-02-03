@@ -1,4 +1,4 @@
-package com.sp.madproj;
+package com.sp.madproj.Feed;
 
 import android.os.Bundle;
 import android.util.Log;
@@ -13,6 +13,7 @@ import com.google.android.material.textfield.TextInputLayout;
 import com.google.firebase.FirebaseNetworkException;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.sp.madproj.R;
 
 public class LogInActivity extends AppCompatActivity {
 

@@ -1,4 +1,4 @@
-package com.sp.madproj;
+package com.sp.madproj.Chatroom;
 
 import android.app.Activity;
 import android.content.ClipData;
@@ -27,8 +27,6 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import androidx.activity.result.ActivityResult;
-import androidx.activity.result.ActivityResultCallback;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
@@ -41,10 +39,6 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.android.volley.NoConnectionError;
-import com.android.volley.Response;
-import com.android.volley.VolleyError;
-import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.Task;
 import com.google.firebase.Timestamp;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DataSnapshot;
@@ -52,6 +46,10 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.GenericTypeIndicator;
 import com.google.firebase.database.ValueEventListener;
+import com.sp.madproj.Classes.Message;
+import com.sp.madproj.Utils.Database;
+import com.sp.madproj.R;
+import com.sp.madproj.Utils.Storage;
 import com.squareup.picasso.Callback;
 import com.squareup.picasso.Picasso;
 
@@ -142,13 +140,10 @@ public class ChatFrag extends Fragment {
 
         ((TextView) view.findViewById(R.id.groupName)).setText(roomName);
 
-        view.findViewById(R.id.chatTopBar).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Intent intent = new Intent(getActivity(), ChatroomSettingsActivity.class);
-                intent.putExtra("roomKey", roomKey);
-                startActivity(intent);
-            }
+        view.findViewById(R.id.chatTopBar).setOnClickListener(view2 -> {
+            Intent intent = new Intent(getActivity(), ChatroomSettingsActivity.class);
+            intent.putExtra("roomKey", roomKey);
+            startActivity(intent);
         });
 
 
@@ -240,53 +235,47 @@ public class ChatFrag extends Fragment {
         imagePreviews.setAdapter(imagePreviewAdapter);
 
         view.findViewById(R.id.sendImageBtn).setOnClickListener(
-                new View.OnClickListener() {
-                    @Override
-                    public void onClick(View view) {
-                        Intent intent = new Intent(Intent.ACTION_GET_CONTENT)
-                                .putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true)
-                                .setType("image/*");
-                        getImage.launch(intent);
-                    }
+                view3 -> {
+                    Intent intent = new Intent(Intent.ACTION_GET_CONTENT)
+                            .putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true)
+                            .setType("image/*");
+                    getImage.launch(intent);
                 }
         );
 
         getImage = registerForActivityResult(
                 new ActivityResultContracts.StartActivityForResult(),
-                new ActivityResultCallback<ActivityResult>() {
-                    @Override
-                    public void onActivityResult(ActivityResult result) {
-                        if (result.getResultCode() == Activity.RESULT_OK) {
-                            ClipData data = result.getData().getClipData();
-                            if (data == null) {
-                                if (Build.VERSION.SDK_INT < 29 && result.getData().getData() != null) {
-                                    imagePreviewModel.add(result.getData().getData());
-                                } else {
-                                    Toast.makeText(getActivity(), "Error", Toast.LENGTH_SHORT).show();
-                                    return;
-                                }
-                            } else if (data.getItemCount() > 10) {
-                                Toast.makeText(getActivity(), "Too many images (Limit: 10)", Toast.LENGTH_SHORT).show();
-                                return;
+                result -> {
+                    if (result.getResultCode() == Activity.RESULT_OK) {
+                        ClipData data = result.getData().getClipData();
+                        if (data == null) {
+                            if (Build.VERSION.SDK_INT < 29 && result.getData().getData() != null) {
+                                imagePreviewModel.add(result.getData().getData());
                             } else {
-                                for (int i = 0; i < data.getItemCount(); i++) {
-                                    imagePreviewModel.add(data.getItemAt(i).getUri());
-                                    Log.d("IMAGES", "onActivityResult: " + data.getItemAt(i).getUri().toString());
-                                }
+                                Toast.makeText(getActivity(), "Error", Toast.LENGTH_SHORT).show();
+                                return;
                             }
-
-                            sendMsgBtn.startAnimation(enableSend);
-                            sendMsgBtn.setEnabled(true);
-                            imagePreviewAdapter.notifyDataSetChanged();
-
+                        } else if (data.getItemCount() > 10) {
+                            Toast.makeText(getActivity(), "Too many images (Limit: 10)", Toast.LENGTH_SHORT).show();
+                            return;
+                        } else {
+                            for (int i = 0; i < data.getItemCount(); i++) {
+                                imagePreviewModel.add(data.getItemAt(i).getUri());
+                                Log.d("IMAGES", "onActivityResult: " + data.getItemAt(i).getUri().toString());
+                            }
                         }
+
+                        sendMsgBtn.startAnimation(enableSend);
+                        sendMsgBtn.setEnabled(true);
+                        imagePreviewAdapter.notifyDataSetChanged();
+
                     }
                 });
 
         return view;
     }
 
-    private View.OnClickListener sendMessage = new View.OnClickListener() {
+    private final View.OnClickListener sendMessage = new View.OnClickListener() {
         @Override
         public void onClick(View view) {
             String pushKey = messages.push().getKey();
@@ -305,12 +294,9 @@ public class ChatFrag extends Fragment {
                 imagePreviewAdapter.notifyDataSetChanged();
             }
 
-            messages.child(pushKey).setValue(message).addOnCompleteListener(new OnCompleteListener<Void>() {
-                @Override
-                public void onComplete(@NonNull Task<Void> task) {
-                    Log.d("REALTIME DB ADD", "onComplete: Message added successfully!");
-                }
-            });
+            messages.child(pushKey).setValue(message).addOnCompleteListener(
+                    task -> Log.d("REALTIME DB ADD", "onComplete: Message added successfully!")
+            );
 
             inputMsg.setText("");
         }
@@ -453,7 +439,7 @@ public class ChatFrag extends Fragment {
         }
 
         class ImagePreviewHolder extends RecyclerView.ViewHolder {
-            private ImageView image;
+            private final ImageView image;
             public ImagePreviewHolder(View view) {
                 super(view);
                 this.image = view.findViewById(R.id.newImagePreview);
@@ -462,7 +448,7 @@ public class ChatFrag extends Fragment {
     }
 
     private class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ChatHolder> {
-        private List<Message> messages;
+        private final List<Message> messages;
         public ChatAdapter(List<Message> messages) {
             this.messages = messages;
         }
@@ -589,9 +575,9 @@ public class ChatFrag extends Fragment {
 
             holder.itemView.setOnTouchListener(swipeAway);
 
-            holder.itemView.setOnClickListener(view -> {
-                Toast.makeText(getActivity().getApplicationContext(), "message clicked", Toast.LENGTH_SHORT).show();
-            });
+            holder.itemView.setOnClickListener(view ->
+                Toast.makeText(getActivity(), "message clicked", Toast.LENGTH_SHORT).show()
+            );
 
             holder.imageContainer.setOnClickListener(view -> {
                 Intent intent = new Intent(getContext(), ExpandImages.class);
@@ -637,35 +623,29 @@ public class ChatFrag extends Fragment {
     private void getUsers() {
         Database.queryAstra(getActivity(),
                 "SELECT * FROM plantopia.user_info",
-                new Response.Listener<String>() {
-                    @Override
-                    public void onResponse(String response) {
-                        Log.d("GET USERS", response);
+                response -> {
+                    Log.d("GET USERS", response);
 
-                        try {
-                            JSONObject responseObj = new JSONObject(response);
-                            JSONArray data = responseObj.getJSONArray("data");
-                            for (int i = 0; i < data.length(); i++) {
-                                JSONObject row = data.getJSONObject(i);
-                                Map<String, String> usernamePfp = new HashMap<>();
-                                usernamePfp.put("username", row.getString("username"));
-                                usernamePfp.put("pfp", row.getString("pfp"));
-                                users.put(row.getString("uid"), usernamePfp);
-                            }
-
-                            Log.d("GET USERS", users.toString());
-                        } catch (JSONException e) {
-                            throw new RuntimeException(e);
+                    try {
+                        JSONObject responseObj = new JSONObject(response);
+                        JSONArray data = responseObj.getJSONArray("data");
+                        for (int i = 0; i < data.length(); i++) {
+                            JSONObject row = data.getJSONObject(i);
+                            Map<String, String> usernamePfp = new HashMap<>();
+                            usernamePfp.put("username", row.getString("username"));
+                            usernamePfp.put("pfp", row.getString("pfp"));
+                            users.put(row.getString("uid"), usernamePfp);
                         }
+
+                        Log.d("GET USERS", users.toString());
+                    } catch (JSONException e) {
+                        throw new RuntimeException(e);
                     }
                 },
-                new Response.ErrorListener() {
-                    @Override
-                    public void onErrorResponse(VolleyError error) {
-                        Log.e("GET USERS ERROR", error.toString());
-                        if (error.getClass() == NoConnectionError.class) {
-                            Toast.makeText(getActivity(), "Please connect to internet", Toast.LENGTH_SHORT).show();
-                        }
+                error -> {
+                    Log.e("GET USERS ERROR", error.toString());
+                    if (error.getClass() == NoConnectionError.class) {
+                        Toast.makeText(getActivity(), "Please connect to internet", Toast.LENGTH_SHORT).show();
                     }
                 }
         );

@@ -1,9 +1,10 @@
-package com.sp.madproj;
+package com.sp.madproj.Identify;
 
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
+import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;
 
@@ -15,6 +16,7 @@ import androidx.recyclerview.widget.DefaultItemAnimator;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import android.provider.MediaStore;
 import android.util.Base64;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -33,6 +35,10 @@ import com.android.volley.RequestQueue;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.Volley;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.sp.madproj.BuildConfig;
+import com.sp.madproj.Main.MainActivity;
+import com.sp.madproj.R;
+import com.sp.madproj.Utils.Storage;
 import com.squareup.picasso.Picasso;
 
 import org.json.JSONArray;
@@ -78,7 +84,7 @@ public class IdentifyFrag extends Fragment {
         }
 
         public void run() {
-            IdentifyFrag.imageKey = Storage.uploadImgSupa(getActivity(), imageUri, Storage.identifStorage);
+            imageKey = Storage.uploadImgSupa(getActivity(), imageUri, Storage.identifStorage);
         }
     }
 
@@ -285,15 +291,22 @@ public class IdentifyFrag extends Fragment {
     }
 
     public void getPlantIdAPI(Uri imageUri) {
-        byte[] bytes;
+        Bitmap bitmap;
         try {
-            bytes = getBytes(getContext().getContentResolver().openInputStream(imageUri));
+            bitmap = MediaStore.Images.Media.getBitmap(getActivity().getContentResolver(), imageUri);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+        int quality = bitmap.getByteCount()/1024 < 512 ? 100 : bitmap.getByteCount()/(1024*512);
+        ByteArrayOutputStream bitmapStream = new ByteArrayOutputStream();
+        bitmap.compress(Bitmap.CompressFormat.JPEG, quality, bitmapStream);
+        byte[] bytes = bitmapStream.toByteArray();
+        bitmap.recycle();
+
+        String base64Encoded = Base64.encodeToString(bytes, Base64.DEFAULT);
 
         String dataUri = "data:" + getContext().getContentResolver().getType(imageUri) +
-                ";base64," + Base64.encodeToString(bytes, Base64.DEFAULT);
+                ";base64," + base64Encoded;
 
         String plantApi = "https://plant.id/api/v3/identification?details=common_names,gbif_id,inaturalist_id,best_light_condition,best_soil_type,best_watering&language=en";
 
@@ -308,6 +321,7 @@ public class IdentifyFrag extends Fragment {
             throw new RuntimeException(e);
         }
 
+        Log.d("test", body.toString());
         RequestQueue queue = Volley.newRequestQueue(getActivity());
 
         JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(Request.Method.POST, plantApi, body,
@@ -325,9 +339,11 @@ public class IdentifyFrag extends Fragment {
                     startActivity(intent);
 
                     loadingIcon.setVisibility(View.GONE);
-                }, error -> {
+                },
+                error -> {
                     Log.d("Plant API Error", "Response Error: " + error.toString());
                     loadingIcon.setVisibility(View.GONE);
+                    Storage.deleteObjSupa(getActivity(), Storage.identifStorage + imageKey);
 
                     if (error.getClass() == NoConnectionError.class) {
                         Toast.makeText(getActivity(), "Please connect to internet", Toast.LENGTH_SHORT).show();
@@ -338,6 +354,9 @@ public class IdentifyFrag extends Fragment {
                     if (error.networkResponse != null) {
                         String bodyStr = new String(error.networkResponse.data, StandardCharsets.UTF_8);
                         Log.d("Plant API Error", bodyStr);
+                        if (bodyStr.equals("Invalid image data")) {
+                            Toast.makeText(getActivity(), "Error with image", Toast.LENGTH_SHORT).show();
+                        }
                     }
 
         //                Log.d("Plant API Error", "Response Error: " + error.networkResponse.statusCode);

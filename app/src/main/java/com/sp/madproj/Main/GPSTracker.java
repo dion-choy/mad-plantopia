@@ -1,4 +1,4 @@
-package com.sp.madproj;
+package com.sp.madproj.Main;
 
 import android.Manifest;
 import android.app.Activity;
@@ -18,7 +18,7 @@ import androidx.core.app.ActivityCompat;
 public class GPSTracker extends Service implements LocationListener, ActivityCompat.OnRequestPermissionsResultCallback {
     private static final int GPS_PERMISSION_REQUEST_CODE = 1001;
     private Context mContext = null;
-    boolean canGetLocation = false;
+    public boolean canGetLocation = false;
 
     Location location;
     double latitude;

@@ -1,4 +1,4 @@
-package com.sp.madproj;
+package com.sp.madproj.Identify;
 
 import android.database.Cursor;
 import android.graphics.Bitmap;
@@ -23,6 +23,8 @@ import androidx.recyclerview.widget.DefaultItemAnimator;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.sp.madproj.R;
+import com.sp.madproj.Utils.Storage;
 import com.squareup.picasso.Picasso;
 
 import org.json.JSONArray;

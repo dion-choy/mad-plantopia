@@ -1,4 +1,4 @@
-package com.sp.madproj;
+package com.sp.madproj.Classes;
 
 public class User {
     public String username;

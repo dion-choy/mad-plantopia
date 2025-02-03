@@ -1,14 +1,14 @@
-package com.sp.madproj;
+package com.sp.madproj.Utils;
 
 import android.content.Context;
 
-import com.android.volley.AuthFailureError;
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.Response;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
 import com.google.firebase.database.FirebaseDatabase;
+import com.sp.madproj.BuildConfig;
 
 
 import java.nio.charset.StandardCharsets;
@@ -32,7 +32,7 @@ public class Database {
                 onError
         ) {
             @Override
-            public byte[] getBody() throws AuthFailureError {
+            public byte[] getBody() {
                 return query.getBytes(StandardCharsets.UTF_8);
             }
 
@@ -52,14 +52,13 @@ public class Database {
     private static FirebaseDatabase database;
     private static final String databaseUrl = "https://plantopia-backend-ecce9-default-rtdb.asia-southeast1.firebasedatabase.app";
     private Database() {
-        database = FirebaseDatabase.getInstance(databaseUrl);
-
-        database.setPersistenceEnabled(true);
     }
 
     public static FirebaseDatabase get() {
         if (database == null) {
-            return new Database().get();
+            database = FirebaseDatabase.getInstance(databaseUrl);
+            database.setPersistenceEnabled(true);
+            return database;
         }
         return database;
     }

@@ -1,4 +1,4 @@
-package com.sp.madproj;
+package com.sp.madproj.Main;
 
 import android.content.SharedPreferences;
 import android.graphics.drawable.AnimatedVectorDrawable;
@@ -21,6 +21,14 @@ import com.google.android.material.navigation.NavigationBarView;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DatabaseReference;
+import com.sp.madproj.BadgeFrag;
+import com.sp.madproj.Chatroom.ChatFrag;
+import com.sp.madproj.Feed.FeedFrag;
+import com.sp.madproj.Feed.LandingPageFrag;
+import com.sp.madproj.HomeFrag;
+import com.sp.madproj.Identify.IdentifyFrag;
+import com.sp.madproj.Plant.PlantFrag;
+import com.sp.madproj.R;
 import com.squareup.picasso.OkHttp3Downloader;
 import com.squareup.picasso.Picasso;
 

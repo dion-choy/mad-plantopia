@@ -12,7 +12,7 @@
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
 
     <application
-        android:name=".MainApplication"
+        android:name=".Main.MainApplication"
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
@@ -22,37 +22,37 @@
         android:theme="@style/Theme.Splash"
         tools:targetApi="31">
         <activity
-            android:name=".PlantDetailActivity"
+            android:name=".Plant.PlantDetailActivity"
             android:exported="false" />
         <activity
-            android:name=".ChatroomSettingsActivity"
+            android:name=".Chatroom.ChatroomSettingsActivity"
             android:exported="false" />
         <activity
-            android:name=".CreateRoomActivity"
+            android:name=".Feed.CreateRoomActivity"
             android:exported="false" />
         <activity
-            android:name=".ExpandImages"
+            android:name=".Chatroom.ExpandImages"
             android:exported="false" />
         <activity
-            android:name=".FeedSettingsActivity"
+            android:name=".Feed.FeedSettingsActivity"
             android:exported="false" />
         <activity
-            android:name=".LogInActivity"
+            android:name=".Feed.LogInActivity"
             android:exported="false" />
         <activity
-            android:name=".SignUpActivity"
+            android:name=".Feed.SignUpActivity"
             android:exported="false" />
         <activity
-            android:name=".AddPlantActivity"
+            android:name=".Plant.AddPlantActivity"
             android:exported="false" />
         <activity
-            android:name=".IdResultActivity"
+            android:name=".Identify.IdResultActivity"
             android:exported="false" />
         <activity
-            android:name=".CamActivity"
+            android:name=".Identify.CamActivity"
             android:exported="false" />
         <activity
-            android:name=".MainActivity"
+            android:name=".Main.MainActivity"
             android:exported="true"
             android:windowSoftInputMode="adjustNothing">
             <intent-filter>

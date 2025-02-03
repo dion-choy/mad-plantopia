@@ -1,4 +1,4 @@
-package com.sp.madproj;
+package com.sp.madproj.Plant;
 
 import android.content.Context;
 import android.graphics.Bitmap;

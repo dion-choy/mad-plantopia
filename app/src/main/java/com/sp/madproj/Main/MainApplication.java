@@ -1,7 +1,9 @@
-package com.sp.madproj;
+package com.sp.madproj.Main;
 
 import android.app.Application;
 import android.media.MediaPlayer;
+
+import com.sp.madproj.R;
 
 public class MainApplication extends Application {
     @Override
