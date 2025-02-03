@@ -24,7 +24,7 @@ public class PlantHelper extends SQLiteOpenHelper {
                 "detail TEXT," +
                 "icon TEXT," +
                 "name TEXT," +
-                "species TEXT);");
+                "last_watered TEXT);");
     }
 
     @Override
@@ -48,14 +48,14 @@ public class PlantHelper extends SQLiteOpenHelper {
                         "WHERE position = ?", new String[]{String.valueOf(position)}));
     }
 
-    public void insert(int position, String detail, String icon, String name, String species) {
+    public void insert(int position, String detail, String icon, String name, String timestamp) {
         ContentValues cv = new ContentValues();
 
         cv.put("position", position);
         cv.put("detail", detail);
         cv.put("icon", icon);
         cv.put("name", name);
-        cv.put("species", species);
+        cv.put("timestamp", timestamp);
 
         getWritableDatabase().insert("plant_table", "position", cv);
     }
@@ -87,7 +87,7 @@ public class PlantHelper extends SQLiteOpenHelper {
         return c.getString(4);
     }
 
-    public String getSpecies(Cursor c) {
+    public String getTimestamp(Cursor c) {
         return c.getString(5);
     }
 }

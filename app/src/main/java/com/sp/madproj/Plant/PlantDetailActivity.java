@@ -3,6 +3,7 @@ package com.sp.madproj.Plant;
 import android.content.Intent;
 import android.database.Cursor;
 import android.graphics.Bitmap;
+import android.net.Uri;
 import android.os.Bundle;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -11,6 +12,10 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.splashscreen.SplashScreen;
 
 import com.sp.madproj.R;
+import com.squareup.picasso.Picasso;
+
+import org.json.JSONException;
+import org.json.JSONObject;
 
 public class PlantDetailActivity extends AppCompatActivity {
     private PlantHelper plantHelper;
@@ -30,15 +35,15 @@ public class PlantDetailActivity extends AppCompatActivity {
         }
 
         plantHelper = new PlantHelper(this);
-        Cursor plant = plantHelper.getPlantById(id);
-        plant.moveToFirst();
+        Cursor plantCursor = plantHelper.getPlantById(id);
+        plantCursor.moveToFirst();
 
-        ((TextView) findViewById(R.id.plantName)).setText(plantHelper.getName(plant));
+        ((TextView) findViewById(R.id.plantName)).setText(plantHelper.getName(plantCursor));
 
         findViewById(R.id.backBtn).setOnClickListener((l) -> finish());
 
         Bitmap plantIcon;
-        switch (plantHelper.getIcon(plant)) {
+        switch (plantHelper.getIcon(plantCursor)) {
             case "cactus":
                 plantIcon = CanvasView.getBitmapFromVectorDrawable(this, R.drawable.plant_cactus);
                 break;
@@ -54,6 +59,27 @@ public class PlantDetailActivity extends AppCompatActivity {
         }
 
         ((ImageView) findViewById(R.id.plantIcon)).setImageBitmap(plantIcon);
+
+        try {
+            JSONObject details = new JSONObject(plantHelper.getDetail(plantCursor));
+            ((TextView) findViewById(R.id.speciesName)).setText(details.getString("name"));
+            ((TextView) findViewById(R.id.description)).setText(
+                    details.getJSONObject("description")
+                            .getString("value")
+            );
+            ((TextView) findViewById(R.id.light)).setText(details.getString("best_light_condition"));
+            ((TextView) findViewById(R.id.watering)).setText(details.getString("best_watering"));
+            ((TextView) findViewById(R.id.soil)).setText(details.getString("best_soil_type"));
+            Picasso.get()
+                    .load(Uri.parse(details.getJSONObject("image").getString("value")))
+                    .into((ImageView) findViewById(R.id.exampleImg));
+            String url = details.getString("url");
+            findViewById(R.id.moreInfo).setOnClickListener(view -> {
+                startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse(url)));
+            });
+        } catch (JSONException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override

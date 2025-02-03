@@ -48,6 +48,7 @@ import com.squareup.picasso.Picasso;
 
 
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -300,7 +301,7 @@ public class PlantFrag extends Fragment {
                 response -> {
                     loadingIcon.setVisibility(View.GONE);
 
-                    plantHelper.insert(position, response.toString(), icon, plantName, species);
+                    plantHelper.insert(position, response.toString(), icon, plantName, LocalDate.now().toString());
                     loadPlants();
                 },
                 error -> {
@@ -442,10 +443,7 @@ public class PlantFrag extends Fragment {
             Intent intent = new Intent(getActivity(), PlantDetailActivity.class);
             intent.putExtra("id", plantHelper.getID(allPlants));
 
-            sprite.setOnClickListener(() -> {
-                Toast.makeText(context, "Clicked", Toast.LENGTH_SHORT).show();
-                startActivity(intent);
-            });
+            sprite.setOnClickListener(() -> startActivity(intent));
 
             canvas.add(sprite);
             if (position < 6) {

@@ -10,9 +10,9 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <application
-        android:name=".Main.MainApplication"
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
@@ -21,6 +21,21 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Splash"
         tools:targetApi="31">
+        <activity
+            android:name=".Main.SplashActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <service
+            android:name=".Main.WateringNotifService"
+            android:enabled="true"
+            android:exported="false" />
+
         <activity
             android:name=".Plant.PlantDetailActivity"
             android:exported="false" />
@@ -53,14 +68,8 @@
             android:exported="false" />
         <activity
             android:name=".Main.MainActivity"
-            android:exported="true"
-            android:windowSoftInputMode="adjustNothing">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity>
+            android:exported="false"
+            android:windowSoftInputMode="adjustNothing" />
     </application>
 
 </manifest>

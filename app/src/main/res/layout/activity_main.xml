@@ -38,13 +38,4 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <ImageView
-        android:id="@+id/splashScreen"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:background="?android:attr/windowBackground"
-        android:visibility="visible"
-        android:elevation="100dp"
-        app:srcCompat="@drawable/splash_screen" />
-
 </androidx.constraintlayout.widget.ConstraintLayout>

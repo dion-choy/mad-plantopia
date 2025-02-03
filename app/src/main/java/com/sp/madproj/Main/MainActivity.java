@@ -1,18 +1,36 @@
 package com.sp.madproj.Main;
 
+import static android.provider.Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS;
+
+import android.Manifest;
+import android.app.Activity;
+import android.content.ComponentName;
+import android.content.Context;
+import android.content.Intent;
+import android.content.ServiceConnection;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.graphics.drawable.AnimatedVectorDrawable;
+import android.location.LocationManager;
+import android.media.MediaPlayer;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.IBinder;
+import android.os.Message;
+import android.os.PowerManager;
 import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 import androidx.core.splashscreen.SplashScreen;
 import androidx.fragment.app.FragmentManager;
 
@@ -32,6 +50,7 @@ import com.sp.madproj.R;
 import com.squareup.picasso.OkHttp3Downloader;
 import com.squareup.picasso.Picasso;
 
+import java.lang.ref.WeakReference;
 import java.util.Objects;
 
 import okhttp3.OkHttpClient;
@@ -108,18 +127,6 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        // SPLASH SCREEN CODE
-        ImageView splashScreenImg = findViewById(R.id.splashScreen);
-        if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.P) {
-            new Handler().postDelayed(() -> {
-                ((AnimatedVectorDrawable) splashScreenImg.getDrawable()).start();
-                new Handler().postDelayed(() -> splashScreenImg.setVisibility(View.GONE), 1800);
-            }, 1000);
-        } else {
-            splashScreenImg.setVisibility(View.GONE);
-        }
-        // SPLASH SCREEN CODE END
-
         navBar = findViewById(R.id.bottomNav);
         navBar.setOnItemSelectedListener(switchPage);
 
@@ -148,6 +155,12 @@ public class MainActivity extends AppCompatActivity {
             Log.e("Picasso", e.toString());
             Log.e("Picasso", e.getMessage());
         }
+
+        int permissionState = ContextCompat.checkSelfPermission(this, android.Manifest.permission.POST_NOTIFICATIONS);
+        if (permissionState == PackageManager.PERMISSION_DENIED) {
+            ActivityCompat.requestPermissions(this, new String[]{android.Manifest.permission.POST_NOTIFICATIONS}, 1);
+        }
+
     }
 
     @Override
@@ -283,4 +296,62 @@ public class MainActivity extends AppCompatActivity {
             return true;
         }
     };
+
+    private WateringNotifService notifService;
+    private boolean serviceBound;
+
+    private final static int MSG_UPDATE_TIME = 0;
+
+    private final Handler mUpdateTimeHandler = new UIUpdateHandler(this);
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        stopService(new Intent(this, WateringNotifService.class));
+        Intent i = new Intent(this, WateringNotifService.class);
+        startService(i);
+        bindService(i, mConnection, 0);
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        if (serviceBound) {
+            unbindService(mConnection);
+            serviceBound = false;
+        }
+    }
+
+    private ServiceConnection mConnection = new ServiceConnection() {
+
+        @Override
+        public void onServiceConnected(ComponentName className, IBinder service) {
+            WateringNotifService.RunServiceBinder binder = (WateringNotifService.RunServiceBinder) service;
+            notifService = binder.getService();
+            serviceBound = true;
+            notifService.startBackground();
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName name) {
+            serviceBound = false;
+        }
+    };
+    static class UIUpdateHandler extends Handler {
+
+        private final static int UPDATE_RATE_MS = 1000;
+        private final WeakReference<MainActivity> activity;
+
+        public UIUpdateHandler(MainActivity activity) {
+            this.activity = new WeakReference<>(activity);
+        }
+
+        @Override
+        public void handleMessage(Message message) {
+            if (MSG_UPDATE_TIME == message.what) {
+//                activity.get();
+                sendEmptyMessageDelayed(MSG_UPDATE_TIME, UPDATE_RATE_MS);
+            }
+        }
+    }
 }
