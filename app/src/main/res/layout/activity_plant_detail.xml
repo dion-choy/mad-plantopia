@@ -73,6 +73,19 @@
                 android:layout_height="200dp"
                 android:src="@drawable/plant_flower" />
 
+            <TextView
+                android:id="@+id/lastWatered"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Last Watered: [Date]" />
+
+            <Button
+                android:id="@+id/watered"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="10dp"
+                android:text="I just watered!" />
+
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"

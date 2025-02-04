@@ -98,12 +98,28 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content" />
 
-                    <androidx.recyclerview.widget.RecyclerView
-                        android:id="@+id/caretakerList"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content" />
-
                 </com.google.android.material.textfield.TextInputLayout>
+
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/caretakerList"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:layout_marginBottom="10dp"
+                    android:maxHeight="150dp"
+                    app:layout_constraintBottom_toTopOf="@id/addCaretaker"
+                    app:layout_constraintTop_toBottomOf="@id/addCaretakerContainer"
+                    tools:layout_editor_absoluteX="10dp" />
+
+                <Button
+                    android:id="@+id/addCaretaker"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Add caretaker"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent" />
 
             </androidx.constraintlayout.widget.ConstraintLayout>
 

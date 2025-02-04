@@ -1,11 +1,13 @@
 package com.sp.madproj.Plant;
 
+import static android.content.Context.MODE_PRIVATE;
 import static com.sp.madproj.Plant.CanvasView.getBitmapFromVectorDrawable;
 import static com.sp.madproj.Plant.CanvasView.pxFromDp;
 
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.net.Uri;
@@ -17,6 +19,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
+import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
@@ -40,9 +43,15 @@ import com.android.volley.RequestQueue;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.Volley;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.google.android.material.textfield.TextInputEditText;
+import com.google.android.material.textfield.TextInputLayout;
+import com.google.firebase.auth.FirebaseAuth;
 import com.sp.madproj.BuildConfig;
 import com.sp.madproj.Classes.User;
+import com.sp.madproj.Main.MainActivity;
+import com.sp.madproj.Main.WateringNotifService;
 import com.sp.madproj.R;
+import com.sp.madproj.Utils.Database;
 import com.squareup.picasso.Callback;
 import com.squareup.picasso.Picasso;
 
@@ -53,6 +62,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 public class PlantFrag extends Fragment {
@@ -143,8 +153,32 @@ public class PlantFrag extends Fragment {
                 }
         );
 
-        addPersonContainer = view.findViewById(R.id.addPersonContainer);
+        TextInputLayout addCaretakerContainer = view.findViewById(R.id.addCaretakerContainer);
+        Button addCaretakerBtn = view.findViewById(R.id.addCaretaker);
 
+        addCaretakerBtn.setOnClickListener(view1 -> {
+            SharedPreferences sharedPref = getActivity().getSharedPreferences("greenhouse", MODE_PRIVATE);
+            if (addCaretakerBtn.getText().toString().equals("Log in first")) {
+                ((MainActivity) getActivity()).navBar.setSelectedItemId(R.id.feedTab);
+            } else if (addCaretakerBtn.getText().toString().equals("Sync first")) {
+                String hashStr = String.valueOf(FirebaseAuth.getInstance().getCurrentUser().getUid().hashCode());
+                sharedPref.edit()
+                        .putString("greenhouseId", hashStr)
+                        .commit();
+//                push(hashStr);
+                addCaretakerContainer.setVisibility(View.VISIBLE);
+                caretakersList.setVisibility(View.VISIBLE);
+                addCaretakerBtn.setText("Add caretaker");
+
+                sharedPref.edit()
+                        .putBoolean("clientChanged", true)
+                        .commit();
+            } else {
+                Toast.makeText(getActivity(), "click", Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        addPersonContainer = view.findViewById(R.id.addPersonContainer);
         addPlantBtn = view.findViewById(R.id.addPlant);
         addPlantBtn.setOnClickListener(
                 view1 -> {
@@ -166,6 +200,22 @@ public class PlantFrag extends Fragment {
                     if (view1.getVisibility() == View.GONE) {
                         return;
                     }
+
+                    if (FirebaseAuth.getInstance().getCurrentUser() == null) {
+                        addCaretakerBtn.setText("Log in first");
+                        addCaretakerContainer.setVisibility(View.GONE);
+                        caretakersList.setVisibility(View.GONE);
+                    } else if (getActivity().getSharedPreferences("greenhouse", MODE_PRIVATE)
+                            .getString("greenhouseId", null) == null ) {
+                        addCaretakerBtn.setText("Sync first");
+                        addCaretakerContainer.setVisibility(View.GONE);
+                        caretakersList.setVisibility(View.GONE);
+                    } else {
+                        addCaretakerContainer.setVisibility(View.VISIBLE);
+                        caretakersList.setVisibility(View.VISIBLE);
+                        addCaretakerBtn.setText("Add caretaker");
+                    }
+
                     addPersonContainer.setVisibility(View.VISIBLE);
                     addPersonContainer.startAnimation(
                             AnimationUtils.loadAnimation(getContext(), R.anim.fadein_bg)
@@ -201,6 +251,29 @@ public class PlantFrag extends Fragment {
     public void onDestroy() {
         super.onDestroy();
         plantHelper.close();
+    }
+
+    private void push(String greenhouseId) {
+        Cursor plants = plantHelper.getAll();
+        plants.moveToFirst();
+        for (int i = 0; i < plants.getCount(); i++) {
+            plants.moveToPosition(i);
+            Database.queryAstra(getActivity(),
+                    String.format(Locale.ENGLISH,
+                            "UPDATE plantopia.greenhouses " +
+                                    "SET position=%d, detail='%s', icon='%s', name='%s', last_watered='%s' " +
+                                    "WHERE id=%s AND plant_id=%s",
+                            plantHelper.getPosition(plants), plantHelper.getDetail(plants),
+                            plantHelper.getIcon(plants), plantHelper.getName(plants),
+                            plantHelper.getTimestamp(plants), greenhouseId, plantHelper.getID(plants)),
+                    (response) -> {
+                        Log.d("update", response);
+                    },
+                    (error) -> {
+                        Log.e("USERS ERROR", error.toString());
+                    }
+            );
+        }
     }
 
     private class CaretakersAdapter extends RecyclerView.Adapter<CaretakersAdapter.MembersHolder>{
@@ -301,7 +374,7 @@ public class PlantFrag extends Fragment {
                 response -> {
                     loadingIcon.setVisibility(View.GONE);
 
-                    plantHelper.insert(position, response.toString(), icon, plantName, LocalDate.now().toString());
+                    plantHelper.insert(position, response.toString(), icon, plantName, LocalDate.now().toString(), getActivity());
                     loadPlants();
                 },
                 error -> {
@@ -351,9 +424,11 @@ public class PlantFrag extends Fragment {
 
     public void closeOptions() {
         Log.d("Visibility", addPersonContainer.getVisibility()+"");
-        addPersonContainer.setVisibility(View.GONE);
-        addPersonContainer.startAnimation(fadeOutBg);
-        new Handler().postDelayed(() -> addPersonContainer.clearAnimation(), 300);
+        if (addPersonContainer.getVisibility() != View.GONE) {
+            addPersonContainer.setVisibility(View.GONE);
+            addPersonContainer.startAnimation(fadeOutBg);
+            new Handler().postDelayed(() -> addPersonContainer.clearAnimation(), 300);
+        }
 
         addPlantBtn.setVisibility(View.GONE);
         addPlantBtn.startAnimation(toBottomFabAnim);

@@ -313,20 +313,12 @@ public class FeedFrag extends Fragment {
     private void removeExpiredCode(String id) {
         Database.queryAstra(getActivity(),
                 "UPDATE plantopia.rooms SET code=NULL, generated_time=NULL WHERE id= '" + id + "';",
-                new Response.Listener<String>() {
-                    @Override
-                    public void onResponse(String response) {
-                        Log.d("CODE", "Expired code removed successfully");
-                    }
-                },
-                new Response.ErrorListener() {
-                    @Override
-                    public void onErrorResponse(VolleyError error) {
-                        Log.e("USERS ERROR", error.toString());
-                        Log.e("USER ERROR", "UPDATE plantopia.rooms SET code=NULL, generated_time=NULL WHERE id= '" + id + "';");
-                        if (error.getClass() == NoConnectionError.class) {
-                            Toast.makeText(getActivity(), "Please connect to internet", Toast.LENGTH_SHORT).show();
-                        }
+                response -> Log.d("CODE", "Expired code removed successfully"),
+                error -> {
+                    Log.e("USERS ERROR", error.toString());
+                    Log.e("USER ERROR", "UPDATE plantopia.rooms SET code=NULL, generated_time=NULL WHERE id= '" + id + "';");
+                    if (error.getClass() == NoConnectionError.class) {
+                        Toast.makeText(getActivity(), "Please connect to internet", Toast.LENGTH_SHORT).show();
                     }
                 }
         );

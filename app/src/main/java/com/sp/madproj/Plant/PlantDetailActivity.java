@@ -5,6 +5,8 @@ import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Handler;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -16,6 +18,8 @@ import com.squareup.picasso.Picasso;
 
 import org.json.JSONException;
 import org.json.JSONObject;
+
+import java.time.LocalDate;
 
 public class PlantDetailActivity extends AppCompatActivity {
     private PlantHelper plantHelper;
@@ -80,6 +84,18 @@ public class PlantDetailActivity extends AppCompatActivity {
         } catch (JSONException e) {
             throw new RuntimeException(e);
         }
+
+        ((TextView) findViewById(R.id.lastWatered)).setText("Last Watered: " + plantHelper.getTimestamp(plantCursor));
+        findViewById(R.id.watered).setOnClickListener(view -> {
+            plantHelper.update(plantHelper.getID(plantCursor), plantHelper.getPosition(plantCursor),
+                    plantHelper.getDetail(plantCursor), plantHelper.getIcon(plantCursor),
+                    plantHelper.getName(plantCursor), LocalDate.now().toString(), this
+            );
+
+            new Handler().postDelayed(() -> {
+                ((TextView) findViewById(R.id.lastWatered)).setText("Last Watered: " + LocalDate.now().toString());
+            }, 100);
+        });
     }
 
     @Override

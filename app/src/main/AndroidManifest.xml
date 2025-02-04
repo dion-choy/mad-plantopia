@@ -33,6 +33,7 @@
 
         <service
             android:name=".Main.WateringNotifService"
+            android:stopWithTask="false"
             android:enabled="true"
             android:exported="false" />
 
