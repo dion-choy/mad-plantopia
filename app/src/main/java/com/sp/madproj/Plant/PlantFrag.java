@@ -19,6 +19,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ImageView;
@@ -49,12 +50,15 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.sp.madproj.BuildConfig;
 import com.sp.madproj.Classes.User;
 import com.sp.madproj.Main.MainActivity;
-import com.sp.madproj.Main.WateringNotifService;
 import com.sp.madproj.R;
 import com.sp.madproj.Utils.Database;
 import com.squareup.picasso.Callback;
 import com.squareup.picasso.Picasso;
 
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
@@ -62,8 +66,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
+import java.util.Timer;
 
 public class PlantFrag extends Fragment {
     private static final int MAX_SIZE = 11;
@@ -82,12 +86,13 @@ public class PlantFrag extends Fragment {
     private CardView addPersonContainer;
     private ProgressBar loadingIcon;
 
-    private CaretakersAdapter caretakersAdapter;
     private final List<User> caretakersModel = new ArrayList<>();
 
     private PlantHelper plantHelper;
 
     private CanvasView canvas = null;
+
+    private SharedPreferences sharedPref;
 
     private Bitmap flower;
     private Bitmap upright;
@@ -133,7 +138,7 @@ public class PlantFrag extends Fragment {
         // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_plant, container, false);
 
-        caretakersAdapter = new CaretakersAdapter(caretakersModel);
+        CaretakersAdapter caretakersAdapter = new CaretakersAdapter(caretakersModel);
 
         RecyclerView caretakersList = view.findViewById(R.id.caretakerList);
         caretakersList.setLayoutManager(new LinearLayoutManager(getActivity()));
@@ -153,28 +158,48 @@ public class PlantFrag extends Fragment {
                 }
         );
 
-        TextInputLayout addCaretakerContainer = view.findViewById(R.id.addCaretakerContainer);
-        Button addCaretakerBtn = view.findViewById(R.id.addCaretaker);
+        TextInputLayout joinGreenhouseContainer = view.findViewById(R.id.joinGreenhouseContainer);
+        Button addCaretakerBtn = view.findViewById(R.id.inviteCaretaker);
+        Button joinGreenhouse = view.findViewById(R.id.joinGreenhouse);
+        TextInputEditText joinCode = view.findViewById(R.id.joinGreenhouseText);
+        joinGreenhouse.setVisibility(View.GONE);
+        joinGreenhouse.setOnClickListener(view1 -> {
+            if (joinCode.getText() == null || joinCode.getText().toString().isEmpty()) {
+                joinCode.setError("Enter a code");
+                return;
+            }
+            checkDbForCode(joinCode.getText().toString());
+        });
 
+        sharedPref = getActivity().getSharedPreferences("greenhouse", MODE_PRIVATE);
         addCaretakerBtn.setOnClickListener(view1 -> {
-            SharedPreferences sharedPref = getActivity().getSharedPreferences("greenhouse", MODE_PRIVATE);
-            if (addCaretakerBtn.getText().toString().equals("Log in first")) {
-                ((MainActivity) getActivity()).navBar.setSelectedItemId(R.id.feedTab);
-            } else if (addCaretakerBtn.getText().toString().equals("Sync first")) {
-                String hashStr = String.valueOf(FirebaseAuth.getInstance().getCurrentUser().getUid().hashCode());
-                sharedPref.edit()
-                        .putString("greenhouseId", hashStr)
-                        .commit();
-//                push(hashStr);
-                addCaretakerContainer.setVisibility(View.VISIBLE);
-                caretakersList.setVisibility(View.VISIBLE);
-                addCaretakerBtn.setText("Add caretaker");
+            switch (addCaretakerBtn.getText().toString()) {
+                case "Log in first":
+                    ((MainActivity) getActivity()).navBar.setSelectedItemId(R.id.feedTab);
+                    break;
+                case "Sync my greenhouse":
+                    String hashStr = String.valueOf(FirebaseAuth.getInstance().getCurrentUser().getUid().hashCode());
 
-                sharedPref.edit()
-                        .putBoolean("clientChanged", true)
-                        .commit();
-            } else {
-                Toast.makeText(getActivity(), "click", Toast.LENGTH_SHORT).show();
+                    updateUsersGreenhouse(FirebaseAuth.getInstance().getCurrentUser().getDisplayName(), hashStr);
+                    joinGreenhouseContainer.setVisibility(View.GONE);
+
+                    sharedPref.edit()
+                            .putString("greenhouseId", hashStr)
+                            .commit();
+
+                    caretakersList.setVisibility(View.VISIBLE);
+                    addCaretakerBtn.setText("Invite caretaker");
+
+                    sharedPref.edit()
+                            .putBoolean("clientChanged", true)
+                            .commit();
+                    break;
+                case "Invite caretaker":
+                    generateAndDisplayCode();
+                    break;
+                case "Leave greenhouse":
+                default:
+                    joinGreenhouseContainer.setVisibility(View.VISIBLE);
             }
         });
 
@@ -201,19 +226,25 @@ public class PlantFrag extends Fragment {
                         return;
                     }
 
+                    joinGreenhouseContainer.setVisibility(View.GONE);
                     if (FirebaseAuth.getInstance().getCurrentUser() == null) {
                         addCaretakerBtn.setText("Log in first");
-                        addCaretakerContainer.setVisibility(View.GONE);
                         caretakersList.setVisibility(View.GONE);
-                    } else if (getActivity().getSharedPreferences("greenhouse", MODE_PRIVATE)
-                            .getString("greenhouseId", null) == null ) {
-                        addCaretakerBtn.setText("Sync first");
-                        addCaretakerContainer.setVisibility(View.GONE);
-                        caretakersList.setVisibility(View.GONE);
+                    } else if (sharedPref.getString("greenhouseId", null) == null) {
+                        addCaretakerBtn.setText("Sync my greenhouse");
+                        caretakersList.setVisibility(View.INVISIBLE);
+                        joinGreenhouse.setVisibility(View.VISIBLE);
+                        joinGreenhouseContainer.setVisibility(View.VISIBLE);
                     } else {
-                        addCaretakerContainer.setVisibility(View.VISIBLE);
                         caretakersList.setVisibility(View.VISIBLE);
-                        addCaretakerBtn.setText("Add caretaker");
+                        if (String.valueOf(FirebaseAuth.getInstance()
+                                .getCurrentUser()
+                                .getUid().hashCode())
+                                .equals(sharedPref.getString("greenhouseId", null))) {
+                            addCaretakerBtn.setText("Invite caretaker");
+                        } else {
+                            addCaretakerBtn.setText("Leave greenhouse");
+                        }
                     }
 
                     addPersonContainer.setVisibility(View.VISIBLE);
@@ -253,27 +284,75 @@ public class PlantFrag extends Fragment {
         plantHelper.close();
     }
 
-    private void push(String greenhouseId) {
-        Cursor plants = plantHelper.getAll();
-        plants.moveToFirst();
-        for (int i = 0; i < plants.getCount(); i++) {
-            plants.moveToPosition(i);
-            Database.queryAstra(getActivity(),
-                    String.format(Locale.ENGLISH,
-                            "UPDATE plantopia.greenhouses " +
-                                    "SET position=%d, detail='%s', icon='%s', name='%s', last_watered='%s' " +
-                                    "WHERE id=%s AND plant_id=%s",
-                            plantHelper.getPosition(plants), plantHelper.getDetail(plants),
-                            plantHelper.getIcon(plants), plantHelper.getName(plants),
-                            plantHelper.getTimestamp(plants), greenhouseId, plantHelper.getID(plants)),
-                    (response) -> {
-                        Log.d("update", response);
-                    },
-                    (error) -> {
-                        Log.e("USERS ERROR", error.toString());
+    private void checkDbForCode(String code) {
+        Database.queryAstra(getActivity(),
+                "SELECT id, detail FROM plantopia.greenhouses WHERE plant_id=-100;",
+                response -> {
+                    Log.d("join greenhouse", response);
+                    try {
+                        JSONObject jsonObject = new JSONObject(response);
+                        if (jsonObject.getInt("count") == 0) {
+                            Toast.makeText(getActivity(), "Invalid code", Toast.LENGTH_LONG).show();
+                            return;
+                        }
+
+                        JSONArray rows = jsonObject.getJSONArray("data");
+                        for (int i = 0; i<rows.length(); i++) {
+                            String greenhouseId = rows.getJSONObject(i).getString("id");
+                            if (code.equals(rows.getJSONObject(i).getString("detail"))) {
+                                Toast.makeText(getActivity(), "Greenhouse added", Toast.LENGTH_LONG).show();
+                                sharedPref.edit()
+                                        .putString("greenhouseId", greenhouseId)
+                                        .commit();
+
+                                Database.queryAstra(getActivity(),
+                                        "UPDATE plantopia.user_info SET greenhouse_id="+greenhouseId+" WHERE username='"+FirebaseAuth.getInstance().getCurrentUser().getDisplayName()+"'",
+                                        response1 -> {},
+                                        error -> {}
+                                        );
+                                break;
+                            }
+                        }
+                        Toast.makeText(getActivity(), "Invalid code", Toast.LENGTH_LONG).show();
+
+                    } catch (JSONException e) {
+                        throw new RuntimeException(e);
                     }
-            );
+                },
+                error -> {
+                    Log.e("UPDATE CODE ERROR", error.toString());
+                    Log.e("UPDATE CODE ERROR",
+                            "SELECT id, detail FROM plantopia.greenhouses WHERE plant_id=-100;"
+                    );
+                    if (error.getClass() == NoConnectionError.class) {
+                        Toast.makeText(getActivity(), "Please connect to internet", Toast.LENGTH_SHORT).show();
+                    }
+                }
+        );
+    }
+
+    private void generateAndDisplayCode() {
+        StringBuilder code = new StringBuilder();
+        for (int i = 0; i < 6; i++) {
+            code.append((int) Math.floor(Math.random() * 10));
         }
+
+        Database.queryAstra(getActivity(),
+                "UPDATE plantopia.greenhouses SET detail='"+ code +"' WHERE id=" + sharedPref.getString("greenhouseId", null) + " AND plant_id=-100;",
+                response -> {
+                    Log.d("ROOMS", code.toString());
+                    Toast.makeText(getActivity(), "Code: " + code, Toast.LENGTH_LONG).show();
+                },
+                error -> {
+                    Log.e("UPDATE CODE ERROR", error.toString());
+                    Log.e("UPDATE CODE ERROR",
+                            "UPDATE plantopia.greenhouses SET detail='"+ code +"' WHERE id=" + sharedPref.getString("greenhouseId", null) + " AND plant_id=-100;"
+                        );
+                    if (error.getClass() == NoConnectionError.class) {
+                        Toast.makeText(getActivity(), "Please connect to internet", Toast.LENGTH_SHORT).show();
+                    }
+                }
+        );
     }
 
     private class CaretakersAdapter extends RecyclerView.Adapter<CaretakersAdapter.MembersHolder>{
@@ -304,7 +383,6 @@ public class PlantFrag extends Fragment {
                         @Override
                         public void onError(Exception e) {}
                     });
-
 
 //            String userKey = "";
 //            String uid = users.get(holder.getAdapterPosition()).uid;
@@ -349,7 +427,6 @@ public class PlantFrag extends Fragment {
 
                 String plantName = result.getData().getStringExtra("name");
                 String accessToken = result.getData().getStringExtra("accessToken");
-                String species = result.getData().getStringExtra("species");
                 String icon = result.getData().getStringExtra("icon");
                 Log.d("Result access token", accessToken);
 
@@ -358,12 +435,49 @@ public class PlantFrag extends Fragment {
                     position = (int) (Math.random() * MAX_SIZE);
                 } while (plantHelper.getFilledPos(position).getCount() > 0);
 
-                getDetail(accessToken, plantName, icon, species, position);
+                getDetail(accessToken, plantName, icon, position);
             }
         }
     });
 
-    private void getDetail(String accessToken, String plantName, String icon, String species, int position) {
+    private void getUsers() {
+        if (getActivity() == null) {
+            return;
+        }
+        SharedPreferences sharedPref = getActivity().getSharedPreferences("greenhouse", MODE_PRIVATE);
+        String greenhouseId = sharedPref.getString("greenhouseId", null);
+        if (greenhouseId == null) {
+            return;
+        }
+
+        Database.queryAstra(getActivity(),
+                "SELECT * FROM plantopia.user_info WHERE greenhouse_id=" + greenhouseId + "';",
+                response -> {
+                    Log.d("Update greenhouse", "Success");
+                },
+                error -> {
+                    Log.e("USERS ERROR", error.toString());
+                    if (error.getClass() == NoConnectionError.class) {
+                        Toast.makeText(getActivity(), "Please connect to internet", Toast.LENGTH_SHORT).show();
+                    }
+                }
+        );
+    }
+
+    private void updateUsersGreenhouse(String username, String hashStr) {
+        Database.queryAstra(getActivity(),
+                "UPDATE plantopia.user_info SET greenhouse_id=" + hashStr + " WHERE username = '" + username + "';",
+                response -> Log.d("Update greenhouse", "Success"),
+                error -> {
+                    Log.e("USERS ERROR", error.toString());
+                    if (error.getClass() == NoConnectionError.class) {
+                        Toast.makeText(getActivity(), "Please connect to internet", Toast.LENGTH_SHORT).show();
+                    }
+                }
+        );
+    }
+
+    private void getDetail(String accessToken, String plantName, String icon, int position) {
 
         String plantApi = "https://plant.id/api/v3/kb/plants/" + accessToken +
                 "?details=common_names,url,description,gbif_id,inaturalist_id,image,synonyms,watering,propagation_methods,best_light_condition,best_soil_type,best_watering&language=en";
@@ -374,7 +488,7 @@ public class PlantFrag extends Fragment {
                 response -> {
                     loadingIcon.setVisibility(View.GONE);
 
-                    plantHelper.insert(position, response.toString(), icon, plantName, LocalDate.now().toString(), getActivity());
+                    plantHelper.insert(position, response.toString(), icon, plantName, LocalDate.now().toString(), getActivity(), true);
                     loadPlants();
                 },
                 error -> {
@@ -428,6 +542,11 @@ public class PlantFrag extends Fragment {
             addPersonContainer.setVisibility(View.GONE);
             addPersonContainer.startAnimation(fadeOutBg);
             new Handler().postDelayed(() -> addPersonContainer.clearAnimation(), 300);
+        }
+
+        if (getView() != null && getActivity() != null) {
+            InputMethodManager imm = (InputMethodManager) getActivity().getSystemService(Context.INPUT_METHOD_SERVICE);
+            imm.hideSoftInputFromWindow(getView().getWindowToken(), 0);
         }
 
         addPlantBtn.setVisibility(View.GONE);

@@ -89,7 +89,7 @@ public class PlantDetailActivity extends AppCompatActivity {
         findViewById(R.id.watered).setOnClickListener(view -> {
             plantHelper.update(plantHelper.getID(plantCursor), plantHelper.getPosition(plantCursor),
                     plantHelper.getDetail(plantCursor), plantHelper.getIcon(plantCursor),
-                    plantHelper.getName(plantCursor), LocalDate.now().toString(), this
+                    plantHelper.getName(plantCursor), LocalDate.now().toString(), this, true
             );
 
             new Handler().postDelayed(() -> {

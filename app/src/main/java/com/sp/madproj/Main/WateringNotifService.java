@@ -22,6 +22,7 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.app.NotificationManagerCompat;
 
 import com.android.volley.NoConnectionError;
+import com.google.firebase.auth.FirebaseAuth;
 import com.sp.madproj.Plant.PlantHelper;
 import com.sp.madproj.R;
 import com.sp.madproj.Utils.Database;
@@ -32,7 +33,11 @@ import org.json.JSONObject;
 
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.Locale;
+import java.util.Timer;
+import java.util.TimerTask;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class WateringNotifService extends Service {
     public WateringNotifService() {
@@ -42,7 +47,7 @@ public class WateringNotifService extends Service {
     private static final int INTERVAL = 10000;
 
     private static final Handler handler = new Handler();
-    private final Runnable callback = new Runnable() {
+    private final TimerTask callback = new TimerTask() {
         @SuppressLint("MissingPermission")
         @Override
         public void run() {
@@ -53,37 +58,62 @@ public class WateringNotifService extends Service {
                     .notify(10000, createNotification(
                             "Run " + num + "times"
                     ));
+            if (!plantHelper.getReadableDatabase().isOpen()) {
+                plants = plantHelper.getAll();
+                return;
+            }
 
             String greenhouseId = sharedPref.getString("greenhouseId", null);
-            if (greenhouseId != null && !sharedPref.getBoolean("clientChanged", false)) {
+            if (greenhouseId != null) {
                 Database.queryAstra(WateringNotifService.this,
                         "SELECT * FROM plantopia.greenhouses WHERE id=" + greenhouseId + ";",
                         (response) -> {
+                            plants = plantHelper.getAll();
                             Log.d("update", response);
+
                             try {
                                 JSONArray rows = new JSONObject(response).getJSONArray("data");
+
+                                Log.d("update sync needed", String.valueOf(sharedPref.getBoolean("clientChanged", false)));
+                                if (sharedPref.getBoolean("clientChanged", false)) {
+                                    push(greenhouseId, rows);
+                                    return;
+                                }
+
                                 if (rows.length() == 0) {
                                     return;
                                 }
 
-                                plantHelper.deleteAll();
+                                StringBuilder existingPos = new StringBuilder();
                                 for (int i = 0; i < rows.length(); i++) {
                                     JSONObject jsonObject = rows.getJSONObject(i);
-                                    if (plantHelper.getPlantById(String.valueOf(jsonObject.getInt("plant_id"))).getCount() > 0) {
-                                        plantHelper.update(String.valueOf(jsonObject.getInt("plant_id")), jsonObject.getInt("position"),
+                                    if (jsonObject.getInt("plant_id") == -100) {
+                                        continue;
+                                    }
+
+                                    if (plantHelper.getFilledPos(jsonObject.getInt("position")).getCount() > 0) {
+                                        plantHelper.updateByPos(jsonObject.getInt("position"),
                                                 jsonObject.getString("detail").replace("htmlSpecial", "\\/").replace("ApOsTrOpHe", "'"), jsonObject.getString("icon"),
                                                 jsonObject.getString("name"), jsonObject.getString("last_watered"),
-                                                WateringNotifService.this, true
+                                                WateringNotifService.this
                                         );
+                                        Log.d("update client", "Updated");
                                     } else {
                                         plantHelper.insert(jsonObject.getInt("position"),
                                                 jsonObject.getString("detail").replace("htmlSpecial", "\\/").replace("ApOsTrOpHe", "'"), jsonObject.getString("icon"),
                                                 jsonObject.getString("name"), jsonObject.getString("last_watered"),
-                                                WateringNotifService.this, true
+                                                WateringNotifService.this
                                         );
-
+                                        Log.d("update client", "Inserted");
                                     }
+                                    existingPos.append(jsonObject.getInt("position"))
+                                            .append(", ");
                                 }
+                                existingPos.setLength(existingPos.length() - 2);
+                                Log.d("TEST", existingPos.toString());
+                                plantHelper.getWritableDatabase()
+                                        .delete("plant_table", "position NOT IN (" + existingPos +
+                                                ")", null);
 
                                 Log.d("update", "Updated");
                             } catch (JSONException e) {
@@ -96,15 +126,12 @@ public class WateringNotifService extends Service {
                             Log.e("users error", "SELECT * FROM plantopia.greenhouses WHERE id=" + greenhouseId + ";");
                         }
                 );
-            } else if (greenhouseId != null) {
-                push(greenhouseId);
             } else {
                 Log.d("update", "sync not turned on");
             }
 
             loadNotifications();
-
-            handler.postDelayed(this, INTERVAL);
+            plantHelper.close();
         }
     };
     private int num = 0;
@@ -154,11 +181,25 @@ public class WateringNotifService extends Service {
         }
     }
 
-    private void push(String greenhouseId) {
+    private void push(String greenhouseId, JSONArray rows) {
         plants.moveToFirst();
-        for (int i = 0; i < plants.getCount(); i++) {
-            plants.moveToPosition(i);
 
+        ArrayList<String> inCloud = new ArrayList<>();
+        int i;
+        for (i = 0; i<rows.length(); i++) {
+            try {
+                inCloud.add(String.valueOf(rows.getJSONObject(i).getInt("plant_id")));
+            } catch (JSONException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        inCloud.remove(String.valueOf(-100));
+        for (i = 0; i < plants.getCount(); i++) {
+            plants.moveToPosition(i);
+            inCloud.remove(plantHelper.getID(plants));
+
+            int finalI = i;
             Database.queryAstra(this,
                     String.format(Locale.ENGLISH,
                             "UPDATE plantopia.greenhouses " +
@@ -167,7 +208,53 @@ public class WateringNotifService extends Service {
                             plantHelper.getPosition(plants), plantHelper.getDetail(plants).replace("\\/", "htmlSpecial").replace("'", "ApOsTrOpHe"),
                             plantHelper.getIcon(plants), plantHelper.getName(plants),
                             plantHelper.getTimestamp(plants), greenhouseId, plantHelper.getID(plants)),
-                    response -> {},
+                    response -> {
+                        Log.i("update sync push", response);
+                        if (finalI == plants.getCount() - 1) {
+                            deleteFromCloud(greenhouseId, inCloud);
+                        }
+                    },
+                    error -> {
+                        sharedPref.edit()
+                                .putBoolean("clientChanged", true)
+                                .commit();
+                        Log.e("update error", error.toString());
+                    }
+            );
+
+        }
+
+        if (plants.getCount() == 0) {
+            Log.e("update sync push", "NOthing in db");
+//            deleteFromCloud(greenhouseId, inCloud);
+        }
+    }
+
+    private void deleteFromCloud(String greenhouseId, ArrayList<String> inCloud) {
+        if (inCloud.isEmpty()) {
+            sharedPref.edit()
+                    .putBoolean("clientChanged", false)
+                    .commit();
+        }
+
+        for (int i = 0; i<inCloud.size(); i++) {
+            Cursor plant = plantHelper.getPlantById(inCloud.get(i));
+            plant.moveToFirst();
+
+            int finalI = i;
+            Database.queryAstra(this,
+                    String.format(Locale.ENGLISH,
+                            "DELETE FROM plantopia.greenhouses " +
+                                    "WHERE id=%s AND plant_id=%s;",
+                            greenhouseId, plantHelper.getID(plants)),
+                    response -> {
+                        Log.e("update sync delete", response);
+                        if (finalI == plants.getCount() - 1) {
+                            sharedPref.edit()
+                                    .putBoolean("clientChanged", false)
+                                    .commit();
+                        }
+                    },
                     error -> {
                         sharedPref.edit()
                                 .putBoolean("clientChanged", true)
@@ -176,10 +263,6 @@ public class WateringNotifService extends Service {
                     }
             );
         }
-
-        sharedPref.edit()
-                .putBoolean("clientChanged", false)
-                .commit();
     }
 
     private final IBinder serviceBinder = new RunServiceBinder();
@@ -196,6 +279,9 @@ public class WateringNotifService extends Service {
     public void onCreate() {
         super.onCreate();
 
+        if (FirebaseAuth.getInstance().getCurrentUser() != null) {
+            checkUsernames(FirebaseAuth.getInstance().getCurrentUser().getDisplayName());
+        }
         sharedPref = getSharedPreferences("greenhouse", MODE_PRIVATE);
 
         Log.v(TAG, "Creating service");
@@ -203,8 +289,7 @@ public class WateringNotifService extends Service {
         plants = plantHelper.getAll();
 
         handler.removeCallbacksAndMessages(null);
-        callback.run();
-        handler.postDelayed(callback, INTERVAL);
+        new Timer().schedule(callback, 0, INTERVAL);
     }
 
     @Override
@@ -223,11 +308,8 @@ public class WateringNotifService extends Service {
     @Override
     public void onDestroy() {
         Log.v(TAG, "Destroying service");
-        handler.removeCallbacks(callback);
-        plantHelper.close();
+        handler.removeCallbacksAndMessages(null);
         super.onDestroy();
-
-        onCreate();
     }
 
     public void startBackground() {
@@ -255,5 +337,47 @@ public class WateringNotifService extends Service {
         builder.setContentIntent(resultPendingIntent);
 
         return builder.build();
+    }
+
+    private void checkUsernames(String username) {
+        Database.queryAstra(this,
+                "SELECT * FROM plantopia.user_info WHERE username = '" + username + "';",
+                response -> {
+                    Log.d("USERS", response);
+                    try {
+                        JSONObject responseObj = new JSONObject(response);
+                        if (responseObj.getInt("count") > 0) {
+                            if (responseObj.getJSONArray("data")
+                                        .getJSONObject(0)
+                                        .isNull("greenhouse_id")
+                            ) {
+                                sharedPref.edit()
+                                        .remove("greenhouseId")
+                                        .apply();
+                                Log.d("Greenhouse ID", "Greenhouse id removed");
+                                return;
+                            }
+
+                            if (!responseObj.getJSONArray("data")
+                                    .getJSONObject(0)
+                                    .getString("greenhouse_id").equals(sharedPref.getString("greenhouseId", ""))
+                            ) {
+                                sharedPref.edit()
+                                        .remove("greenhouseId")
+                                        .apply();
+                                Log.d("Greenhouse ID", "Greenhouse id removed");
+                            }
+                        }
+                    } catch (JSONException e) {
+                        throw new RuntimeException(e);
+                    }
+                },
+                error -> {
+                    Log.e("USERS ERROR", error.toString());
+                    if (error.getClass() == NoConnectionError.class) {
+                        Toast.makeText(getApplicationContext(), "Please connect to internet", Toast.LENGTH_SHORT).show();
+                    }
+                }
+        );
     }
 }

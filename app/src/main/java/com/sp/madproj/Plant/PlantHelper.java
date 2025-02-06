@@ -74,8 +74,9 @@ public class PlantHelper extends SQLiteOpenHelper {
         cv.put("name", name);
         cv.put("last_watered", last_watered);
 
-        String.valueOf(getWritableDatabase().insert("plant_table", "position", cv));
-        if (greenhouseId != null && !forSync) {
+        getWritableDatabase().insert("plant_table", "position", cv);
+        if (greenhouseId != null && forSync) {
+            Log.d("Database", "Client Changes: True");
             sharedPref.edit()
                     .putBoolean("clientChanged", true)
                     .commit();
@@ -84,6 +85,19 @@ public class PlantHelper extends SQLiteOpenHelper {
 
     public void insert(int position, String detail, String icon, String name, String last_watered, Context context) {
         insert(position, detail, icon, name, last_watered, context, false);
+    }
+
+    public void updateByPos(int position, String detail, String icon, String name, String last_watered, Context context) {
+        ContentValues cv = new ContentValues();
+
+        cv.put("position", position);
+        cv.put("detail", detail);
+        cv.put("icon", icon);
+        cv.put("name", name);
+        cv.put("last_watered", last_watered);
+
+        getWritableDatabase().update("plant_table", cv, "position = ?",
+                new String[]{String.valueOf(position)});
     }
 
     public void update(String id, int position, String detail, String icon, String name, String last_watered, Context context, boolean forSync) {
@@ -98,7 +112,7 @@ public class PlantHelper extends SQLiteOpenHelper {
         getWritableDatabase().update("plant_table", cv, "_id = ?",
                 new String[]{id});
 
-        if (greenhouseId != null && !forSync) {
+        if (greenhouseId != null && forSync) {
             sharedPref.edit()
                     .putBoolean("clientChanged", true)
                     .commit();

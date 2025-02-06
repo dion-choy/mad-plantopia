@@ -83,18 +83,18 @@
                 android:padding="10dp">
 
                 <com.google.android.material.textfield.TextInputLayout
-                    android:id="@+id/addCaretakerContainer"
+                    android:id="@+id/joinGreenhouseContainer"
                     style="?attr/textInputFilledStyle"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:hint="Add caretaker"
+                    android:hint="Enter code"
                     app:boxBackgroundColor="?attr/colorSurfaceContainer"
                     app:hintTextColor="?android:attr/textColor"
                     app:layout_constraintTop_toTopOf="parent"
                     tools:layout_editor_absoluteX="10dp">
 
                     <com.google.android.material.textfield.TextInputEditText
-                        android:id="@+id/addCaretakerInput"
+                        android:id="@+id/joinGreenhouseText"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content" />
 
@@ -107,19 +107,31 @@
                     android:layout_marginTop="10dp"
                     android:layout_marginBottom="10dp"
                     android:maxHeight="150dp"
-                    app:layout_constraintBottom_toTopOf="@id/addCaretaker"
-                    app:layout_constraintTop_toBottomOf="@id/addCaretakerContainer"
+                    app:layout_constraintBottom_toTopOf="@id/inviteCaretaker"
+                    app:layout_constraintTop_toBottomOf="@id/joinGreenhouseContainer"
                     tools:layout_editor_absoluteX="10dp" />
 
                 <Button
-                    android:id="@+id/addCaretaker"
+                    android:id="@+id/inviteCaretaker"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:layout_marginBottom="5dp"
                     android:layout_weight="1"
-                    android:text="Add caretaker"
-                    app:layout_constraintBottom_toBottomOf="parent"
+                    android:text="Invite caretaker"
+                    app:layout_constraintBottom_toTopOf="@+id/joinGreenhouse"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintStart_toStartOf="parent" />
+
+                <Button
+                    android:id="@+id/joinGreenhouse"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="5dp"
+                    android:layout_weight="1"
+                    android:text="Join another greenhouse"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@id/inviteCaretaker" />
 
             </androidx.constraintlayout.widget.ConstraintLayout>
 
