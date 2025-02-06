@@ -87,7 +87,7 @@ public class WateringNotifService extends Service {
                                 StringBuilder existingPos = new StringBuilder();
                                 for (int i = 0; i < rows.length(); i++) {
                                     JSONObject jsonObject = rows.getJSONObject(i);
-                                    if (jsonObject.getInt("plant_id") == -100) {
+                                    if (jsonObject.getInt("position") == -100) {
                                         continue;
                                     }
 
@@ -127,8 +127,7 @@ public class WateringNotifService extends Service {
                             }
                         },
                         (error) -> {
-//                            Log.e("USERS ERROR", error.toString());
-                            Log.e("users error", "SELECT * FROM plantopia.greenhouses WHERE id=" + greenhouseId + ";");
+                            Log.e("USERS ERROR", error.toString());
                         }
                 );
             } else {
@@ -189,30 +188,30 @@ public class WateringNotifService extends Service {
     private void push(String greenhouseId, JSONArray rows) {
         plants.moveToFirst();
 
-        ArrayList<String> inCloud = new ArrayList<>();
+        ArrayList<Integer> inCloud = new ArrayList<>();
         int i;
         for (i = 0; i<rows.length(); i++) {
             try {
-                inCloud.add(String.valueOf(rows.getJSONObject(i).getInt("plant_id")));
+                inCloud.add(rows.getJSONObject(i).getInt("position"));
             } catch (JSONException e) {
                 throw new RuntimeException(e);
             }
         }
 
-        inCloud.remove(String.valueOf(-100));
+        inCloud.remove(Integer.valueOf(-100));
         for (i = 0; i < plants.getCount(); i++) {
             plants.moveToPosition(i);
-            inCloud.remove(plantHelper.getID(plants));
+            inCloud.remove(Integer.valueOf(plantHelper.getPosition(plants)));
 
             int finalI = i;
             Database.queryAstra(this,
                     String.format(Locale.ENGLISH,
                             "UPDATE plantopia.greenhouses " +
-                                    "SET position=%d, detail='%s', icon='%s', name='%s', last_watered='%s' " +
-                                    "WHERE id=%s AND plant_id=%s;",
-                            plantHelper.getPosition(plants), plantHelper.getDetail(plants).replace("\\/", "htmlSpecial").replace("'", "ApOsTrOpHe"),
+                                    "SET detail='%s', icon='%s', name='%s', last_watered='%s' " +
+                                    "WHERE id=%s AND position=%s;",
+                            plantHelper.getDetail(plants).replace("\\/", "htmlSpecial").replace("'", "ApOsTrOpHe"),
                             plantHelper.getIcon(plants), plantHelper.getName(plants),
-                            plantHelper.getTimestamp(plants), greenhouseId, plantHelper.getID(plants)),
+                            plantHelper.getTimestamp(plants), greenhouseId, plantHelper.getPosition(plants)),
                     response -> {
                         Log.i("update sync push", response);
                         if (finalI == plants.getCount() - 1) {
@@ -235,7 +234,7 @@ public class WateringNotifService extends Service {
         }
     }
 
-    private void deleteFromCloud(String greenhouseId, ArrayList<String> inCloud) {
+    private void deleteFromCloud(String greenhouseId, ArrayList<Integer> inCloud) {
         if (inCloud.isEmpty()) {
             sharedPref.edit()
                     .putBoolean("clientChanged", false)
@@ -243,18 +242,18 @@ public class WateringNotifService extends Service {
         }
 
         for (int i = 0; i<inCloud.size(); i++) {
-            Cursor plant = plantHelper.getPlantById(inCloud.get(i));
+            Cursor plant = plantHelper.getFilledPos(inCloud.get(i));
             plant.moveToFirst();
 
             int finalI = i;
             Database.queryAstra(this,
                     String.format(Locale.ENGLISH,
                             "DELETE FROM plantopia.greenhouses " +
-                                    "WHERE id=%s AND plant_id=%s;",
-                            greenhouseId, plantHelper.getID(plants)),
+                                    "WHERE id=%s AND position=%s;",
+                            greenhouseId, inCloud.get(i)),
                     response -> {
                         Log.e("update sync delete", response);
-                        if (finalI == plants.getCount() - 1) {
+                        if (finalI == inCloud.size() - 1) {
                             sharedPref.edit()
                                     .putBoolean("clientChanged", false)
                                     .commit();

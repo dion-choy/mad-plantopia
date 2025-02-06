@@ -123,8 +123,14 @@ public class PlantHelper extends SQLiteOpenHelper {
         update(id, position, detail, icon, name, last_watered, context, false);
     }
 
-    public void delete(String id, String imgKey, Context context) {
+    public void delete(String id, boolean forSync) {
         getWritableDatabase().delete("plant_table", "_id=?", new String[]{id});
+
+        if (greenhouseId != null && forSync) {
+            sharedPref.edit()
+                    .putBoolean("clientChanged", true)
+                    .commit();
+        }
     }
 
 

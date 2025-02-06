@@ -6,11 +6,14 @@ import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
+import android.view.View;
+import android.view.animation.AnimationUtils;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.splashscreen.SplashScreen;
 
 import com.sp.madproj.R;
@@ -95,6 +98,36 @@ public class PlantDetailActivity extends AppCompatActivity {
             new Handler().postDelayed(() -> {
                 ((TextView) findViewById(R.id.lastWatered)).setText("Last Watered: " + LocalDate.now().toString());
             }, 100);
+        });
+
+        ConstraintLayout confirmRemoveLayout = findViewById(R.id.confirmRemove);
+        findViewById(R.id.deletePlant).setOnClickListener(view -> {
+            if (confirmRemoveLayout.getVisibility() != View.GONE) {
+                confirmRemoveLayout.setVisibility(View.GONE);
+                confirmRemoveLayout.startAnimation(
+                        AnimationUtils.loadAnimation(this, R.anim.fadeout_bg)
+                );
+                new Handler().postDelayed(confirmRemoveLayout::clearAnimation, 300);
+            } else {
+                confirmRemoveLayout.setVisibility(View.VISIBLE);
+                confirmRemoveLayout.startAnimation(
+                        AnimationUtils.loadAnimation(this, R.anim.fadein_bg)
+                );
+                new Handler().postDelayed(confirmRemoveLayout::clearAnimation, 300);
+            }
+        });
+
+        confirmRemoveLayout.setOnClickListener(view -> {
+            confirmRemoveLayout.setVisibility(View.GONE);
+            confirmRemoveLayout.startAnimation(
+                    AnimationUtils.loadAnimation(this, R.anim.fadeout_bg)
+            );
+            new Handler().postDelayed(confirmRemoveLayout::clearAnimation, 300);
+        });
+
+        findViewById(R.id.removeBtn).setOnClickListener(view -> {
+            plantHelper.delete(id, true);
+            finish();
         });
     }
 

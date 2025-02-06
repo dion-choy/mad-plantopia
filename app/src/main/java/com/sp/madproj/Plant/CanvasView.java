@@ -154,6 +154,11 @@ public class CanvasView extends View {
         return this.bufferCanvas;
     }
 
+    public void clear() {
+        allSprites.clear();
+        clickableSprites.clear();
+    }
+
     public boolean remove(Sprite sprite) {
         clickableSprites.remove(sprite);
         return allSprites.remove(sprite);

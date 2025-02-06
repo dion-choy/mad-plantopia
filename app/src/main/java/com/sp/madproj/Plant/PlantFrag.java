@@ -286,7 +286,7 @@ public class PlantFrag extends Fragment {
 
     private void checkDbForCode(String code) {
         Database.queryAstra(getActivity(),
-                "SELECT id, detail FROM plantopia.greenhouses WHERE plant_id=-100;",
+                "SELECT id, detail FROM plantopia.greenhouses WHERE position=-100;",
                 response -> {
                     Log.d("join greenhouse", response);
                     try {
@@ -303,6 +303,7 @@ public class PlantFrag extends Fragment {
                                 Toast.makeText(getActivity(), "Greenhouse added", Toast.LENGTH_LONG).show();
                                 sharedPref.edit()
                                         .putString("greenhouseId", greenhouseId)
+                                        .putBoolean("clientChanged", false)
                                         .commit();
 
                                 Database.queryAstra(getActivity(),
@@ -310,7 +311,7 @@ public class PlantFrag extends Fragment {
                                         response1 -> {},
                                         error -> {}
                                         );
-                                break;
+                                return;
                             }
                         }
                         Toast.makeText(getActivity(), "Invalid code", Toast.LENGTH_LONG).show();
@@ -321,9 +322,6 @@ public class PlantFrag extends Fragment {
                 },
                 error -> {
                     Log.e("UPDATE CODE ERROR", error.toString());
-                    Log.e("UPDATE CODE ERROR",
-                            "SELECT id, detail FROM plantopia.greenhouses WHERE plant_id=-100;"
-                    );
                     if (error.getClass() == NoConnectionError.class) {
                         Toast.makeText(getActivity(), "Please connect to internet", Toast.LENGTH_SHORT).show();
                     }
@@ -338,7 +336,7 @@ public class PlantFrag extends Fragment {
         }
 
         Database.queryAstra(getActivity(),
-                "UPDATE plantopia.greenhouses SET detail='"+ code +"' WHERE id=" + sharedPref.getString("greenhouseId", null) + " AND plant_id=-100;",
+                "UPDATE plantopia.greenhouses SET detail='"+ code +"' WHERE id=" + sharedPref.getString("greenhouseId", null) + " AND position=-100;",
                 response -> {
                     Log.d("ROOMS", code.toString());
                     Toast.makeText(getActivity(), "Code: " + code, Toast.LENGTH_LONG).show();
@@ -346,7 +344,7 @@ public class PlantFrag extends Fragment {
                 error -> {
                     Log.e("UPDATE CODE ERROR", error.toString());
                     Log.e("UPDATE CODE ERROR",
-                            "UPDATE plantopia.greenhouses SET detail='"+ code +"' WHERE id=" + sharedPref.getString("greenhouseId", null) + " AND plant_id=-100;"
+                            "UPDATE plantopia.greenhouses SET detail='"+ code +"' WHERE id=" + sharedPref.getString("greenhouseId", null) + " AND position=-100;"
                         );
                     if (error.getClass() == NoConnectionError.class) {
                         Toast.makeText(getActivity(), "Please connect to internet", Toast.LENGTH_SHORT).show();
@@ -537,7 +535,6 @@ public class PlantFrag extends Fragment {
     }
 
     public void closeOptions() {
-        Log.d("Visibility", addPersonContainer.getVisibility()+"");
         if (addPersonContainer.getVisibility() != View.GONE) {
             addPersonContainer.setVisibility(View.GONE);
             addPersonContainer.startAnimation(fadeOutBg);
@@ -600,6 +597,8 @@ public class PlantFrag extends Fragment {
         if (context == null) {
             return;
         }
+
+        canvas.clear();
 
         Cursor allPlants = plantHelper.getAll();
         allPlants.moveToFirst();
