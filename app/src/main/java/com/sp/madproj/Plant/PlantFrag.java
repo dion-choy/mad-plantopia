@@ -595,7 +595,7 @@ public class PlantFrag extends Fragment {
         return new float[]{pos[0]-7, pos[1]+10, pos[2]};
     }
 
-    private void loadPlants() {
+    public void loadPlants() {
         Context context = getContext();
         if (context == null) {
             return;

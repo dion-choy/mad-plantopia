@@ -73,6 +73,10 @@ public class MainActivity extends AppCompatActivity {
         return longitude;
     }
 
+    public PlantFrag getPlantFrag() {
+        return this.plantFrag;
+    }
+
     @Override
     public void onBackPressed() {
         if (fragManager.findFragmentById(R.id.viewFrag) == identifyFrag && identifyFrag.getView().findViewById(R.id.idPlant).getContentDescription().equals("Close options")) {
@@ -288,7 +292,7 @@ public class MainActivity extends AppCompatActivity {
 
     private final static int MSG_UPDATE_TIME = 0;
 
-    private final Handler mUpdateTimeHandler = new UIUpdateHandler(this);
+    private final Handler serviceHandler = new UIUpdateHandler(this);
 
     @Override
     protected void onStart() {
@@ -316,6 +320,9 @@ public class MainActivity extends AppCompatActivity {
             notifService = binder.getService();
             serviceBound = true;
             notifService.startBackground();
+            notifService.setSyncListener(() -> {
+                serviceHandler.sendEmptyMessage(MSG_UPDATE_TIME);
+            });
         }
 
         @Override
@@ -335,8 +342,8 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void handleMessage(Message message) {
             if (MSG_UPDATE_TIME == message.what) {
-//                activity.get();
-                sendEmptyMessageDelayed(MSG_UPDATE_TIME, UPDATE_RATE_MS);
+                activity.get().getPlantFrag().loadPlants();
+//                sendEmptyMessageDelayed(MSG_UPDATE_TIME, UPDATE_RATE_MS);
             }
         }
     }

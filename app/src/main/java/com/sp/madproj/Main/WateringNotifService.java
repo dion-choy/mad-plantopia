@@ -105,15 +105,20 @@ public class WateringNotifService extends Service {
                                                 WateringNotifService.this
                                         );
                                         Log.d("update client", "Inserted");
+                                        if (syncListener != null) {
+                                            syncListener.run();
+                                        }
                                     }
                                     existingPos.append(jsonObject.getInt("position"))
                                             .append(", ");
                                 }
                                 existingPos.setLength(existingPos.length() - 2);
                                 Log.d("TEST", existingPos.toString());
-                                plantHelper.getWritableDatabase()
+                                if (plantHelper.getWritableDatabase()
                                         .delete("plant_table", "position NOT IN (" + existingPos +
-                                                ")", null);
+                                                ")", null) > 0) {
+                                    syncListener.run();
+                                }
 
                                 Log.d("update", "Updated");
                             } catch (JSONException e) {
@@ -226,7 +231,7 @@ public class WateringNotifService extends Service {
 
         if (plants.getCount() == 0) {
             Log.e("update sync push", "NOthing in db");
-//            deleteFromCloud(greenhouseId, inCloud);
+            deleteFromCloud(greenhouseId, inCloud);
         }
     }
 
@@ -264,6 +269,12 @@ public class WateringNotifService extends Service {
             );
         }
     }
+
+    public void setSyncListener(Runnable listener) {
+        syncListener = listener;
+    }
+
+    private Runnable syncListener = null;
 
     private final IBinder serviceBinder = new RunServiceBinder();
     public class RunServiceBinder extends Binder {
