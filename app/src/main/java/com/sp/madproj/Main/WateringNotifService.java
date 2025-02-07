@@ -53,6 +53,10 @@ public class WateringNotifService extends Service {
         public void run() {
             Log.d(TAG, "Service ran " + ++num + " times");
 
+            if (FirebaseAuth.getInstance().getCurrentUser() != null) {
+                checkUsernames(FirebaseAuth.getInstance().getCurrentUser().getDisplayName());
+            }
+
             // Test
             NotificationManagerCompat.from(WateringNotifService.this)
                     .notify(10000, createNotification(
@@ -289,9 +293,6 @@ public class WateringNotifService extends Service {
     public void onCreate() {
         super.onCreate();
 
-        if (FirebaseAuth.getInstance().getCurrentUser() != null) {
-            checkUsernames(FirebaseAuth.getInstance().getCurrentUser().getDisplayName());
-        }
         sharedPref = getSharedPreferences("greenhouse", MODE_PRIVATE);
 
         Log.v(TAG, "Creating service");
