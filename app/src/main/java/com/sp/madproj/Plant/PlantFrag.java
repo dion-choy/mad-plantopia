@@ -4,11 +4,13 @@ import static android.content.Context.MODE_PRIVATE;
 import static com.sp.madproj.Plant.CanvasView.getBitmapFromVectorDrawable;
 import static com.sp.madproj.Plant.CanvasView.pxFromDp;
 
+import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.net.Uri;
@@ -35,6 +37,8 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.cardview.widget.CardView;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.DefaultItemAnimator;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -137,6 +141,16 @@ public class PlantFrag extends Fragment {
                 new Sprite(context, CanvasView.DP, pot, 335.09f, 399f, 1, 1, false),
                 new Sprite(context, CanvasView.DP, pot, -5.73f, 399f, 1, 1, false)
         );
+
+        int permissionState = ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.READ_CALENDAR);
+        if (permissionState == PackageManager.PERMISSION_DENIED) {
+            ActivityCompat.requestPermissions(requireActivity(), new String[]{Manifest.permission.READ_CALENDAR}, 1);
+        }
+
+        permissionState = ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.WRITE_CALENDAR);
+        if (permissionState == PackageManager.PERMISSION_DENIED) {
+            ActivityCompat.requestPermissions(requireActivity(), new String[]{Manifest.permission.WRITE_CALENDAR}, 1);
+        }
     }
 
     @SuppressLint("ApplySharedPref")

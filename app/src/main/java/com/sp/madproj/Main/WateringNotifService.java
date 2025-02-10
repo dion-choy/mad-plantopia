@@ -7,14 +7,20 @@ import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
+import android.content.ContentResolver;
+import android.content.ContentValues;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.graphics.Color;
+import android.net.Uri;
 import android.os.Binder;
 import android.os.Handler;
 import android.os.IBinder;
+import android.provider.CalendarContract.Calendars;
+import android.provider.CalendarContract.Events;
+import android.provider.CalendarContract.Reminders;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -32,12 +38,13 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.time.LocalDate;
+import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Locale;
+import java.util.TimeZone;
 import java.util.Timer;
 import java.util.TimerTask;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 public class WateringNotifService extends Service {
     public WateringNotifService() {
@@ -69,80 +76,94 @@ public class WateringNotifService extends Service {
 
             String greenhouseId = sharedPref.getString("greenhouseId", null);
             if (greenhouseId != null) {
-                Database.queryAstra(WateringNotifService.this,
-                        "SELECT * FROM plantopia.greenhouses WHERE id=" + greenhouseId + ";",
-                        (response) -> {
-                            plants = plantHelper.getAll();
-                            Log.d("update", response);
-
-                            try {
-                                JSONArray rows = new JSONObject(response).getJSONArray("data");
-
-                                Log.d("update sync needed", String.valueOf(sharedPref.getBoolean("clientChanged", false)));
-                                if (sharedPref.getBoolean("clientChanged", false)) {
-                                    push(greenhouseId, rows);
-                                    return;
-                                }
-
-                                if (rows.length() == 0) {
-                                    return;
-                                }
-
-                                StringBuilder existingPos = new StringBuilder();
-                                for (int i = 0; i < rows.length(); i++) {
-                                    JSONObject jsonObject = rows.getJSONObject(i);
-                                    if (jsonObject.getInt("position") == -100) {
-                                        continue;
-                                    }
-
-                                    if (plantHelper.getFilledPos(jsonObject.getInt("position")).getCount() > 0) {
-                                        plantHelper.updateByPos(jsonObject.getInt("position"),
-                                                jsonObject.getString("detail").replace("htmlSpecial", "\\/").replace("ApOsTrOpHe", "'"), jsonObject.getString("icon"),
-                                                jsonObject.getString("name"), jsonObject.getString("last_watered"),
-                                                WateringNotifService.this
-                                        );
-                                        Log.d("update client", "Updated");
-                                    } else {
-                                        plantHelper.insert(jsonObject.getInt("position"),
-                                                jsonObject.getString("detail").replace("htmlSpecial", "\\/").replace("ApOsTrOpHe", "'"), jsonObject.getString("icon"),
-                                                jsonObject.getString("name"), jsonObject.getString("last_watered"),
-                                                WateringNotifService.this
-                                        );
-                                        Log.d("update client", "Inserted");
-                                        if (syncListener != null) {
-                                            syncListener.run();
-                                        }
-                                    }
-                                    existingPos.append(jsonObject.getInt("position"))
-                                            .append(", ");
-                                }
-                                existingPos.setLength(existingPos.length() - 2);
-                                Log.d("TEST", existingPos.toString());
-                                if (plantHelper.getWritableDatabase()
-                                        .delete("plant_table", "position NOT IN (" + existingPos +
-                                                ")", null) > 0) {
-                                    syncListener.run();
-                                }
-
-                                Log.d("update", "Updated");
-                            } catch (JSONException e) {
-                                Log.d("update error", e.toString());
-                                throw new RuntimeException(e);
-                            }
-                        },
-                        (error) -> {
-                            Log.e("USERS ERROR", error.toString());
-                        }
-                );
+                pullFromCloud(greenhouseId);
             } else {
-                Log.d("update", "sync not turned on");
+                Log.d("Update", "sync not turned on");
             }
 
             loadNotifications();
+            loadCalendar();
             plantHelper.close();
         }
     };
     private int num = 0;
+
+    private void loadCalendar() {
+        plants.moveToFirst();
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.WRITE_CALENDAR) != PackageManager.PERMISSION_GRANTED) {
+            Log.d("Update", "Calendar permissions denied");
+            return;
+        }
+
+        String[] projection = {"_id", "calendar_displayName"};
+        Cursor calCursor = getApplication().getContentResolver()
+                .query(Calendars.CONTENT_URI, projection, Calendars.VISIBLE + " = 1 AND "  + Calendars.IS_PRIMARY + "=1", null, Calendars._ID + " ASC");
+        if (calCursor.getCount() <= 0){
+            calCursor = getApplication().getContentResolver()
+                    .query(Calendars.CONTENT_URI, projection, Calendars.VISIBLE + " = 1", null, Calendars._ID + " ASC");
+        }
+
+        calCursor.moveToFirst();
+        long calID = calCursor.getLong(0);
+        calCursor.close();
+
+        for (int i=0; i<plants.getCount(); i++) {
+            plants.moveToPosition(i);
+
+            LocalDate lastWatered = LocalDate.parse(plantHelper.getTimestamp(plants));
+
+            int min = 0;
+            try {
+                JSONObject jsonObject = new JSONObject(plantHelper.getDetail(plants));
+                if (!jsonObject.isNull("watering")) {
+                    min = jsonObject.getJSONObject("watering").getInt("min");
+                } else {
+                    continue;
+                }
+            } catch (JSONException e) {
+                throw new RuntimeException(e);
+            }
+
+            int timeDelta = 0;
+            if (min == 1) {
+                timeDelta = 7;
+            } else if (min == 2) {
+                timeDelta = 3;
+            } else if (min == 3) {
+                timeDelta = 1;
+            }
+            LocalDate nextWatered = lastWatered.plusDays(timeDelta);
+            Log.d("Update Calendar", "Calendar updating");
+
+            ContentResolver cr = getContentResolver();
+            Cursor cursor = cr.query(Events.CONTENT_URI, new String[] { Events.CALENDAR_ID, Events.TITLE, Events._ID},
+                    Events.TITLE + "=? AND " + Events.DESCRIPTION + "=?",
+                    new String[] {"Water " + plantHelper.getName(plants), "Position " + plantHelper.getPosition(plants)}, null);
+
+            if (cursor.getCount() > 0) {
+                continue;
+            }
+            ContentValues values = new ContentValues();
+            values.put(Events.DTSTART, nextWatered.atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli());
+            values.put(Events.DTEND, nextWatered.atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli() + 86400000);
+            values.put(Events.ALL_DAY, 1);
+            values.put(Events.TITLE, "Water " + plantHelper.getName(plants));
+            values.put(Events.DESCRIPTION, "Position " + plantHelper.getPosition(plants));
+            values.put(Events.CALENDAR_ID, calID);
+            values.put(Events.EVENT_TIMEZONE, TimeZone.getDefault().getID());
+            Uri uri = cr.insert(Events.CONTENT_URI, values);
+
+            long eventID = Long.parseLong(uri.getLastPathSegment());
+
+            values = new ContentValues();
+            values.put(Reminders.MINUTES, 15);
+            values.put(Reminders.EVENT_ID, eventID);
+            values.put(Reminders.METHOD, Reminders.METHOD_ALERT);
+            cr.insert(Reminders.CONTENT_URI, values);
+        }
+
+        Log.d("Update Calendar", "Calendar updated");
+    }
 
     private void loadNotifications() {
         plants.moveToFirst();
@@ -189,6 +210,71 @@ public class WateringNotifService extends Service {
         }
     }
 
+    private void pullFromCloud(String greenhouseId) {
+        Database.queryAstra(WateringNotifService.this,
+                "SELECT * FROM plantopia.greenhouses WHERE id=" + greenhouseId + ";",
+                (response) -> {
+            plants = plantHelper.getAll();
+                    Log.d("Update", response);
+
+                    try {
+                        JSONArray rows = new JSONObject(response).getJSONArray("data");
+
+                        Log.d("Update sync needed", String.valueOf(sharedPref.getBoolean("clientChanged", false)));
+                        if (sharedPref.getBoolean("clientChanged", false)) {
+                            push(greenhouseId, rows);
+                            return;
+                        }
+
+                        if (rows.length() == 0) {
+                            return;
+                        }
+
+                        StringBuilder existingPos = new StringBuilder();
+                        for (int i = 0; i < rows.length(); i++) {
+                            JSONObject jsonObject = rows.getJSONObject(i);
+                            if (jsonObject.getInt("position") == -100) {
+                                continue;
+                            }
+
+                            if (plantHelper.getFilledPos(jsonObject.getInt("position")).getCount() > 0) {
+                                plantHelper.updateByPos(jsonObject.getInt("position"),
+                                        jsonObject.getString("detail").replace("htmlSpecial", "\\/").replace("ApOsTrOpHe", "'"), jsonObject.getString("icon"),
+                                        jsonObject.getString("name"), jsonObject.getString("last_watered"),
+                                        WateringNotifService.this
+                                );
+                                Log.d("Update client", "Updated");
+                            } else {
+                                plantHelper.insert(jsonObject.getInt("position"),
+                                        jsonObject.getString("detail").replace("htmlSpecial", "\\/").replace("ApOsTrOpHe", "'"), jsonObject.getString("icon"),
+                                        jsonObject.getString("name"), jsonObject.getString("last_watered"),
+                                        WateringNotifService.this
+                                );
+                                Log.d("Update client", "Inserted");
+                                if (syncListener != null) {
+                                    syncListener.run();
+                                }
+                            }
+                            existingPos.append(jsonObject.getInt("position"))
+                                    .append(", ");
+                        }
+                        existingPos.setLength(existingPos.length() - 2);
+                        if (plantHelper.getWritableDatabase()
+                                .delete("plant_table", "position NOT IN (" + existingPos +
+                                        ")", null) > 0) {
+                            syncListener.run();
+                        }
+
+                        Log.d("Update", "Updated");
+                    } catch (JSONException e) {
+                        Log.d("Update error", e.toString());
+                        throw new RuntimeException(e);
+                    }
+                },
+                (error) -> Log.e("SYNC ERROR", error.toString())
+        );
+    }
+
     @SuppressLint("ApplySharedPref")
     private void push(String greenhouseId, JSONArray rows) {
         plants.moveToFirst();
@@ -218,7 +304,7 @@ public class WateringNotifService extends Service {
                             plantHelper.getIcon(plants), plantHelper.getName(plants),
                             plantHelper.getTimestamp(plants), greenhouseId, plantHelper.getPosition(plants)),
                     response -> {
-                        Log.i("update sync push", response);
+                        Log.i("Update sync push", response);
                         if (finalI == plants.getCount() - 1) {
                             deleteFromCloud(greenhouseId, inCloud);
                         }
@@ -227,14 +313,14 @@ public class WateringNotifService extends Service {
                         sharedPref.edit()
                                 .putBoolean("clientChanged", true)
                                 .commit();
-                        Log.e("update error", error.toString());
+                        Log.e("Update error", error.toString());
                     }
             );
 
         }
 
         if (plants.getCount() == 0) {
-            Log.e("update sync push", "NOthing in db");
+            Log.e("Update sync push", "NOthing in db");
             deleteFromCloud(greenhouseId, inCloud);
         }
     }
@@ -258,7 +344,7 @@ public class WateringNotifService extends Service {
                                     "WHERE id=%s AND position=%s;",
                             greenhouseId, inCloud.get(i)),
                     response -> {
-                        Log.e("update sync delete", response);
+                        Log.e("Update sync delete", response);
                         if (finalI == inCloud.size() - 1) {
                             sharedPref.edit()
                                     .putBoolean("clientChanged", false)
@@ -269,7 +355,7 @@ public class WateringNotifService extends Service {
                         sharedPref.edit()
                                 .putBoolean("clientChanged", true)
                                 .commit();
-                        Log.e("update error", error.toString());
+                        Log.e("Update error", error.toString());
                     }
             );
         }
