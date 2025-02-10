@@ -1,0 +1,4 @@
+Plant Parent;Add your first plant to your greenhouse|0
+Green Thumb;Fill up your entire greenhouse|0
+Budding Botanist;Identify your first plant using the ID feature|0
+Garden Club Member;Join the app’s plant care forum|0

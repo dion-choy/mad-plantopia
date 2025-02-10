@@ -17,13 +17,13 @@
         <ImageButton
             android:id="@+id/backBtn"
             android:layout_width="wrap_content"
-            android:layout_height="match_parent"
+            android:layout_height="wrap_content"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:contentDescription="back button"
             android:rotation="180"
-            android:scaleX="0.7"
-            android:scaleY="0.7"
             android:src="@drawable/back_btn"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
             app:tint="?android:attr/textColor" />
 
         <androidx.cardview.widget.CardView

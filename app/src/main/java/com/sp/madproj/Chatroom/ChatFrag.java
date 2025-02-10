@@ -47,6 +47,7 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.GenericTypeIndicator;
 import com.google.firebase.database.ValueEventListener;
 import com.sp.madproj.Classes.Message;
+import com.sp.madproj.Plant.CanvasView;
 import com.sp.madproj.Utils.Database;
 import com.sp.madproj.R;
 import com.sp.madproj.Utils.Storage;
@@ -96,7 +97,7 @@ public class ChatFrag extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        getActivity().getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
+        requireActivity().getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
     }
 
     @Override
@@ -149,7 +150,7 @@ public class ChatFrag extends Fragment {
 
         root = view.findViewById(R.id.root);
         displayMetrics = new DisplayMetrics();
-        getActivity().getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
+        requireActivity().getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
 
         chatAdapter = new ChatAdapter(model);
         chatAdapter.registerAdapterDataObserver(new RecyclerView.AdapterDataObserver() {
@@ -306,7 +307,7 @@ public class ChatFrag extends Fragment {
     public void onDestroyView() {
         super.onDestroyView();
         model.clear();
-        getActivity().getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_NOTHING);
+        requireActivity().getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_NOTHING);
     }
 
     private void destroyFragment() {
@@ -414,17 +415,19 @@ public class ChatFrag extends Fragment {
 
             Bitmap bitmap;
             try {
-                bitmap = MediaStore.Images.Media.getBitmap(getActivity().getContentResolver(), uri);
+                bitmap = MediaStore.Images.Media.getBitmap(requireActivity().getContentResolver(), uri);
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
 
             bitmap = Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true);
+            Bitmap.createScaledBitmap(bitmap, (int) CanvasView.pxFromDp(80, requireContext()),
+                    (int) CanvasView.pxFromDp(80, requireContext()), false);
             holder.image.setImageBitmap(bitmap);
 
             holder.itemView.setOnClickListener(view -> {
                 imagePreviewModel.remove(uri);
-                imagePreviewAdapter.notifyDataSetChanged();
+                imagePreviewAdapter.notifyItemRemoved(holder.getAdapterPosition());
 
                 if (imagePreviewModel.isEmpty()) {
                     sendMsgBtn.startAnimation(disableSend);
@@ -476,40 +479,36 @@ public class ChatFrag extends Fragment {
             }
 
             if (!message.username.equals(prevUsername)) {
+                String usernameStr;
+                String pfpStr;
                 if (!users.isEmpty() && users.get(message.uid) != null){
                     Log.d("GET USERS", users.toString());
-                    Picasso.get()
-                            .load(users.get(message.uid).get("pfp"))
-                            .placeholder(R.mipmap.default_pfp_foreground)
-                            .into(holder.pfpIcon, new Callback() {
-                                @Override
-                                public void onSuccess() {
-                                    holder.pfpIcon.setImageTintList(null);
-                                }
-
-                                @Override
-                                public void onError(Exception e) {}
-                            });
-
-                    holder.username.setText(users.get(message.uid).get("username"));
+                    usernameStr  = users.get(message.uid).get("username");
+                    pfpStr = users.get(message.uid).get("pfp");
                 } else {
-                    holder.username.setText(message.username);
-                    Picasso.get()
-                            .load(message.pfp)
-                            .placeholder(R.mipmap.default_pfp_foreground)
-                            .into(holder.pfpIcon, new Callback() {
-                                @Override
-                                public void onSuccess() {
-                                    holder.pfpIcon.setImageTintList(null);
-                                }
-
-                                @Override
-                                public void onError(Exception e) {
-                                }
-                            });
-                    holder.pfpIcon.setVisibility(View.VISIBLE);
-                    holder.username.setVisibility(View.VISIBLE);
+                    usernameStr  = message.username;
+                    pfpStr = message.pfp;
                 }
+
+                holder.username.setText(usernameStr);
+                Picasso.get()
+                        .load(pfpStr)
+                        .resize((int) CanvasView.pxFromDp(50, requireContext()),
+                                (int) CanvasView.pxFromDp(50, requireContext()))
+                        .centerCrop()
+                        .placeholder(R.mipmap.default_pfp_foreground)
+                        .into(holder.pfpIcon, new Callback() {
+                            @Override
+                            public void onSuccess() {
+                                holder.pfpIcon.setImageTintList(null);
+                            }
+
+                            @Override
+                            public void onError(Exception e) {
+                            }
+                        });
+                holder.pfpIcon.setVisibility(View.VISIBLE);
+                holder.username.setVisibility(View.VISIBLE);
             } else {
                 holder.pfpIcon.setVisibility(View.GONE);
                 holder.username.setVisibility(View.GONE);
@@ -526,6 +525,9 @@ public class ChatFrag extends Fragment {
                 holder.imageTopLeft.setVisibility(View.VISIBLE);
                 Picasso.get()
                         .load(Storage.chatroomImageStorage + message.imageKeys.get(0))
+                        .resize((int) CanvasView.pxFromDp(330, requireContext()),
+                                (int) CanvasView.pxFromDp(330, requireContext()))
+                        .centerCrop()
                         .placeholder(R.drawable.gallery)
                         .into(holder.imageTopLeft);
                 Log.d("CHAT IMAGE", "onBindViewHolder: 1 Viewable");
@@ -537,6 +539,9 @@ public class ChatFrag extends Fragment {
                 holder.imageTopRight.setVisibility(View.VISIBLE);
                 Picasso.get()
                         .load(Storage.chatroomImageStorage + message.imageKeys.get(1))
+                        .resize((int) CanvasView.pxFromDp(165, requireContext()),
+                                (int) CanvasView.pxFromDp(330, requireContext()))
+                        .centerCrop()
                         .placeholder(R.drawable.gallery)
                         .into(holder.imageTopRight);
                 Log.d("CHAT IMAGE", "onBindViewHolder: 2 Viewable");
@@ -548,6 +553,9 @@ public class ChatFrag extends Fragment {
                 holder.imageBottomLeft.setVisibility(View.VISIBLE);
                 Picasso.get()
                         .load(Storage.chatroomImageStorage + message.imageKeys.get(2))
+                        .resize((int) CanvasView.pxFromDp(330, requireContext()),
+                                (int) CanvasView.pxFromDp(165, requireContext()))
+                        .centerCrop()
                         .placeholder(R.drawable.gallery)
                         .into(holder.imageBottomLeft);
                 Log.d("CHAT IMAGE", "onBindViewHolder: 3 Viewable");
@@ -559,9 +567,12 @@ public class ChatFrag extends Fragment {
                 holder.imageBottomRight.setVisibility(View.VISIBLE);
                 Picasso.get()
                         .load(Storage.chatroomImageStorage + message.imageKeys.get(3))
+                        .resize((int) CanvasView.pxFromDp(165, requireContext()),
+                                (int) CanvasView.pxFromDp(165, requireContext()))
+                        .centerCrop()
                         .placeholder(R.drawable.gallery)
                         .into(holder.imageBottomRight);
-                Log.d("CHAT IMAGE", "onBindViewHolder: 3 Viewable");
+                Log.d("CHAT IMAGE", "onBindViewHolder: 4 Viewable");
             } else {
                 holder.imageBottomRight.setVisibility(View.GONE);
             }
@@ -570,14 +581,14 @@ public class ChatFrag extends Fragment {
                 holder.extraImages.setVisibility(View.VISIBLE);
                 holder.extraImages.setText(String.format(Locale.ENGLISH, "+%d", message.imageKeys.size() - 3));
             } else {
-                holder.imageBottomRight.setVisibility(View.GONE);
+                holder.extraImages.setVisibility(View.GONE);
             }
 
             holder.itemView.setOnTouchListener(swipeAway);
 
-            holder.itemView.setOnClickListener(view ->
-                Toast.makeText(getActivity(), "message clicked", Toast.LENGTH_SHORT).show()
-            );
+//            holder.itemView.setOnClickListener(view ->
+//                Toast.makeText(getActivity(), "message clicked", Toast.LENGTH_SHORT).show()
+//            );
 
             holder.imageContainer.setOnClickListener(view -> {
                 Intent intent = new Intent(getContext(), ExpandImages.class);

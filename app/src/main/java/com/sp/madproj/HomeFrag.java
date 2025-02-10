@@ -2,18 +2,23 @@ package com.sp.madproj;
 
 import static android.content.Context.MODE_PRIVATE;
 
+import android.Manifest;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
+import android.database.Cursor;
 import android.graphics.Color;
 import android.location.LocationManager;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.os.Build;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
+import androidx.core.app.ActivityCompat;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.DefaultItemAnimator;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -34,9 +39,13 @@ import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.Volley;
 import com.sp.madproj.Main.GPSTracker;
 import com.sp.madproj.Main.MainActivity;
+import com.sp.madproj.Plant.PlantHelper;
 
 import org.json.JSONException;
+import org.json.JSONObject;
 
+import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -75,7 +84,7 @@ public class HomeFrag extends Fragment {
         weatherImg = view.findViewById(R.id.weatherImage);
 
         // Load past data
-        sharedPref = getActivity().getApplicationContext().getSharedPreferences("mySettings", MODE_PRIVATE);
+        sharedPref = requireActivity().getSharedPreferences("mySettings", MODE_PRIVATE);
         fillScreenText(
                 sharedPref.getInt("temperature", 0),
                 sharedPref.getInt("humidity", 0),
@@ -94,14 +103,14 @@ public class HomeFrag extends Fragment {
         // Set refresh
         refreshHome =  view.findViewById(R.id.refreshHome);
         refreshHome.setOnRefreshListener(() -> {
-            ((MainActivity) getActivity()).updateLocation();
+            ((MainActivity) requireActivity()).updateLocation();
             getWeather();
             loadNotifs();
             notifs.setAdapter(notifsAdapter);
             refreshHome.setRefreshing(false);
         });
 
-        GPSTracker gpsTracker = ((MainActivity) getActivity()).gpsTracker;
+        GPSTracker gpsTracker = ((MainActivity) requireActivity()).gpsTracker;
         if (gpsTracker != null && gpsTracker.canGetLocation) {
             getWeather();
         }
@@ -115,7 +124,11 @@ public class HomeFrag extends Fragment {
 
         IntentFilter filter = new IntentFilter(LocationManager.PROVIDERS_CHANGED_ACTION);
         filter.addAction(ConnectivityManager.CONNECTIVITY_ACTION);
-        getActivity().registerReceiver(gpsSwitchStateReceiver, filter, Context.RECEIVER_NOT_EXPORTED);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            requireActivity().registerReceiver(gpsSwitchStateReceiver, filter, Context.RECEIVER_NOT_EXPORTED);
+        } else {
+            requireActivity().registerReceiver(gpsSwitchStateReceiver, filter);
+        }
 
         notifs.setAdapter(notifsAdapter);
     }
@@ -127,6 +140,7 @@ public class HomeFrag extends Fragment {
             this.notifs = notifs;
         }
 
+        @NonNull
         @Override
         public NotifsHolder onCreateViewHolder(ViewGroup parent, int viewType) {
             View view = LayoutInflater.from(parent.getContext())
@@ -153,7 +167,7 @@ public class HomeFrag extends Fragment {
                     holder.notifType.setColorFilter(Color.RED);
                     break;
                 default:
-                    Toast.makeText(getActivity().getApplicationContext(), notif.substring(0,1), Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getActivity(), notif.substring(0,1), Toast.LENGTH_SHORT).show();
                     holder.notifType.setImageResource(R.drawable.notif_info);
             }
         }
@@ -170,7 +184,7 @@ public class HomeFrag extends Fragment {
             public NotifsHolder(View itemView) {
                 super(itemView);
                 notifType = itemView.findViewById(R.id.pfpIcon);
-                notifText = itemView.findViewById(R.id.notifMessage);
+                notifText = itemView.findViewById(R.id.title);
             }
         }
     }
@@ -245,6 +259,8 @@ public class HomeFrag extends Fragment {
     private void loadNotifs() {
         model.clear();
 
+//        model.add("2Test");
+
         int temp = sharedPref.getInt("temperature", 0);
         int humidity = sharedPref.getInt("humidity", 0);
         if (temp > 26) {
@@ -263,17 +279,51 @@ public class HomeFrag extends Fragment {
             model.add("1The humidity is low! Your plants might require more water");
         }
 
-        model.add("2Test2");
-        model.add("3Test3");
+        PlantHelper plantHelper = new PlantHelper(getContext());
+        Cursor plants = plantHelper.getAll();
+        plants.moveToFirst();
+        if (ActivityCompat.checkSelfPermission(requireContext(), Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+            return;
+        }
+        for (int i=0; i<plants.getCount(); i++) {
+            plants.moveToPosition(i);
+            LocalDate lastWatered = LocalDate.parse(plantHelper.getTimestamp(plants));
+            int timeDelta = (int) ChronoUnit.DAYS.between(lastWatered, LocalDate.now());
+
+            int min = 0;
+            try {
+                JSONObject jsonObject = new JSONObject(plantHelper.getDetail(plants));
+                if (!jsonObject.isNull("watering")) {
+                    min = jsonObject.getJSONObject("watering").getInt("min");
+                }
+            } catch (JSONException e) {
+                throw new RuntimeException(e);
+            }
+
+            if (min == 1) {
+                if (timeDelta >= 7) {
+                    model.add("3" + plantHelper.getName(plants) + " requires watering!");
+                }
+            } else if (min == 2) {
+                if (timeDelta >= 3) {
+                    model.add("3" + plantHelper.getName(plants) + " requires watering!");
+                }
+            } else if (min == 3) {
+                if (timeDelta >= 1) {
+                    model.add("3" + plantHelper.getName(plants) + " requires watering!");
+                }
+            }
+        }
+        plantHelper.close();
     }
 
     private void getWeather() {
         String weatherUrl = "https://api.openweathermap.org/data/2.5/weather?units=metric" +
-                "&lat=" + ((MainActivity) getActivity()).getLatitude() +
-                "&lon=" + ((MainActivity) getActivity()).getLongitude() +
+                "&lat=" + ((MainActivity) requireActivity()).getLatitude() +
+                "&lon=" + ((MainActivity) requireActivity()).getLongitude() +
                 "&appid=" + BuildConfig.WEATHER_KEY;
 
-        RequestQueue queue = Volley.newRequestQueue(getActivity());
+        RequestQueue queue = Volley.newRequestQueue(requireActivity());
 
         JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(
                 Request.Method.GET, weatherUrl, null, response -> {

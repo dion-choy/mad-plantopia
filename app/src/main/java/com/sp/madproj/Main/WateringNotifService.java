@@ -189,6 +189,7 @@ public class WateringNotifService extends Service {
         }
     }
 
+    @SuppressLint("ApplySharedPref")
     private void push(String greenhouseId, JSONArray rows) {
         plants.moveToFirst();
 
@@ -238,6 +239,7 @@ public class WateringNotifService extends Service {
         }
     }
 
+    @SuppressLint("ApplySharedPref")
     private void deleteFromCloud(String greenhouseId, ArrayList<Integer> inCloud) {
         if (inCloud.isEmpty()) {
             sharedPref.edit()

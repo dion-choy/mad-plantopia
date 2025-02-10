@@ -37,6 +37,7 @@ import com.android.volley.toolbox.Volley;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.sp.madproj.BuildConfig;
 import com.sp.madproj.Main.MainActivity;
+import com.sp.madproj.Plant.CanvasView;
 import com.sp.madproj.R;
 import com.sp.madproj.Utils.Storage;
 import com.squareup.picasso.Picasso;
@@ -252,6 +253,9 @@ public class IdentifyFrag extends Fragment {
             String imageUrl = Storage.identifStorage + helper.getImage(cursor);
             Picasso.get()
                     .load(imageUrl)
+                    .resize((int) CanvasView.pxFromDp(100, requireContext()),
+                            (int) CanvasView.pxFromDp(100, requireContext()))
+                    .centerCrop()
                     .placeholder(R.drawable.plant_flower)
                     .into(holder.image);
 

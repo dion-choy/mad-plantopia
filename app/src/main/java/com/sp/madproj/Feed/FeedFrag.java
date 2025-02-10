@@ -1,7 +1,10 @@
 package com.sp.madproj.Feed;
 
+import static android.content.Context.MODE_PRIVATE;
+
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -23,10 +26,6 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.android.volley.NoConnectionError;
-import com.android.volley.Response;
-import com.android.volley.VolleyError;
-import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.Task;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -37,6 +36,7 @@ import com.google.firebase.database.GenericTypeIndicator;
 import com.google.firebase.database.ValueEventListener;
 import com.sp.madproj.Chatroom.Chatroom;
 import com.sp.madproj.Main.MainActivity;
+import com.sp.madproj.Plant.CanvasView;
 import com.sp.madproj.R;
 import com.sp.madproj.Utils.Database;
 import com.sp.madproj.Utils.Storage;
@@ -108,11 +108,6 @@ public class FeedFrag extends Fragment {
                     .commit();
         } else {
             currentUser.reload();
-            String username = currentUser.getDisplayName();
-            String email = currentUser.getEmail();
-
-            Log.d("USER NAME: ", username);
-            Log.d("USER EMAIL: ", email);
         }
     }
 
@@ -131,6 +126,10 @@ public class FeedFrag extends Fragment {
                         if (currentUser != null && members.containsValue(currentUser.getUid())) {
                             Log.d("REALTIME", "added: " + snapshot);
                             addChatroomToModel(child);
+                            SharedPreferences sharedPref = requireActivity().getSharedPreferences("greenhouse", MODE_PRIVATE);
+                            sharedPref.edit()
+                                    .putBoolean("joinedRoom", true)
+                                    .apply();
                         }
                         if (chatRoomAdapter != null) {
                             chatRoomAdapter.notifyDataSetChanged();
@@ -219,7 +218,7 @@ public class FeedFrag extends Fragment {
 
         view.findViewById(R.id.createRoom).setOnClickListener(view1 -> {
             Intent intent = new Intent(getActivity(), CreateRoomActivity.class);
-            getActivity().startActivity(intent);
+            requireActivity().startActivity(intent);
         });
         return view;
     }
@@ -227,44 +226,38 @@ public class FeedFrag extends Fragment {
     private void getCode(String code) {
         Database.queryAstra(getActivity(),
                 "SELECT * FROM plantopia.rooms WHERE code = '" + code + "';",
-                new Response.Listener<String>() {
-                    @Override
-                    public void onResponse(String response) {
-                        Log.d("CODE", response);
-                        try {
-                            JSONObject responseObj = new JSONObject(response);
-                            Log.d("CODE", responseObj.toString());
-                            if (responseObj.getJSONArray("data").length() == 0 || responseObj.getJSONArray("data").getJSONObject(0).isNull("generated_time")) {
-                                Toast.makeText(getActivity(), "Code expired or not generated", Toast.LENGTH_LONG).show();
-                                return;
-                            }
-
-                            OffsetDateTime generatedTime = OffsetDateTime.parse(responseObj.getJSONArray("data").getJSONObject(0).getString("generated_time"));
-                            OffsetDateTime nowTime = OffsetDateTime.now();
-                            long time = ChronoUnit.HOURS.between(generatedTime, nowTime);
-                            if (time > 1) {
-                                Toast.makeText(getActivity(), "Code expired or not generated", Toast.LENGTH_LONG).show();
-                                String id = responseObj.getJSONArray("data").getJSONObject(0).getString("id");
-                                removeExpiredCode(id);
-                            } else {
-                                String roomKey = responseObj.getJSONArray("data").getJSONObject(0).getString("id");
-                                Log.d("CODE", roomKey);
-                                addUser(roomKey);
-                                closeOptions();
-                            }
-
-                        } catch (JSONException e) {
-                            throw new RuntimeException(e);
+                response -> {
+                    Log.d("CODE", response);
+                    try {
+                        JSONObject responseObj = new JSONObject(response);
+                        Log.d("CODE", responseObj.toString());
+                        if (responseObj.getJSONArray("data").length() == 0 || responseObj.getJSONArray("data").getJSONObject(0).isNull("generated_time")) {
+                            Toast.makeText(getActivity(), "Code expired or not generated", Toast.LENGTH_LONG).show();
+                            return;
                         }
+
+                        OffsetDateTime generatedTime = OffsetDateTime.parse(responseObj.getJSONArray("data").getJSONObject(0).getString("generated_time"));
+                        OffsetDateTime nowTime = OffsetDateTime.now();
+                        long time = ChronoUnit.HOURS.between(generatedTime, nowTime);
+                        if (time > 1) {
+                            Toast.makeText(getActivity(), "Code expired or not generated", Toast.LENGTH_LONG).show();
+                            String id = responseObj.getJSONArray("data").getJSONObject(0).getString("id");
+                            removeExpiredCode(id);
+                        } else {
+                            String roomKey = responseObj.getJSONArray("data").getJSONObject(0).getString("id");
+                            Log.d("CODE", roomKey);
+                            addUser(roomKey);
+                            closeOptions();
+                        }
+
+                    } catch (JSONException e) {
+                        throw new RuntimeException(e);
                     }
                 },
-                new Response.ErrorListener() {
-                    @Override
-                    public void onErrorResponse(VolleyError error) {
-                        Log.e("USERS ERROR", error.toString());
-                        if (error.getClass() == NoConnectionError.class) {
-                            Toast.makeText(getActivity(), "Please connect to internet", Toast.LENGTH_SHORT).show();
-                        }
+                error -> {
+                    Log.e("USERS ERROR", error.toString());
+                    if (error.getClass() == NoConnectionError.class) {
+                        Toast.makeText(getActivity(), "Please connect to internet", Toast.LENGTH_SHORT).show();
                     }
                 }
         );
@@ -277,35 +270,29 @@ public class FeedFrag extends Fragment {
                 .child(roomKey)
                 .child("members");
 
-        chatMembers.get().addOnCompleteListener(new OnCompleteListener<DataSnapshot>() {
-            @Override
-            public void onComplete(@NonNull Task<DataSnapshot> task) {
-                if (!task.isSuccessful()) {
-                    return;
-                }
-
-                GenericTypeIndicator<HashMap<String, String>> t = new GenericTypeIndicator<>() {};
-                HashMap<String, String> members = task.getResult().getValue(t);
-
-                if (members != null && members.containsValue(currentUser.getUid())) {
-                    Toast.makeText(getActivity(), "Already a member", Toast.LENGTH_SHORT).show();
-                    return;
-                }
-
-                String newMemberKey = chatMembers.push().getKey();
-
-                chatMembers.child(newMemberKey)
-                        .setValue(currentUser.getUid())
-                        .addOnCompleteListener(new OnCompleteListener<Void>() {
-                            @Override
-                            public void onComplete(@NonNull Task<Void> task) {
-                                if (task.isSuccessful()) {
-                                    Log.d("REALTIME DB ADD", "onComplete: Member added successfully!");
-                                    Toast.makeText(getActivity(), "Successfully added!", Toast.LENGTH_LONG).show();
-                                }
-                            }
-                        });
+        chatMembers.get().addOnCompleteListener(task -> {
+            if (!task.isSuccessful()) {
+                return;
             }
+
+            GenericTypeIndicator<HashMap<String, String>> t = new GenericTypeIndicator<>() {};
+            HashMap<String, String> members = task.getResult().getValue(t);
+
+            if (members != null && members.containsValue(currentUser.getUid())) {
+                Toast.makeText(getActivity(), "Already a member", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            String newMemberKey = chatMembers.push().getKey();
+
+            chatMembers.child(newMemberKey)
+                    .setValue(currentUser.getUid())
+                    .addOnCompleteListener(task1 -> {
+                        if (task1.isSuccessful()) {
+                            Log.d("REALTIME DB ADD", "onComplete: Member added successfully!");
+                            Toast.makeText(getActivity(), "Successfully added!", Toast.LENGTH_LONG).show();
+                        }
+                    });
         });
 
     }
@@ -348,6 +335,9 @@ public class FeedFrag extends Fragment {
             holder.chatName.setText(chatroom.name);
             Picasso.get()
                     .load(Storage.chatroomIconStorage + chatroom.iconKey)
+                    .resize((int) CanvasView.pxFromDp(50, requireContext()),
+                            (int) CanvasView.pxFromDp(50, requireContext()))
+                    .centerCrop()
                     .placeholder(R.mipmap.default_pfp_foreground)
                     .into(holder.chatIcon, new Callback() {
                         @Override
@@ -359,19 +349,16 @@ public class FeedFrag extends Fragment {
                         public void onError(Exception e) {}
                     });
 
-            holder.itemView.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View view) {
-                    Bundle roomName = new Bundle();
-                    roomName.putString("roomKey", chatroom.key);
-                    roomName.putString("roomName", chatroom.name);
-                    roomName.putString("iconKey", chatroom.iconKey);
-                    ((MainActivity) getActivity()).chatFrag.setArguments(roomName);
-                    getActivity().getSupportFragmentManager()
-                            .beginTransaction()
-                            .replace(R.id.chatFrag, ((MainActivity) getActivity()).chatFrag)
-                            .commit();
-                }
+            holder.itemView.setOnClickListener(view -> {
+                Bundle roomName = new Bundle();
+                roomName.putString("roomKey", chatroom.key);
+                roomName.putString("roomName", chatroom.name);
+                roomName.putString("iconKey", chatroom.iconKey);
+                ((MainActivity) requireActivity()).chatFrag.setArguments(roomName);
+                requireActivity().getSupportFragmentManager()
+                        .beginTransaction()
+                        .replace(R.id.chatFrag, ((MainActivity) requireActivity()).chatFrag)
+                        .commit();
             });
         }
 

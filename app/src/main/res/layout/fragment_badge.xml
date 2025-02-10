@@ -1,15 +1,52 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context=".HomeFrag">
 
-    <!-- TODO: Update blank fragment layout -->
-    <TextView
-        android:id="@+id/temp"
+    <ScrollView
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:text="BADGE" />
+        android:layout_height="match_parent">
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <TextView
+                android:id="@+id/achievedText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Achieved:"
+                android:textSize="30sp" />
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/achievedList"
+                android:nestedScrollingEnabled="false"
+                android:isScrollContainer="false"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:layout_constraintTop_toBottomOf="@+id/achievedText">
+
+            </androidx.recyclerview.widget.RecyclerView>
+
+            <TextView
+                android:id="@+id/InProgressText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="In Progress"
+                android:textSize="30sp"
+                app:layout_constraintTop_toBottomOf="@id/achievedList" />
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/inProgressList"
+                android:nestedScrollingEnabled="false"
+                android:isScrollContainer="false"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:layout_constraintTop_toBottomOf="@+id/InProgressText" />
+        </androidx.constraintlayout.widget.ConstraintLayout>
+    </ScrollView>
 
 </FrameLayout>
