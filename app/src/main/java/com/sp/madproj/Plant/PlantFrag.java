@@ -190,13 +190,21 @@ public class PlantFrag extends Fragment {
         Button addCaretakerBtn = view.findViewById(R.id.inviteCaretaker);
         Button joinGreenhouse = view.findViewById(R.id.joinGreenhouse);
         TextInputEditText joinCode = view.findViewById(R.id.joinGreenhouseText);
-        joinGreenhouse.setVisibility(View.GONE);
         joinGreenhouse.setOnClickListener(view1 -> {
-            if (joinCode.getText() == null || joinCode.getText().toString().isEmpty()) {
-                joinCode.setError("Enter a code");
-                return;
+            switch(joinGreenhouse.getText().toString()) {
+                case "Join another greenhouse":
+                    if (joinCode.getText() == null || joinCode.getText().toString().isEmpty()) {
+                        joinCode.setError("Enter a code");
+                        return;
+                    }
+                    checkDbForCode(joinCode.getText().toString());
+                    joinCode.setText("");
+                case "Remove from cloud":
+                    sharedPref.edit()
+                            .remove("greenhouseId")
+                            .commit();
+                    closeOptions();
             }
-            checkDbForCode(joinCode.getText().toString());
         });
 
         sharedPref = requireActivity().getSharedPreferences("greenhouse", MODE_PRIVATE);
@@ -204,6 +212,7 @@ public class PlantFrag extends Fragment {
             switch (addCaretakerBtn.getText().toString()) {
                 case loginTxt:
                     ((MainActivity) requireActivity()).navBar.setSelectedItemId(R.id.feedTab);
+                    closeOptions();
                     break;
                 case syncGreenhouseTxt:
                     String hashStr = String.valueOf(FirebaseAuth.getInstance().getCurrentUser().getUid().hashCode());
@@ -218,8 +227,7 @@ public class PlantFrag extends Fragment {
                             .putBoolean("clientChanged", true)
                             .putString("greenhouseId", hashStr)
                             .commit();
-
-                    joinGreenhouse.setVisibility(View.GONE);
+                    closeOptions();
                     break;
                 case inviteMemberTxt:
                     generateAndDisplayCode();
@@ -241,8 +249,10 @@ public class PlantFrag extends Fragment {
                     }
 
                     addCaretakerBtn.setText(syncGreenhouseTxt);
+                    closeOptions();
                 default:
                     joinGreenhouseContainer.setVisibility(View.VISIBLE);
+                    closeOptions();
             }
         });
 
@@ -279,18 +289,16 @@ public class PlantFrag extends Fragment {
                         e.printStackTrace();
                     }
                     MediaScannerConnection.scanFile(requireContext(), new String[]{file.toString()}, new String[] {"image/jpeg"},
-                            new MediaScannerConnection.OnScanCompletedListener() {
-                                public void onScanCompleted(String path, Uri uri) {
-                                    Log.i("SHARE", uri.toString());
+                            (path, uri) -> {
+                                Log.i("SHARE", uri.toString());
 
-                                    Intent sendIntent = new Intent();
-                                    sendIntent.setAction(Intent.ACTION_SEND);
-                                    sendIntent.putExtra(Intent.EXTRA_STREAM, uri);
-                                    sendIntent.putExtra(Intent.EXTRA_TEXT, "Check out my Greenhouse!");
-                                    sendIntent.setType("image/jpeg");
+                                Intent sendIntent = new Intent();
+                                sendIntent.setAction(Intent.ACTION_SEND);
+                                sendIntent.putExtra(Intent.EXTRA_STREAM, uri);
+                                sendIntent.putExtra(Intent.EXTRA_TEXT, "Check out my Greenhouse!");
+                                sendIntent.setType("image/jpeg");
 
-                                    startActivity(Intent.createChooser(sendIntent, null));
-                                }
+                                startActivity(Intent.createChooser(sendIntent, null));
                             });
 
                 }
@@ -319,16 +327,16 @@ public class PlantFrag extends Fragment {
                     }
                     getUsers();
 
-                    joinGreenhouseContainer.setVisibility(View.GONE);
                     if (FirebaseAuth.getInstance().getCurrentUser() == null) {
                         addCaretakerBtn.setText(loginTxt);
                         caretakersList.setVisibility(View.GONE);
                     } else if (sharedPref.getString("greenhouseId", null) == null) {
                         addCaretakerBtn.setText(syncGreenhouseTxt);
                         caretakersList.setVisibility(View.GONE);
-                        joinGreenhouse.setVisibility(View.VISIBLE);
-                        joinGreenhouseContainer.setVisibility(View.VISIBLE);
+                        joinGreenhouse.setText("Join another greenhouse");
                     } else {
+                        joinGreenhouseContainer.setVisibility(View.GONE);
+                        joinGreenhouse.setText("Remove from cloud");
                         caretakersList.setVisibility(View.VISIBLE);
                         if (String.valueOf(FirebaseAuth.getInstance()
                                 .getCurrentUser()

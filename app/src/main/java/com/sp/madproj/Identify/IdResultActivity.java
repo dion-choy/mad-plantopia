@@ -68,12 +68,7 @@ public class IdResultActivity extends AppCompatActivity {
         inputImage = findViewById(R.id.inputImg);
         Toolbar toolbar = findViewById(R.id.toolbar);
 
-        findViewById(R.id.returnBtn).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                finish();
-            }
-        });
+        findViewById(R.id.returnBtn).setOnClickListener(view -> finish());
 
         String inputUriStr = getIntent().getStringExtra("inputUriStr" );
         String apiReply = getIntent().getStringExtra("response" );
@@ -86,17 +81,14 @@ public class IdResultActivity extends AppCompatActivity {
             } else if (purpose.equals("check") && imgKey != null && recordId != null) {
                 toolbar.setVisibility(View.VISIBLE);
                 toolbar.inflateMenu(R.menu.id_menu);
-                toolbar.setOnMenuItemClickListener(new Toolbar.OnMenuItemClickListener() {
-                    @Override
-                    public boolean onMenuItemClick(MenuItem menuItem) {
-                        if (menuItem.getItemId() == R.id.delete) {
-                            idHelper.delete(recordId, imgKey, IdResultActivity.this);
-                            Storage.deleteObjSupa(IdResultActivity.this, Storage.identifStorage + imgKey);
-                            finish();
-                            return true;
-                        }
-                        return false;
+                toolbar.setOnMenuItemClickListener(menuItem -> {
+                    if (menuItem.getItemId() == R.id.delete) {
+                        idHelper.delete(recordId, imgKey, IdResultActivity.this);
+                        Storage.deleteObjSupa(IdResultActivity.this, Storage.identifStorage + imgKey);
+                        finish();
+                        return true;
                     }
+                    return false;
                 });
 
                 loadFromDB(imgKey, apiReply);
@@ -170,7 +162,7 @@ public class IdResultActivity extends AppCompatActivity {
                 break;
         }
 
-        Bitmap bitmap = null;
+        Bitmap bitmap;
         try {
             bitmap = MediaStore.Images.Media.getBitmap(this.getContentResolver(), Uri.parse(inputUriStr));
         } catch (IOException e) {
