@@ -17,7 +17,6 @@ import android.database.Cursor;
 import android.graphics.Color;
 import android.net.Uri;
 import android.os.Binder;
-import android.os.Handler;
 import android.os.IBinder;
 import android.provider.CalendarContract.Calendars;
 import android.provider.CalendarContract.Events;

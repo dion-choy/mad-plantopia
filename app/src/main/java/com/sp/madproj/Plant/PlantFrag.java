@@ -78,7 +78,6 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Timer;
 
 public class PlantFrag extends Fragment {
     private static final int MAX_SIZE = 11;

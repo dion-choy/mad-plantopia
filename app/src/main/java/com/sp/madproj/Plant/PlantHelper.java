@@ -10,12 +10,6 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.util.Log;
 
-import com.android.volley.NoConnectionError;
-import com.sp.madproj.Utils.Database;
-import com.sp.madproj.Utils.Storage;
-
-import java.util.Locale;
-
 public class PlantHelper extends SQLiteOpenHelper {
     private static final String DATABASE_NAME = "plant.db";
     private static final int SCHEMA_VERSION = 1;
