@@ -8,6 +8,7 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.content.ContentResolver;
+import android.content.ContentUris;
 import android.content.ContentValues;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -136,13 +137,24 @@ public class WateringNotifService extends Service {
             Log.d("Update Calendar", "Calendar updating");
 
             ContentResolver cr = getContentResolver();
-            Cursor cursor = cr.query(Events.CONTENT_URI, new String[] { Events.CALENDAR_ID, Events.TITLE, Events._ID},
+            Cursor cursor = cr.query(Events.CONTENT_URI, new String[] { Events.CALENDAR_ID, Events.TITLE, Events._ID, Events.DTSTART},
                     Events.TITLE + "=? AND " + Events.DESCRIPTION + "=?",
                     new String[] {"Water " + plantHelper.getName(plants), "Position " + plantHelper.getPosition(plants)}, null);
 
-            if (cursor.getCount() > 0) {
+            if (cursor == null) {
                 continue;
             }
+
+            if (cursor.getCount() > 0) {
+                cursor.moveToFirst();
+                if (cursor.getLong(3) == nextWatered.atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli()) {
+                    continue;
+                }
+
+                Uri deleteUri = ContentUris.withAppendedId(Events.CONTENT_URI, cursor.getLong(2));
+                cr.delete(deleteUri, null, null);
+            }
+            cursor.close();
             ContentValues values = new ContentValues();
             values.put(Events.DTSTART, nextWatered.atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli());
             values.put(Events.DTEND, nextWatered.atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli() + 86400000);
