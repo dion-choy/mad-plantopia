@@ -54,7 +54,7 @@ public class WateringNotifService extends Service {
     private static final String TAG = WateringNotifService.class.getSimpleName();
     private static final int INTERVAL = 10000;
 
-    private static final Handler handler = new Handler();
+    private Timer interval = new Timer();
     private final TimerTask callback = new TimerTask() {
         @SuppressLint("MissingPermission")
         @Override
@@ -71,9 +71,9 @@ public class WateringNotifService extends Service {
                             "Run " + num + "times"
                     ));
             if (!plantHelper.getReadableDatabase().isOpen()) {
-                plants = plantHelper.getAll();
                 return;
             }
+            plants = plantHelper.getAll();
 
             String greenhouseId = sharedPref.getString("greenhouseId", null);
             if (greenhouseId != null) {
@@ -136,7 +136,10 @@ public class WateringNotifService extends Service {
             } else if (min == 3) {
                 timeDelta = 1;
             }
-            LocalDate nextWatered = lastWatered.plusDays(timeDelta);
+            long nextWateredMillis = lastWatered.plusDays(timeDelta)
+                    .atStartOfDay(ZoneOffset.UTC)
+                    .toInstant()
+                    .toEpochMilli();
             Log.d("Update Calendar", "Calendar updating");
 
             ContentResolver cr = getContentResolver();
@@ -150,7 +153,7 @@ public class WateringNotifService extends Service {
 
             if (cursor.getCount() > 0) {
                 cursor.moveToFirst();
-                if (cursor.getLong(3) == nextWatered.atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli()) {
+                if (cursor.getLong(3) == nextWateredMillis) {
                     continue;
                 }
 
@@ -158,9 +161,10 @@ public class WateringNotifService extends Service {
                 cr.delete(deleteUri, null, null);
             }
             cursor.close();
+
             ContentValues values = new ContentValues();
-            values.put(Events.DTSTART, nextWatered.atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli());
-            values.put(Events.DTEND, nextWatered.atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli() + 86400000);
+            values.put(Events.DTSTART, nextWateredMillis);
+            values.put(Events.DTEND, nextWateredMillis);
             values.put(Events.ALL_DAY, 1);
             values.put(Events.TITLE, "Water " + plantHelper.getName(plants));
             values.put(Events.DESCRIPTION, "Position " + plantHelper.getPosition(plants));
@@ -175,6 +179,8 @@ public class WateringNotifService extends Service {
             values.put(Reminders.EVENT_ID, eventID);
             values.put(Reminders.METHOD, Reminders.METHOD_ALERT);
             cr.insert(Reminders.CONTENT_URI, values);
+
+            Log.d("Update Calendar", "Event added: " + eventID);
         }
 
         Log.d("Update Calendar", "Calendar updated");
@@ -229,7 +235,7 @@ public class WateringNotifService extends Service {
         Database.queryAstra(WateringNotifService.this,
                 "SELECT * FROM plantopia.greenhouses WHERE id=" + greenhouseId + ";",
                 (response) -> {
-            plants = plantHelper.getAll();
+                    plants = plantHelper.getAll();
                     Log.d("Update", response);
 
                     try {
@@ -402,8 +408,9 @@ public class WateringNotifService extends Service {
         plantHelper = new PlantHelper(this);
         plants = plantHelper.getAll();
 
-        handler.removeCallbacksAndMessages(null);
-        new Timer().schedule(callback, 0, INTERVAL);
+        interval.cancel();
+        interval.purge();
+        interval.schedule(callback, 0, INTERVAL);
     }
 
     @Override
@@ -422,7 +429,6 @@ public class WateringNotifService extends Service {
     @Override
     public void onDestroy() {
         Log.v(TAG, "Destroying service");
-        handler.removeCallbacksAndMessages(null);
         super.onDestroy();
     }
 
