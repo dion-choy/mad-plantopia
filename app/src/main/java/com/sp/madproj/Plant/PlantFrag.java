@@ -13,8 +13,11 @@ import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.graphics.Bitmap;
+import android.media.MediaScannerConnection;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Handler;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -65,8 +68,11 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.File;
+import java.io.FileOutputStream;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -87,6 +93,7 @@ public class PlantFrag extends Fragment {
     private FloatingActionButton openMenu;
     private FloatingActionButton addPlantBtn;
     private FloatingActionButton addPersonBtn;
+    private FloatingActionButton shareBtn;
     private TextView shade;
     private CardView addPersonContainer;
     private ProgressBar loadingIcon;
@@ -241,6 +248,55 @@ public class PlantFrag extends Fragment {
         });
 
         addPersonContainer = view.findViewById(R.id.addPersonContainer);
+
+        shareBtn = view.findViewById(R.id.shareBtn);
+        shareBtn.setOnClickListener(
+                view1 -> {
+                    String fname;
+                    if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.P) {
+                        if (ActivityCompat.checkSelfPermission(requireContext(), Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+                            ActivityCompat.requestPermissions(requireActivity(),
+                                    new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
+                                    1);
+                        }
+
+                        fname = "/Pictures/Image-" + LocalDateTime.now().toString().replaceAll(":", ".").replaceAll("\\.", "-") + ".jpg";
+                    } else {
+                        fname = "/Pictures/Plantopia/Image-" + LocalDateTime.now().toString().replaceAll(":", ".").replaceAll("\\.", "-") + ".jpg";
+                    }
+
+                    String root = Environment.getExternalStorageDirectory().toString();
+                    File myDir = new File(root);
+                    myDir.mkdirs();
+                    File file = new File(myDir, fname);
+                    if (file.exists()) file.delete();
+                    Log.i("SHARE", root + fname);
+                    try {
+                        FileOutputStream out = new FileOutputStream(file);
+                        canvas.getBuffer().compress(Bitmap.CompressFormat.JPEG, 100, out);
+                        out.flush();
+                        out.close();
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                    MediaScannerConnection.scanFile(requireContext(), new String[]{file.toString()}, new String[] {"image/jpeg"},
+                            new MediaScannerConnection.OnScanCompletedListener() {
+                                public void onScanCompleted(String path, Uri uri) {
+                                    Log.i("SHARE", uri.toString());
+
+                                    Intent sendIntent = new Intent();
+                                    sendIntent.setAction(Intent.ACTION_SEND);
+                                    sendIntent.putExtra(Intent.EXTRA_STREAM, uri);
+                                    sendIntent.putExtra(Intent.EXTRA_TEXT, "Check out my Greenhouse!");
+                                    sendIntent.setType("image/jpeg");
+
+                                    startActivity(Intent.createChooser(sendIntent, null));
+                                }
+                            });
+
+                }
+        );
+
         addPlantBtn = view.findViewById(R.id.addPlant);
         addPlantBtn.setOnClickListener(
                 view1 -> {
@@ -291,11 +347,17 @@ public class PlantFrag extends Fragment {
                     );
 
 
-                    addPersonBtn.startAnimation(toBottomFabAnim);
-                    addPlantBtn.startAnimation(toBottomFabAnim);
+                    shareBtn.setVisibility(View.GONE);
+                    shareBtn.startAnimation(toBottomFabAnim);
+                    new Handler().postDelayed(() -> shareBtn.clearAnimation(), 300);
 
                     addPlantBtn.setVisibility(View.GONE);
+                    addPlantBtn.startAnimation(toBottomFabAnim);
+                    new Handler().postDelayed(() -> addPlantBtn.clearAnimation(), 300);
+
                     addPersonBtn.setVisibility(View.GONE);
+                    addPersonBtn.startAnimation(toBottomFabAnim);
+                    new Handler().postDelayed(() -> addPersonBtn.clearAnimation(), 300);
                     openMenu.setImageResource(R.drawable.icon_done);
                 }
         );
@@ -584,6 +646,7 @@ public class PlantFrag extends Fragment {
     }
 
     private void openOptions() {
+        shareBtn.setVisibility(View.VISIBLE);
         addPlantBtn.setVisibility(View.VISIBLE);
         addPersonBtn.setVisibility(View.VISIBLE);
         shade.setVisibility(View.VISIBLE);
@@ -591,6 +654,7 @@ public class PlantFrag extends Fragment {
 
         shade.startAnimation(fadeInBg);
         openMenu.startAnimation(rotateClockWiseFabAnim);
+        shareBtn.startAnimation(fromBottomFabAnim);
         addPersonBtn.startAnimation(fromBottomFabAnim);
         addPlantBtn.startAnimation(fromBottomFabAnim);
 
@@ -610,6 +674,10 @@ public class PlantFrag extends Fragment {
             InputMethodManager imm = (InputMethodManager) getActivity().getSystemService(Context.INPUT_METHOD_SERVICE);
             imm.hideSoftInputFromWindow(getView().getWindowToken(), 0);
         }
+
+        shareBtn.setVisibility(View.GONE);
+        shareBtn.startAnimation(toBottomFabAnim);
+        new Handler().postDelayed(() -> shareBtn.clearAnimation(), 300);
 
         addPlantBtn.setVisibility(View.GONE);
         addPlantBtn.startAnimation(toBottomFabAnim);

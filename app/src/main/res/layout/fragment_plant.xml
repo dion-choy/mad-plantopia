@@ -31,6 +31,22 @@
             app:layout_constraintTop_toTopOf="parent" />
 
         <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/shareBtn"
+            android:layout_width="wrap_content"
+            android:layout_height="0dp"
+            android:layout_marginEnd="16dp"
+            android:backgroundTint="@color/light_text"
+            android:clickable="true"
+            android:contentDescription="Identify new plant"
+            android:src="@drawable/share_icon"
+            android:visibility="gone"
+            app:fabCustomSize="40dp"
+            app:layout_constraintBottom_toTopOf="@id/addPerson"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:shapeAppearanceOverlay="@style/fab"
+            app:tint="@color/nav_bar_background" />
+
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
             android:id="@+id/addPerson"
             android:layout_width="wrap_content"
             android:layout_height="0dp"

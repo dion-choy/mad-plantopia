@@ -104,6 +104,9 @@ public class WateringNotifService extends Service {
                     .query(Calendars.CONTENT_URI, projection, Calendars.VISIBLE + " = 1", null, Calendars._ID + " ASC");
         }
 
+        if (calCursor.getCount() == 0) {
+            return;
+        }
         calCursor.moveToFirst();
         long calID = calCursor.getLong(0);
         calCursor.close();

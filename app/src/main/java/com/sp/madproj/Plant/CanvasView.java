@@ -154,6 +154,10 @@ public class CanvasView extends View {
         return this.bufferCanvas;
     }
 
+    public Bitmap getBuffer() {
+        return buffer;
+    }
+
     public void clear() {
         allSprites.clear();
         clickableSprites.clear();
