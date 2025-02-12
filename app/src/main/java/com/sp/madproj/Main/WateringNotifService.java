@@ -410,6 +410,7 @@ public class WateringNotifService extends Service {
 
         interval.cancel();
         interval.purge();
+        interval = new Timer();
         interval.schedule(callback, 0, INTERVAL);
     }
 
