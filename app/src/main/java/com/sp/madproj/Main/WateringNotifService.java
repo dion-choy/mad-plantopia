@@ -41,6 +41,7 @@ import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Locale;
 import java.util.TimeZone;
 import java.util.Timer;
@@ -88,6 +89,7 @@ public class WateringNotifService extends Service {
     };
     private int num = 0;
 
+    private HashMap<Integer, Long> calendar = new HashMap<>();
     private void loadCalendar() {
         plants.moveToFirst();
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.WRITE_CALENDAR) != PackageManager.PERMISSION_GRANTED) {
@@ -141,6 +143,10 @@ public class WateringNotifService extends Service {
                     .toEpochMilli();
             Log.d("Update Calendar", "Calendar updating");
 
+            if (calendar.get(plantHelper.getPosition(plants)) != null) {
+                return;
+            }
+
             ContentResolver cr = getContentResolver();
             Cursor cursor = cr.query(Events.CONTENT_URI, new String[] { Events.CALENDAR_ID, Events.TITLE, Events._ID, Events.DTSTART},
                     Events.TITLE + "=? AND " + Events.DESCRIPTION + "=?",
@@ -152,7 +158,14 @@ public class WateringNotifService extends Service {
 
             if (cursor.getCount() > 0) {
                 cursor.moveToFirst();
+                for (int j = 1; j < cursor.getCount(); j++) {
+                    Uri deleteUri = ContentUris.withAppendedId(Events.CONTENT_URI, cursor.getLong(2));
+                    cr.delete(deleteUri, null, null);
+                }
+
+                cursor.moveToFirst();
                 if (cursor.getLong(3) == nextWateredMillis) {
+                    calendar.put(plantHelper.getPosition(plants), cursor.getLong(2));
                     continue;
                 }
 
@@ -178,6 +191,8 @@ public class WateringNotifService extends Service {
             values.put(Reminders.EVENT_ID, eventID);
             values.put(Reminders.METHOD, Reminders.METHOD_ALERT);
             cr.insert(Reminders.CONTENT_URI, values);
+
+            calendar.put(plantHelper.getPosition(plants), eventID);
 
             Log.d("Update Calendar", "Event added: " + eventID);
         }
