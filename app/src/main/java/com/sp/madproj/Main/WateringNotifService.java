@@ -293,7 +293,9 @@ public class WateringNotifService extends Service {
                             existingPos.append(jsonObject.getInt("position"))
                                     .append(", ");
                         }
-                        existingPos.setLength(existingPos.length() - 2);
+                        if (existingPos.length() >= 2) {
+                            existingPos.setLength(existingPos.length() - 2);
+                        }
                         if (plantHelper.getWritableDatabase()
                                 .delete("plant_table", "position NOT IN (" + existingPos +
                                         ")", null) > 0) {
