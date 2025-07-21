@@ -14,6 +14,7 @@ android {
     def supaKey= properties.getProperty('supaKey')
     def anonSupaKey= properties.getProperty('anonSupaKey')
     def astraDBToken= properties.getProperty('astraDBToken')
+    def bucketUrl= properties.getProperty('bucketUrl')
 
     defaultConfig {
         applicationId "com.sp.madproj"
@@ -29,6 +30,7 @@ android {
         buildConfigField "String" , "SUPA_KEY" , supaKey
         buildConfigField "String" , "ANON_SUPA_KEY" , anonSupaKey
         buildConfigField "String" , "ASTRA_DB_TOKEN" , astraDBToken
+        buildConfigField "String" , "BUCKET_URL", bucketUrl
     }
 
     buildTypes {
